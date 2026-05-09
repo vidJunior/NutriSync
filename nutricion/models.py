@@ -128,10 +128,10 @@ class ItemRegistro(models.Model):
     def calcular_macros(self):
         """Calcula los macros proporcionales a la cantidad en gramos"""
         factor = self.cantidad_g / Decimal("100.0")
-        self.total_calorias = self.alimento.calorias_100g * factor
-        self.total_proteinas = self.alimento.proteinas_100g * factor
-        self.total_carbohidratos = self.alimento.carbohidratos_100g * factor
-        self.total_grasas = self.alimento.grasas_100g * factor
+        self.total_calorias = (self.alimento.calorias_100g * factor).quantize(Decimal("0.01"))
+        self.total_proteinas = (self.alimento.proteinas_100g * factor).quantize(Decimal("0.01"))
+        self.total_carbohidratos = (self.alimento.carbohidratos_100g * factor).quantize(Decimal("0.01"))
+        self.total_grasas = (self.alimento.grasas_100g * factor).quantize(Decimal("0.01"))
 
     def save(self, *args, **kwargs):
         self.calcular_macros()

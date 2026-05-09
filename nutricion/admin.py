@@ -74,7 +74,7 @@ class RegistroComidaAdmin(admin.ModelAdmin):
 # =========================
 @admin.register(ItemRegistro)
 class ItemRegistroAdmin(admin.ModelAdmin):
-    list_display = ("registro", "alimento", "cantidad_g", "calorias")
+    list_display = ("registro", "alimento", "cantidad_g", "total_calorias")
     list_filter = ("alimento",)
 
 

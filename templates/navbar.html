@@ -4,7 +4,17 @@
             <span>🥗</span> NutriSync
         </a>
         <div class="space-x-4">
-            <a href="/" class="hover:text-green-200">Dashboard</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'nutricion:dashboard' %}" class="hover:text-green-200">Dashboard</a>
+            <a href="{% url 'nutricion:lista_registros' %}" class="hover:text-green-200">Comidas</a>
+            <a href="{% url 'nutricion:lista_habitos' %}" class="hover:text-green-200">Hábitos</a>
+            <a href="{% url 'nutricion:logros' %}" class="hover:text-green-200">Logros</a>
+            <a href="{% url 'nutricion:perfil_editar' %}" class="hover:text-green-200">Perfil</a>
+            <a href="{% url 'nutricion:logout' %}" class="hover:text-green-200">Salir</a>
+            {% else %}
+            <a href="{% url 'nutricion:login' %}" class="hover:text-green-200">Iniciar sesión</a>
+            <a href="{% url 'nutricion:registro' %}" class="hover:text-green-200">Registrarse</a>
+            {% endif %}
         </div>
     </div>
 </nav>

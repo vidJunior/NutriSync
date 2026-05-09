@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Mis Comidas</h2>
+        <a href="{% url 'nutricion:crear_comida' %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg mb-4 inline-block">Nueva Comida</a>
+        {% if comidas %}
+        <ul class="space-y-2">
+            {% for comida in comidas %}
+            <li class="border-b py-2 flex justify-between">
+                <span>{{ comida.fecha }} - {{ comida.get_tipo_comida_display }}</span>
+                <span class="font-semibold">{{ comida.total_calorias|floatformat:0 }} kcal</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-600">No hay registros de comidas aún.</p>
+        {% endif %}
+        <a href="{% url 'nutricion:dashboard' %}" class="text-green-600 hover:underline mt-4 inline-block">Volver</a>
+    </div>
+</div>
+{% endblock %}
