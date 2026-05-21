@@ -17,7 +17,8 @@ urlpatterns = [
     path("", include("citas.urls")),
     # Planes nutricionales y alimentos (Parte 4)
     path("", include("nutricion.urls")),
-    # path("", include("seguimiento.urls")),
+    # Seguimiento corporal y notas clínicas (Parte 5)
+    path("seguimiento/", include("seguimiento.urls")),
 ]
 
 # Handlers de error personalizados con diseño consistente al resto del sistema

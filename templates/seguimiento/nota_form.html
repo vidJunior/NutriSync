@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Nueva Nota Clínica{% endblock %}
+{% block page_title %}Nueva Nota Clínica{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6">
+        <a href="{% url 'core:dashboard' %}" class="hover:text-teal-600 transition-colors">Dashboard</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        <a href="{% url 'pacientes:lista' %}" class="hover:text-teal-600 transition-colors">Pacientes</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        <a href="{% url 'pacientes:detalle' paciente.pk %}" class="hover:text-teal-600 transition-colors">{{ paciente.nombre_completo }}</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        <span class="text-slate-600 font-medium">Nueva Nota</span>
+    </nav>
+
+    <!-- Banner del paciente -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <i data-lucide="user" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold text-slate-800">{{ paciente.nombre_completo }}</h2>
+                <p class="text-xs text-slate-400">Creando nueva nota clínica</p>
+            </div>
+        </div>
+        <a href="{% url 'seguimiento:notas_lista' paciente.pk %}"
+           class="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ver notas
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Fecha -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.fecha.label }}
+                    </label>
+                    {{ form.fecha }}
+                    {% if form.fecha.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.fecha.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tipo -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.tipo.label }}
+                    </label>
+                    {{ form.tipo }}
+                    {% if form.tipo.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.tipo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Cita relacionada -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.cita.label }}
+                    </label>
+                    {{ form.cita }}
+                    {% if form.cita.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.cita.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Título -->
+            <div class="mt-5">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    {{ form.titulo.label }}
+                </label>
+                {{ form.titulo }}
+                {% if form.titulo.errors %}
+                <p class="text-red-500 text-xs mt-1">{{ form.titulo.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Contenido -->
+            <div class="mt-5">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    {{ form.contenido.label }}
+                </label>
+                {{ form.contenido }}
+                {% if form.contenido.errors %}
+                <p class="text-red-500 text-xs mt-1">{{ form.contenido.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Acciones -->
+            <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'pacientes:detalle' paciente.pk %}"
+                   class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm transition-all duration-200">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Guardar Nota
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

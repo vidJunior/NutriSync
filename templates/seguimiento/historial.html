@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Historial de {{ paciente.nombre_completo }}{% endblock %}
+{% block page_title %}Historial del Paciente{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Breadcrumb + acciones -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-sm text-slate-400">
+            <a href="{% url 'core:dashboard' %}" class="hover:text-teal-600">Dashboard</a>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <a href="{% url 'pacientes:lista' %}" class="hover:text-teal-600">Pacientes</a>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <span class="text-slate-600 font-medium">{{ paciente.nombre_completo }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'seguimiento:medidas_nueva' paciente.pk %}"
+               class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nueva Medida
+            </a>
+            <a href="{% url 'seguimiento:notas_nueva' paciente.pk %}"
+               class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm transition-all duration-200 flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nueva Nota
+            </a>
+        </div>
+    </div>
+
+    <!-- Banner del paciente -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="user" class="w-5 h-5"></i>
+        </div>
+        <div class="flex-1">
+            <a href="{% url 'pacientes:detalle' paciente.pk %}" class="text-lg font-semibold text-slate-800 hover:text-teal-600 transition-colors">
+                {{ paciente.nombre_completo }}
+            </a>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span class="flex items-center gap-1"><i data-lucide="activity" class="w-3.5 h-3.5"></i> {{ total_medidas }} medidas</span>
+            <span class="flex items-center gap-1"><i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> {{ total_notas }} notas</span>
+            <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> {{ total_citas }} citas</span>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="relative">
+        {% if eventos %}
+        <!-- Línea vertical -->
+        <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200"></div>
+
+        <div class="space-y-6">
+            {% for evento in eventos %}
+            <div class="relative pl-16">
+                <!-- Círculo en la línea -->
+                <div class="absolute left-4 w-5 h-5 rounded-full border-4 border-white shadow-sm
+                    {% if evento.color == 'teal' %}bg-teal-500
+                    {% elif evento.color == 'indigo' %}bg-indigo-500
+                    {% elif evento.color == 'amber' %}bg-amber-500
+                    {% endif %}">
+                </div>
+
+                <!-- Card del evento -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-start gap-3">
+                        <!-- Icono -->
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                            {% if evento.color == 'teal' %}bg-teal-50 text-teal-600
+                            {% elif evento.color == 'indigo' %}bg-indigo-50 text-indigo-600
+                            {% elif evento.color == 'amber' %}bg-amber-50 text-amber-600
+                            {% endif %}">
+                            <i data-lucide="{{ evento.icono }}" class="w-4 h-4"></i>
+                        </div>
+
+                        <!-- Contenido -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <span class="text-xs font-medium
+                                    {% if evento.color == 'teal' %}text-teal-600
+                                    {% elif evento.color == 'indigo' %}text-indigo-600
+                                    {% elif evento.color == 'amber' %}text-amber-600
+                                    {% endif %}">
+                                    {% if evento.tipo == 'medida' %}Medición Corporal
+                                    {% elif evento.tipo == 'nota' %}Nota Clínica
+                                    {% elif evento.tipo == 'cita' %}Cita{% endif %}
+                                </span>
+                                <span class="text-xs text-slate-400">{{ evento.fecha_display }}</span>
+                            </div>
+                            {% if evento.url %}
+                            <a href="{{ evento.url }}" class="text-sm font-semibold text-slate-800 hover:text-teal-600 transition-colors">
+                                {{ evento.titulo }}
+                            </a>
+                            {% else %}
+                            <p class="text-sm font-semibold text-slate-800">{{ evento.titulo }}</p>
+                            {% endif %}
+                            <p class="text-xs text-slate-500 mt-0.5">{{ evento.detalle }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-16 px-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-5">
+                <i data-lucide="timeline" class="w-10 h-10 text-slate-300"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-700 mb-2">Sin actividad registrada</h3>
+            <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">
+                Aún no hay medidas, notas clínicas ni citas registradas para {{ paciente.nombre_completo }}.
+                Comienza registrando la primera medición o nota clínica.
+            </p>
+            <div class="flex items-center justify-center gap-3">
+                <a href="{% url 'seguimiento:medidas_nueva' paciente.pk %}"
+                   class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4"></i> Registrar medidas
+                </a>
+                <a href="{% url 'seguimiento:notas_nueva' paciente.pk %}"
+                   class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Crear nota
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

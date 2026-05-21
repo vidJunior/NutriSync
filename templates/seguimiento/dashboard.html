@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Seguimiento{% endblock %}
+{% block page_title %}Seguimiento Corporal{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <p class="text-sm text-slate-500">
+            Resumen de últimas mediciones corporales de tus pacientes activos.
+        </p>
+        <p class="text-xs text-slate-400 font-medium">
+            <span class="text-teal-600 font-semibold">{{ total_medidas }}</span> mediciones registradas
+        </p>
+    </div>
+
+    <!-- Lista de pacientes con medidas -->
+    <div class="space-y-4">
+        {% for item in pacientes_con_medidas %}
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <!-- Información del paciente -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <a href="{% url 'pacientes:detalle' item.paciente.pk %}"
+                           class="text-base font-semibold text-slate-800 hover:text-teal-600 transition-colors">
+                            {{ item.paciente.nombre_completo }}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Última medida -->
+                <div class="flex items-center gap-6">
+                    {% if item.ultima_medida %}
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 uppercase tracking-wide">Última medida</p>
+                        <p class="text-xs text-slate-500">{{ item.ultima_medida.fecha|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 uppercase tracking-wide">Peso</p>
+                        <p class="text-sm font-semibold text-slate-800">{{ item.ultima_medida.peso_kg }} kg</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 uppercase tracking-wide">IMC</p>
+                        <p class="text-sm font-semibold
+                            {% if item.ultima_medida.imc < 18.5 %}text-amber-600
+                            {% elif item.ultima_medida.imc < 25 %}text-emerald-600
+                            {% elif item.ultima_medida.imc < 30 %}text-amber-600
+                            {% else %}text-red-600{% endif %}">
+                            {{ item.ultima_medida.imc }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400">Sin mediciones registradas</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex gap-2">
+                        <a href="{% url 'seguimiento:medidas_nueva' item.paciente.pk %}"
+                           class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3 h-3"></i> Medir
+                        </a>
+                        <a href="{% url 'seguimiento:medidas_lista' item.paciente.pk %}"
+                           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1">
+                            <i data-lucide="activity" class="w-3 h-3"></i> Historial
+                        </a>
+                        <a href="{% url 'seguimiento:historial' item.paciente.pk %}"
+                           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1">
+                            <i data-lucide="timeline" class="w-3 h-3"></i> Timeline
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty state -->
+        <div class="text-center py-16 px-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-5">
+                <i data-lucide="activity" class="w-10 h-10 text-slate-300"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-700 mb-2">Sin pacientes activos</h3>
+            <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">
+                No tienes pacientes activos registrados. Agrega pacientes primero para comenzar a registrar sus medidas corporales.
+            </p>
+            <a href="{% url 'pacientes:nuevo' %}"
+               class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Registrar paciente
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

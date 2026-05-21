@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Historial de Medidas{% endblock %}
+{% block page_title %}Historial de Medidas Corporales{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Breadcrumb + acciones -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-sm text-slate-400">
+            <a href="{% url 'core:dashboard' %}" class="hover:text-teal-600">Dashboard</a>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <a href="{% url 'pacientes:lista' %}" class="hover:text-teal-600">Pacientes</a>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <span class="text-slate-600 font-medium">{{ paciente.nombre_completo }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'seguimiento:medidas_nueva' paciente.pk %}"
+               class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nueva Medida
+            </a>
+            <a href="{% url 'seguimiento:historial' paciente.pk %}"
+               class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm transition-all duration-200 flex items-center gap-2">
+                <i data-lucide="timeline" class="w-4 h-4"></i> Ver Historial
+            </a>
+        </div>
+    </div>
+
+    <!-- Banner del paciente -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="user" class="w-5 h-5"></i>
+        </div>
+        <div>
+            <a href="{% url 'pacientes:detalle' paciente.pk %}" class="text-lg font-semibold text-slate-800 hover:text-teal-600 transition-colors">
+                {{ paciente.nombre_completo }}
+            </a>
+            {% if ultima_medida %}
+            <p class="text-xs text-slate-400">Última medición: {{ ultima_medida.fecha|date:"d/m/Y" }} — {{ ultima_medida.peso_kg }} kg (IMC {{ ultima_medida.imc }})</p>
+            {% else %}
+            <p class="text-xs text-slate-400">Aún no hay mediciones registradas</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabla de medidas -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {% if medidas %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-left">
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Fecha</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Peso (kg)</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Talla (cm)</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">IMC</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Grasa (%)</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Cintura (cm)</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Cadera (cm)</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Notas</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for medida in medidas %}
+                    {% with cambio=cambios|first %}
+                    {% endwith %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-4 py-3 text-slate-800 font-medium whitespace-nowrap">{{ medida.fecha|date:"d/m/Y" }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-slate-800">{{ medida.peso_kg }}</span>
+                            {% if cambios %}
+                            {% with c=cambios.forloop.counter0 %}
+                                {% if c.peso == "subio" %}
+                                <span class="text-amber-600 text-xs ml-1 inline-flex items-center"><i data-lucide="trending-up" class="w-3 h-3"></i></span>
+                                {% elif c.peso == "bajo" %}
+                                <span class="text-emerald-600 text-xs ml-1 inline-flex items-center"><i data-lucide="trending-down" class="w-3 h-3"></i></span>
+                                {% endif %}
+                            {% endwith %}
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-slate-600">{{ medida.talla_cm }}</td>
+                        <td class="px-4 py-3">
+                            <span class="font-semibold {% if medida.imc < 18.5 %}text-amber-600{% elif medida.imc < 25 %}text-emerald-600{% elif medida.imc < 30 %}text-amber-600{% else %}text-red-600{% endif %}">
+                                {{ medida.imc }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-slate-600">{{ medida.grasa_corporal_pct|default:"—" }}</td>
+                        <td class="px-4 py-3 text-slate-600">{{ medida.cintura_cm|default:"—" }}</td>
+                        <td class="px-4 py-3 text-slate-600">{{ medida.cadera_cm|default:"—" }}</td>
+                        <td class="px-4 py-3 text-slate-500 max-w-[200px] truncate">{{ medida.notas|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+            <p class="text-xs text-slate-400">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </p>
+            <div class="flex gap-1">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"
+                   class="px-3 py-1 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Anterior</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"
+                   class="px-3 py-1 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-12 px-6">
+            <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="activity" class="w-8 h-8 text-slate-300"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-700 mb-1">Sin mediciones registradas</h3>
+            <p class="text-sm text-slate-400 mb-6">
+                Aún no has registrado medidas corporales para {{ paciente.nombre_completo }}.
+            </p>
+            <a href="{% url 'seguimiento:medidas_nueva' paciente.pk %}"
+               class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Registrar primera medida
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
