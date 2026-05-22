@@ -48,3 +48,23 @@ html {
     outline: 2px solid #0D9488;
     outline-offset: 2px;
 }
+
+/* ─── Pulido Visual ──────────────────────────────────────────────────────── */
+
+body {
+    background-color: #F8FAFC;
+}
+
+.card-hover {
+    transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+}
+
+.empty-state {
+    color: #94A3B8;
+    text-align: center;
+    padding: 2rem;
+}

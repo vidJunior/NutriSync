@@ -258,10 +258,56 @@ async function refreshListaPacientes() {
     }
 }
 
+// ─── Sidebar Responsive ────────────────────────────────────────────────────
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('-translate-x-full');
+    }
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.add('-translate-x-full');
+    }
+}
+
 // ─── Inicialización al cargar la página ─────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    // Sidebar responsive toggle
+    const menuBtn = document.getElementById('menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarLinks = sidebar ? sidebar.querySelectorAll('a') : [];
+
+    if (menuBtn && sidebar) {
+        // Toggle sidebar con el botón del menú
+        menuBtn.addEventListener('click', () => {
+            toggleSidebar();
+        });
+
+        // Cerrar sidebar cuando se hace clic en un enlace (en móvil)
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                // Solo cerrar en dispositivos pequeños (menos de lg)
+                if (window.innerWidth < 1024) {
+                    closeSidebar();
+                }
+            });
+        });
+    }
+
+    // Cerrar sidebar al cambiar el tamaño de la ventana a desktop
+    window.addEventListener('resize', () => {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && window.innerWidth >= 1024) {
+            sidebar.classList.remove('-translate-x-full');
+        }
+    });
 });

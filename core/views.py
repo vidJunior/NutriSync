@@ -6,10 +6,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from datetime import timedelta
 from config.choices import EstadoNutricionista
 from .forms import PerfilNutricionistaForm
 from citas.models import Cita
 from pacientes.models import Paciente
+from nutricion.models import PlanNutricional
+from seguimiento.models import MedidaCorporal
 
 
 def login_view(request):
@@ -62,40 +65,55 @@ def logout_view(request):
 
 @login_required
 def dashboard_view(request):
-    """
-    Dashboard principal con métricas reales de pacientes y citas.
-    Muestra el total de pacientes activos, las citas de hoy y las próximas consultas de la agenda.
-    """
-    hoy = timezone.localtime(timezone.now())
-    fecha_hoy = hoy.date()
-    inicio_hoy = hoy.replace(hour=0, minute=0, second=0, microsecond=0)
+    hoy = timezone.now().date()
+    inicio_semana = hoy
+    fin_semana = hoy + timedelta(days=7)
 
-    # 1. Total pacientes activos
-    pacientes_activos_count = Paciente.objects.filter(
-        nutricionista=request.user, 
+    # Aislamiento por nutricionista
+    pacientes_activos = Paciente.objects.filter(
+        nutricionista=request.user,
+        estado=True
+    )
+
+    total_pacientes = pacientes_activos.count()
+
+    citas_hoy = Cita.objects.select_related('paciente').filter(
+        paciente__nutricionista=request.user,
+        fecha_hora__date=hoy
+    ).order_by('fecha_hora')
+
+    proximas_citas = Cita.objects.select_related('paciente').filter(
+        paciente__nutricionista=request.user,
+        fecha_hora__date__range=[inicio_semana, fin_semana],
+        estado='programada'
+    ).order_by('fecha_hora')
+
+    pacientes_con_plan = PlanNutricional.objects.filter(
+        paciente__nutricionista=request.user,
         estado=True
     ).count()
 
-    # 2. Citas programadas para hoy (excluyendo canceladas)
-    citas_hoy_count = Cita.objects.filter(
-        paciente__nutricionista=request.user,
-        fecha_hora__date=fecha_hoy
-    ).exclude(estado='cancelada').count()
+    ultimos_seguimientos = MedidaCorporal.objects.select_related(
+        'paciente'
+    ).filter(
+        paciente__nutricionista=request.user
+    ).order_by('-fecha')[:5]
 
-    # 3. Próximas 5 citas a partir del inicio del día de hoy
-    proximas_citas = Cita.objects.filter(
-        paciente__nutricionista=request.user,
-        fecha_hora__gte=inicio_hoy
-    ).exclude(
-        estado='cancelada'
-    ).select_related('paciente').order_by('fecha_hora')[:5]
+    ultimos_pacientes = Paciente.objects.filter(
+        nutricionista=request.user
+    ).order_by('-fecha_registro')[:5]
 
     context = {
-        "pacientes_activos_count": pacientes_activos_count,
-        "citas_hoy_count": citas_hoy_count,
-        "proximas_citas": proximas_citas,
+        'total_pacientes': total_pacientes,
+        'citas_hoy': citas_hoy,
+        'cantidad_citas_hoy': citas_hoy.count(),
+        'proximas_citas': proximas_citas[:5],
+        'pacientes_con_plan': pacientes_con_plan,
+        'ultimos_seguimientos': ultimos_seguimientos,
+        'ultimos_pacientes': ultimos_pacientes,
     }
-    return render(request, "core/dashboard.html", context)
+
+    return render(request, 'core/dashboard.html', context)
 
 
 @login_required

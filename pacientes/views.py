@@ -163,17 +163,37 @@ class PacienteDetailView(NutricionistaPacienteMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Importación local para evitar importación circular entre apps.
-        # nutricion importa Paciente, así que Paciente no puede importar nutricion en el nivel de módulo.
+        paciente = self.object
+
+        # ─── Medida Corporal (Último peso) ───
+        try:
+            from seguimiento.models import MedidaCorporal
+            context['ultima_medida'] = MedidaCorporal.objects.filter(
+                paciente=paciente
+            ).order_by('-fecha').first()
+        except Exception:
+            context['ultima_medida'] = None
+
+        # ─── Plan Nutricional Activo ───
         try:
             from nutricion.models import PlanNutricional
-            planes = PlanNutricional.objects.filter(paciente=self.object)
-            context["plan_activo"] = planes.filter(estado=True).first()
-            context["planes_count"] = planes.count()
+            planes = PlanNutricional.objects.filter(paciente=paciente)
+            context['plan_activo'] = planes.filter(estado=True).first()
+            context['planes_count'] = planes.count()
         except Exception:
-            # Si la app nutricion aún no tiene migraciones aplicadas, no rompemos la vista
-            context["plan_activo"] = None
-            context["planes_count"] = 0
+            context['plan_activo'] = None
+            context['planes_count'] = 0
+
+        # ─── Próxima Cita Programada ───
+        try:
+            from citas.models import Cita
+            context['proxima_cita'] = Cita.objects.filter(
+                paciente=paciente,
+                estado='programada'
+            ).order_by('fecha_hora').first()
+        except Exception:
+            context['proxima_cita'] = None
+
         return context
 
 

@@ -40,11 +40,17 @@
     {% include "components/sidebar.html" %}
 
     <!-- ─── Área de contenido ──────────────────────── -->
-    <div class="flex-1 flex flex-col min-h-screen ml-60">
+    <div class="flex-1 flex flex-col min-h-screen">
 
         <!-- Header -->
         <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-            <h1 class="text-xl font-semibold text-slate-800">{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="flex items-center gap-4">
+                <button id="menu-btn"
+                    class="lg:hidden p-2 rounded-lg border border-slate-200">
+                    ☰
+                </button>
+                <h1 class="text-xl font-semibold text-slate-800">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-slate-500">
                     {{ perfil.nombre_completo|default:user.username }}
