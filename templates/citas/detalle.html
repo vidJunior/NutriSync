@@ -218,7 +218,8 @@
                                 Marcar como Completada
                             </button>
                         </form>
-                        <!-- No asistió -->
+                        <!-- No asistió (Solo disponible si la cita ya inició o pasó en el tiempo) -->
+                        {% if puede_marcar_no_asistio %}
                         <form method="post" action="{% url 'citas:cambiar_estado' cita.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="estado" value="no_asistio">
@@ -227,6 +228,7 @@
                                 Marcar como No Asistió
                             </button>
                         </form>
+                        {% endif %}
                         <!-- Cancelar -->
                         <form method="post" action="{% url 'citas:cambiar_estado' cita.pk %}">
                             {% csrf_token %}

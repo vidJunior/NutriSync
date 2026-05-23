@@ -98,7 +98,23 @@ class CitaCreateView(LoginRequiredMixin, CreateView):
             self.request,
             f"Cita con {self.object.paciente.nombre_completo} programada con éxito."
         )
-        return reverse_lazy("citas:detalle", kwargs={"pk": self.object.pk})
+        return reverse_lazy("citas:agenda")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from config.choices import TipoCita
+        import json
+        
+        # Filtramos citas de tipo Primera Consulta para los pacientes de este nutricionista
+        qs_primera = Cita.objects.filter(
+            paciente__nutricionista=self.request.user,
+            tipo=TipoCita.PRIMERA_CONSULTA
+        )
+        pacientes_con_primera = set(qs_primera.values_list("paciente_id", flat=True))
+        context["tiene_primera_consulta_json"] = json.dumps({
+            p_id: True for p_id in pacientes_con_primera
+        })
+        return context
 
 
 # ─── Detalle de Cita ─────────────────────────────────────────────────────────
@@ -114,6 +130,8 @@ class CitaDetailView(NutricionistaCitaMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # Opciones de estados para el cambio rápido en el detalle
         context["estados"] = EstadoCita.CHOICES
+        # "No asistió" solo debe estar disponible si la cita ya inició o pasó en el tiempo
+        context["puede_marcar_no_asistio"] = self.object.fecha_hora and self.object.fecha_hora < timezone.now()
         return context
 
 
@@ -139,6 +157,26 @@ class CitaUpdateView(NutricionistaCitaMixin, UpdateView):
         )
         return reverse_lazy("citas:agenda")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from config.choices import TipoCita
+        import json
+        
+        # Filtramos citas de tipo Primera Consulta para los pacientes de este nutricionista,
+        # excluyendo la cita actual que estamos editando.
+        qs_primera = Cita.objects.filter(
+            paciente__nutricionista=self.request.user,
+            tipo=TipoCita.PRIMERA_CONSULTA
+        )
+        if self.object and self.object.pk:
+            qs_primera = qs_primera.exclude(pk=self.object.pk)
+            
+        pacientes_con_primera = set(qs_primera.values_list("paciente_id", flat=True))
+        context["tiene_primera_consulta_json"] = json.dumps({
+            p_id: True for p_id in pacientes_con_primera
+        })
+        return context
+
 
 # ─── Cambio Rápido de Estado ──────────────────────────────────────────────────
 
@@ -154,6 +192,11 @@ def cita_cambiar_estado(request, pk):
     nuevo_estado = request.POST.get("estado")
     
     if nuevo_estado in dict(EstadoCita.CHOICES):
+        # Validación de negocio: 'no_asistio' solo si ya pasó la fecha de inicio
+        if nuevo_estado == EstadoCita.NO_ASISTIO and cita.fecha_hora > timezone.now():
+            messages.error(request, "No se puede marcar como 'No asistió' una cita futura.")
+            return redirect("citas:detalle", pk=cita.pk)
+
         cita.estado = nuevo_estado
         # Validamos y guardamos
         try:

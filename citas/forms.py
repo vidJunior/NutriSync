@@ -62,6 +62,46 @@ class CitaForm(forms.ModelForm):
             # Formato requerido por el input HTML5 datetime-local: YYYY-MM-DDTHH:MM
             self.fields["fecha_hora"].widget.attrs["min"] = ahora_local.strftime("%Y-%m-%dT%H:%M")
 
+        # 3. Manejo condicional de la edición del estado del paciente
+        if not self.instance.pk:
+            # En creación: el estado se maneja automáticamente como 'programada' (por defecto en el modelo)
+            # y se remueve del formulario para evitar que sea alterado por el usuario.
+            if "estado" in self.fields:
+                del self.fields["estado"]
+        else:
+            # En edición: restringir los estados de cambio a: Completada, Cancelada, No asistió.
+            # Conservamos 'programada' como opción seleccionable SOLAMENTE si la cita está actualmente en ese estado.
+            if "estado" in self.fields:
+                from config.choices import EstadoCita
+                
+                opciones = [
+                    (EstadoCita.COMPLETADA, "Completada"),
+                    (EstadoCita.CANCELADA, "Cancelada"),
+                ]
+                
+                # "No asistió" solo debe estar disponible si la cita ya inició o pasó en el tiempo
+                ahora = timezone.now()
+                if self.instance.fecha_hora and self.instance.fecha_hora < ahora:
+                    opciones.append((EstadoCita.NO_ASISTIO, "No asistió"))
+                elif self.instance.estado == EstadoCita.NO_ASISTIO:
+                    # Si ya estaba en No asistió por alguna razón, se mantiene en la lista
+                    opciones.append((EstadoCita.NO_ASISTIO, "No asistió"))
+                    
+                if self.instance.estado == EstadoCita.PROGRAMADA:
+                    opciones.insert(0, (EstadoCita.PROGRAMADA, "Programada"))
+                self.fields["estado"].choices = opciones
+
+            # Bloqueo del cambio de tipo y de paciente si la cita ya es de tipo 'Primera Consulta'
+            from config.choices import TipoCita
+            if self.instance.tipo == TipoCita.PRIMERA_CONSULTA:
+                if "tipo" in self.fields:
+                    self.fields["tipo"].disabled = True
+                    self.fields["tipo"].help_text = "El tipo de una 'Primera Consulta' no puede ser modificado."
+                if "paciente" in self.fields:
+                    self.fields["paciente"].disabled = True
+                    self.fields["paciente"].help_text = "El paciente de una 'Primera Consulta' no puede ser modificado."
+
+
         # 3. Aplicar clases CSS del sistema de diseño (Tailwind) a todos los campos
         for field_name, field in self.fields.items():
             if field_name == "fecha_hora":
@@ -84,3 +124,25 @@ class CitaForm(forms.ModelForm):
             else:
                 existing_classes = field.widget.attrs.get("class", "")
                 field.widget.attrs["class"] = f"{base_classes} {existing_classes}".strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        paciente = cleaned_data.get("paciente")
+        tipo = cleaned_data.get("tipo")
+
+        if paciente and tipo:
+            from config.choices import TipoCita
+            if tipo == TipoCita.PRIMERA_CONSULTA:
+                citas_previas = Cita.objects.filter(
+                    paciente=paciente,
+                    tipo=TipoCita.PRIMERA_CONSULTA
+                )
+                if self.instance.pk:
+                    citas_previas = citas_previas.exclude(pk=self.instance.pk)
+                
+                if citas_previas.exists():
+                    self.add_error(
+                        "tipo",
+                        "El paciente seleccionado ya cuenta con una cita registrada de tipo 'Primera Consulta'. Seleccione Seguimiento, Control o Evaluación."
+                    )
+        return cleaned_data

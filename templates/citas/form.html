@@ -128,6 +128,7 @@
             <!-- Sección 3: Estado y Costo -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- Estado -->
+                {% if form.estado %}
                 <div>
                     <label for="{{ form.estado.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                         Estado de la Cita <span class="text-red-500">*</span>
@@ -140,9 +141,10 @@
                     </p>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 <!-- Costo -->
-                <div>
+                <div class="{% if not form.estado %}md:col-span-2{% endif %}">
                     <label for="{{ form.costo.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                         Costo de Consulta (S/.) <span class="text-red-500">*</span>
                     </label>
@@ -203,4 +205,40 @@
     </div>
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const tienePrimeraMap = {{ tiene_primera_consulta_json|safe }};
+        const tipoSelect = document.getElementById("id_tipo");
+        const pacienteSelect = document.getElementById("id_paciente");
+
+        function actualizarTiposDeConsulta() {
+            if (!pacienteSelect || !tipoSelect) return;
+            
+            const pacienteId = pacienteSelect.value;
+            const tienePrimera = tienePrimeraMap[pacienteId] === true;
+            const opciones = tipoSelect.querySelectorAll("option");
+            
+            opciones.forEach(option => {
+                if (option.value === "primera_consulta") {
+                    if (tienePrimera) {
+                        option.disabled = true;
+                        option.hidden = true;
+                        if (tipoSelect.value === "primera_consulta") {
+                            tipoSelect.value = "seguimiento";
+                        }
+                    } else {
+                        option.disabled = false;
+                        option.hidden = false;
+                    }
+                }
+            });
+        }
+
+        if (pacienteSelect) {
+            pacienteSelect.addEventListener("change", actualizarTiposDeConsulta);
+            actualizarTiposDeConsulta();
+        }
+    });
+</script>
 {% endblock %}
