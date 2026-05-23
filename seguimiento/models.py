@@ -84,12 +84,30 @@ class MedidaCorporal(models.Model):
         return f"{self.paciente} — {self.fecha}: {self.peso_kg} kg (IMC: {self.imc})"
 
     def save(self, *args, **kwargs):
+        from datetime import date
+        if not self.fecha:
+            self.fecha = date.today()
         # Fórmula estándar OMS: IMC = peso(kg) / (talla(m))²
         # Se calcula en save() en lugar de en cada request para consistencia de datos
         if self.peso_kg is not None and self.talla_cm is not None and self.talla_cm > 0:
             talla_m = self.talla_cm / 100
             self.imc = round(self.peso_kg / (talla_m**2), 1)
         super().save(*args, **kwargs)
+
+        # Sincronización inteligente de base de datos con el peso y la talla de referencia del paciente
+        paciente = self.paciente
+        update_fields = []
+
+        if self.talla_cm and paciente.talla != self.talla_cm:
+            paciente.talla = self.talla_cm
+            update_fields.append("talla")
+
+        if self.peso_kg and paciente.peso != self.peso_kg:
+            paciente.peso = self.peso_kg
+            update_fields.append("peso")
+
+        if update_fields:
+            paciente.save(update_fields=update_fields)
 
 
 class NotaClinica(models.Model):

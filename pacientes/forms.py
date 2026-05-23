@@ -20,6 +20,7 @@ class PacienteForm(forms.ModelForm):
             "fecha_nacimiento",
             "sexo",
             "peso",
+            "talla",
             "ocupacion",
             "telefono",
             "email",
@@ -64,6 +65,13 @@ class PacienteForm(forms.ModelForm):
                 attrs={
                     "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
                     "placeholder": "Ej: 70.5",
+                    "step": "0.1",
+                }
+            ),
+            "talla": forms.NumberInput(
+                attrs={
+                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
+                    "placeholder": "Ej: 165.0",
                     "step": "0.1",
                 }
             ),
@@ -125,6 +133,18 @@ class PacienteForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Reemplazar la opción por defecto --------- por una indicación clara
         self.fields["sexo"].choices = [("", "Seleccione género...")] + Sexo.CHOICES
+        # Hacer obligatoria la talla en el formulario web
+        if "talla" in self.fields:
+            self.fields["talla"].required = True
+
+    def clean_talla(self):
+        """Si el usuario ingresa la talla en metros (ej: 1.80), la convertimos a centímetros (180)."""
+        talla = self.cleaned_data.get("talla")
+        if talla is not None:
+            # Si se encuentra en un rango de metros razonable (0.5 a 2.5), multiplicar por 100
+            if 0.5 <= talla <= 2.5:
+                talla = talla * 100
+        return talla
 
     def clean_nombre(self):
         """Normaliza el nombre: primera letra mayúscula, sin espacios extra."""

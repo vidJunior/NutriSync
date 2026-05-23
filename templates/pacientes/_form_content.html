@@ -21,11 +21,11 @@
         </div>
         {% endif %}
 
-        <!-- Fila 1: Datos Personales (3/5) + Contacto (2/5) -->
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        <!-- Fila 1: Datos Personales (50%) + Contacto (50%) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-            <!-- Columna izquierda: Datos Personales — más ancha (60%) -->
-            <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <!-- Columna izquierda: Datos Personales -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <div class="mb-4">
                     <h2 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
                         <i data-lucide="user" class="w-4 h-4 text-teal-600"></i>
@@ -63,7 +63,7 @@
                         <p class="text-red-500 text-xs mt-1">{{ form.dni.errors|join:", " }}</p>
                         {% endif %}
                     </div>
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label for="{{ form.fecha_nacimiento.id_for_label }}"
                                    class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
@@ -84,6 +84,8 @@
                             <p class="text-red-500 text-xs mt-1">{{ form.sexo.errors|join:", " }}</p>
                             {% endif %}
                         </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label for="{{ form.peso.id_for_label }}"
                                    class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
@@ -92,6 +94,16 @@
                             {{ form.peso }}
                             {% if form.peso.errors %}
                             <p class="text-red-500 text-xs mt-1">{{ form.peso.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.talla.id_for_label }}"
+                                   class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+                                Talla (cm) <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.talla }}
+                            {% if form.talla.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.talla.errors|join:", " }}</p>
                             {% endif %}
                         </div>
                     </div>
@@ -108,8 +120,8 @@
                 </div>
             </div>
 
-            <!-- Columna derecha: Contacto — más angosta (40%) -->
-            <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <!-- Columna derecha: Contacto -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <div class="mb-4">
                     <h2 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
                         <i data-lucide="phone" class="w-4 h-4 text-teal-600"></i>

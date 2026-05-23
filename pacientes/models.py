@@ -11,6 +11,7 @@ from pacientes.validators import (
     validate_peso,
     validate_fecha_nacimiento_edad,
     validate_nombre_apellido,
+    validate_talla,
 )
 
 
@@ -62,6 +63,15 @@ class Paciente(models.Model):
         validators=[validate_peso],
         verbose_name="Peso (kg)",
         help_text="Peso inicial o de referencia del paciente",
+    )
+    talla = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[validate_talla],
+        null=True,
+        blank=True,
+        verbose_name="Talla (cm)",
+        help_text="Estatura inicial o de referencia del paciente",
     )
 
     # ─── Contacto ────────────────────────────────────────────────────────────
@@ -142,11 +152,14 @@ class Paciente(models.Model):
             from datetime import date
 
             hoy = date.today()
-            cumplio_este_ano = (hoy.month, hoy.day) >= (
-                self.fecha_nacimiento.month,
-                self.fecha_nacimiento.day,
-            )
-            return (
-                hoy.year - self.fecha_nacimiento.year - (0 if cumplio_este_ano else 1)
-            )
+            cumplio_este_ano = (hoy.month, hoy.day) >= (self.fecha_nacimiento.month, self.fecha_nacimiento.day)
+            return hoy.year - self.fecha_nacimiento.year - (0 if cumplio_este_ano else 1)
+        return None
+
+    @property
+    def imc_inicial(self):
+        """Calcula dinámicamente el IMC inicial en base al peso y talla de registro."""
+        if self.peso and self.talla and self.talla > 0:
+            talla_m = self.talla / 100
+            return round(self.peso / (talla_m ** 2), 1)
         return None

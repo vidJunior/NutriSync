@@ -15,6 +15,7 @@ class PacienteAdmin(admin.ModelAdmin):
         "email",
         "sexo",
         "estado",
+        "talla",
         "nutricionista",
         "fecha_registro",
     )
@@ -38,6 +39,7 @@ class PacienteAdmin(admin.ModelAdmin):
                     "fecha_nacimiento",
                     "sexo",
                     "peso",
+                    "talla",
                     "ocupacion",
                 )
             },

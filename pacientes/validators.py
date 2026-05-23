@@ -42,3 +42,12 @@ def validate_nombre_apellido(value):
     """Valida que el nombre o apellido solo contenga letras y caracteres alfabéticos válidos."""
     if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]+$", str(value)):
         raise ValidationError("Este campo solo puede contener letras y espacios.")
+
+
+def validate_talla(value):
+    """Valida que la talla del paciente se ubique en un rango realista (entre 50 y 250 cm)."""
+    if value is not None:
+        if value < 50:
+            raise ValidationError("La talla mínima es de 50 cm.")
+        if value > 250:
+            raise ValidationError("La talla máxima no puede superar los 250 cm.")

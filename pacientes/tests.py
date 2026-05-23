@@ -23,6 +23,7 @@ class PacienteCreateViewTestCase(TestCase):
             "sexo": "M",
             "fecha_nacimiento": "1990-05-15",
             "peso": 75.5,
+            "talla": 170.0,
         }
 
     def test_crear_paciente_pagina_completa_redirecciona(self):
@@ -233,6 +234,28 @@ class PacienteValidationTestCase(TestCase):
         with self.assertRaises(ValidationError):
             p.full_clean()
 
+    def test_talla_valido_y_error(self):
+        p = Paciente(
+            nutricionista=self.nutri1,
+            nombre="Carlos",
+            apellido="Gómez",
+            dni="12345678",
+            fecha_nacimiento="1990-05-15",
+            sexo="M",
+            peso=75.5,
+            talla=170.0,
+            telefono="987654321",
+        )
+        # Talla menor a 50
+        p.talla = 45.0
+        with self.assertRaises(ValidationError):
+            p.full_clean()
+
+        # Talla mayor a 250
+        p.talla = 255.0
+        with self.assertRaises(ValidationError):
+            p.full_clean()
+
     def test_fecha_nacimiento_edad_minima(self):
         p = Paciente(
             nutricionista=self.nutri1,
@@ -303,8 +326,195 @@ class PacienteValidationTestCase(TestCase):
             "sexo": "M",
             "fecha_nacimiento": "1990-05-15",
             "peso": 75.5,
+            "talla": 170.0,
         }
         form = PacienteForm(data=form_data)
         self.assertFalse(form.is_valid())
         self.assertIn("El nombre y el apellido del paciente no pueden ser idénticos.", form.non_field_errors())
+
+
+class MedidaCorporalSyncTestCase(TestCase):
+    def setUp(self):
+        self.nutricionista = User.objects.create_user(
+            username="nutri_test", email="nutri_test@gmail.com", password="password123"
+        )
+        self.paciente = Paciente.objects.create(
+            nutricionista=self.nutricionista,
+            nombre="Carlos",
+            apellido="Gómez",
+            dni="12345678",
+            fecha_nacimiento="1990-05-15",
+            sexo="M",
+            peso=75.5,
+            talla=170.0,
+            telefono="987654321",
+        )
+
+    def test_sincronizacion_automatica_peso_y_talla(self):
+        """
+        Valida que al crear una MedidaCorporal con diferente peso y talla,
+        el perfil del Paciente se actualice de forma automática en la BD.
+        """
+        from seguimiento.models import MedidaCorporal
+        from datetime import date
+
+        # Crear medida con nuevos valores
+        MedidaCorporal.objects.create(
+            paciente=self.paciente,
+            fecha=date.today(),
+            peso_kg=80.0,
+            talla_cm=175.0,
+        )
+
+        # Recargar de base de datos
+        self.paciente.refresh_from_db()
+
+        # Verificar sincronización
+        self.assertEqual(float(self.paciente.peso), 80.0)
+        self.assertEqual(float(self.paciente.talla), 175.0)
+
+    def test_sincronizacion_sin_cambio(self):
+        """
+        Valida que si los valores son iguales, la sincronización no cause fallos
+        y se mantengan idénticos.
+        """
+        from seguimiento.models import MedidaCorporal
+        from datetime import date
+
+        # Crear medida con valores iguales
+        MedidaCorporal.objects.create(
+            paciente=self.paciente,
+            fecha=date.today(),
+            peso_kg=75.5,
+            talla_cm=170.0,
+        )
+
+        # Recargar de base de datos
+        self.paciente.refresh_from_db()
+
+        self.assertEqual(float(self.paciente.peso), 75.5)
+        self.assertEqual(float(self.paciente.talla), 170.0)
+
+    def test_precarga_automatica_peso_y_talla_en_formulario(self):
+        """
+        Valida que al cargar el formulario de nueva medida para un paciente,
+        el peso y la talla del paciente se precarguen automáticamente.
+        """
+        self.client.login(username="nutri_test", password="password123")
+        response = self.client.get(
+            reverse("seguimiento:medidas_nueva", kwargs={"paciente_pk": self.paciente.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(float(form.initial["talla_cm"]), 170.0)
+        self.assertEqual(float(form.initial["peso_kg"]), 75.5)
+
+    def test_precarga_automatica_con_medidas_previas(self):
+        """
+        Valida que si el paciente ya tiene medidas registradas, el formulario
+        de nueva medida se inicialice con los valores de la última medición (los más recientes),
+        en lugar de los valores del expediente original del paciente.
+        """
+        from seguimiento.models import MedidaCorporal
+        from datetime import date
+
+        # Crear una medida previa con valores actualizados
+        MedidaCorporal.objects.create(
+            paciente=self.paciente,
+            fecha=date.today(),
+            peso_kg=82.5,
+            talla_cm=172.0,
+        )
+
+        self.client.login(username="nutri_test", password="password123")
+        response = self.client.get(
+            reverse("seguimiento:medidas_nueva", kwargs={"paciente_pk": self.paciente.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(float(form.initial["talla_cm"]), 172.0)
+        self.assertEqual(float(form.initial["peso_kg"]), 82.5)
+
+    def test_precarga_edicion_paciente_con_medidas_recientes(self):
+        """
+        Valida que al abrir el formulario para editar a un paciente existente,
+        el peso y la talla del formulario se inicialicen con los valores más recientes
+        del historial de seguimiento si existen.
+        """
+        from seguimiento.models import MedidaCorporal
+        from datetime import date
+
+        # Crear una medida previa con valores actualizados
+        MedidaCorporal.objects.create(
+            paciente=self.paciente,
+            fecha=date.today(),
+            peso_kg=82.5,
+            talla_cm=172.0,
+        )
+
+        self.client.login(username="nutri_test", password="password123")
+        response = self.client.get(
+            reverse("pacientes:editar", kwargs={"pk": self.paciente.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(float(form.initial["talla"]), 172.0)
+        self.assertEqual(float(form.initial["peso"]), 82.5)
+
+    def test_fecha_medicion_automatica_a_hoy(self):
+        """
+        Valida que al registrar una nueva medida corporal, la fecha se asigne
+        automáticamente al día de hoy (sin tener que proveerla en el formulario).
+        """
+        from datetime import date
+        from seguimiento.models import MedidaCorporal
+        self.client.login(username="nutri_test", password="password123")
+        
+        form_data = {
+            "peso_kg": 80.0,
+            "talla_cm": 170.0,
+        }
+        
+        # Antes del registro, no hay medidas
+        self.assertEqual(MedidaCorporal.objects.filter(paciente=self.paciente).count(), 0)
+        
+        response = self.client.post(
+            reverse("seguimiento:medidas_nueva", kwargs={"paciente_pk": self.paciente.pk}),
+            data=form_data
+        )
+        self.assertEqual(response.status_code, 302)  # Redirección exitosa
+        
+        # Validamos que se haya creado la medida
+        medida = MedidaCorporal.objects.filter(paciente=self.paciente).first()
+        self.assertIsNotNone(medida)
+        self.assertEqual(medida.fecha, date.today())
+
+    def test_notas_recientes_en_detalle_paciente(self):
+        """
+        Valida que al cargar la ficha clínica del paciente (PacienteDetailView),
+        las notas clínicas registradas se inyecten correctamente en el contexto
+        para ser mostradas en su ficha.
+        """
+        from seguimiento.models import NotaClinica
+        from datetime import date
+
+        # Crear una nota clínica de prueba
+        NotaClinica.objects.create(
+            paciente=self.paciente,
+            fecha=date.today(),
+            titulo="Control Rutinario",
+            contenido="Paciente muestra progresos excelentes.",
+            tipo="consulta",
+        )
+
+        self.client.login(username="nutri_test", password="password123")
+        response = self.client.get(
+            reverse("pacientes:detalle", kwargs={"pk": self.paciente.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("notas_recientes", response.context)
+        notas_context = response.context["notas_recientes"]
+        self.assertEqual(len(notas_context), 1)
+        self.assertEqual(notas_context[0].titulo, "Control Rutinario")
+
 

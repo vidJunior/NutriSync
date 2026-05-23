@@ -66,11 +66,29 @@ class MedidaCreateView(NutricionistaSeguimientoMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.paciente = self.paciente
+        from datetime import date
+        form.instance.fecha = date.today()
         messages.success(
             self.request,
             f"Medidas registradas para {self.paciente.nombre_completo}.",
         )
         return super().form_valid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Intentamos obtener la última medida registrada de este paciente para precargar sus valores reales más recientes
+        ultima_medida = self.paciente.medidas.order_by("-fecha", "-fecha_registro").first()
+        
+        if ultima_medida:
+            initial["talla_cm"] = ultima_medida.talla_cm
+            initial["peso_kg"] = ultima_medida.peso_kg
+        else:
+            # Si no hay medidas previas, precargamos los datos de referencia del expediente del paciente
+            if self.paciente.talla:
+                initial["talla_cm"] = self.paciente.talla
+            if self.paciente.peso:
+                initial["peso_kg"] = self.paciente.peso
+        return initial
 
     def get_success_url(self):
         return reverse_lazy("seguimiento:medidas_lista", kwargs={"paciente_pk": self.paciente.pk})

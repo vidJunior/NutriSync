@@ -23,7 +23,6 @@ class MedidaCorporalForm(forms.ModelForm):
     class Meta:
         model = MedidaCorporal
         fields = [
-            "fecha",
             "peso_kg",
             "talla_cm",
             "grasa_corporal_pct",
@@ -32,12 +31,6 @@ class MedidaCorporalForm(forms.ModelForm):
             "notas",
         ]
         widgets = {
-            "fecha": forms.DateInput(
-                attrs={
-                    "type": "date",
-                    "class": INPUT_CLASSES,
-                }
-            ),
             "peso_kg": forms.NumberInput(
                 attrs={
                     "class": INPUT_CLASSES,
@@ -84,6 +77,7 @@ class MedidaCorporalForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         # Mostrar el IMC actual como campo de solo lectura si ya existe una instancia
         if self.instance and self.instance.pk and self.instance.imc:
             self.fields["imc_display"] = forms.DecimalField(
@@ -102,6 +96,15 @@ class MedidaCorporalForm(forms.ModelForm):
                 "imc_display",
                 campo_imc,
             )
+
+    def clean_talla_cm(self):
+        """Si el usuario ingresa la talla en metros (ej: 1.80), la convertimos a centímetros (180)."""
+        talla_cm = self.cleaned_data.get("talla_cm")
+        if talla_cm is not None:
+            # Si se encuentra en un rango de metros razonable (0.5 a 2.5), multiplicar por 100
+            if 0.5 <= talla_cm <= 2.5:
+                talla_cm = talla_cm * 100
+        return talla_cm
 
 
 class NotaClinicaForm(forms.ModelForm):

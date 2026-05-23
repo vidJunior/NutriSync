@@ -203,6 +203,15 @@ class PacienteDetailView(NutricionistaPacienteMixin, DetailView):
         except Exception:
             context['proxima_cita'] = None
 
+        # ─── Notas Clínicas Recientes ───
+        try:
+            from seguimiento.models import NotaClinica
+            context['notas_recientes'] = list(
+                NotaClinica.objects.filter(paciente=paciente).order_by('-fecha', '-fecha_creacion')[:5]
+            )
+        except Exception:
+            context['notas_recientes'] = []
+
         return context
 
 
@@ -215,6 +224,15 @@ class PacienteUpdateView(FormFragmentMixin, NutricionistaPacienteMixin, UpdateVi
     model = Paciente
     form_class = PacienteForm
     template_name = "pacientes/form.html"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Precargamos los campos de peso y talla con la medición física más reciente de su historial
+        ultima_medida = self.object.medidas.order_by("-fecha", "-fecha_registro").first()
+        if ultima_medida:
+            initial["peso"] = ultima_medida.peso_kg
+            initial["talla"] = ultima_medida.talla_cm
+        return initial
 
     def get_success_url(self):
         messages.success(

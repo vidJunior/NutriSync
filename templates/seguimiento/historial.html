@@ -7,12 +7,11 @@
 
     <!-- Breadcrumb + acciones -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-2 text-sm text-slate-400">
-            <a href="{% url 'core:dashboard' %}" class="hover:text-teal-600">Dashboard</a>
-            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-            <a href="{% url 'pacientes:lista' %}" class="hover:text-teal-600">Pacientes</a>
-            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-            <span class="text-slate-600 font-medium">{{ paciente.nombre_completo }}</span>
+        <div>
+            <a href="{% url 'seguimiento:dashboard' %}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 transition-colors duration-200">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Volver a Seguimiento
+            </a>
         </div>
         <div class="flex items-center gap-2">
             <a href="{% url 'seguimiento:medidas_nueva' paciente.pk %}"

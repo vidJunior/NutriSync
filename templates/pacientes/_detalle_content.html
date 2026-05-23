@@ -16,6 +16,11 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
+            <!-- Botón Nueva Nota -->
+            <a href="{% url 'seguimiento:notas_nueva' paciente.pk %}"
+               class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="w-4 h-4"></i> Nueva Nota
+            </a>
             <!-- Botón Editar -->
             <button onclick="openModalEditar('{{ paciente.pk }}')"
                 class="flex items-center gap-2 px-4 py-2 text-sm transition-all duration-200 border rounded-lg border-slate-300 text-slate-600 hover:bg-slate-50">
@@ -106,6 +111,22 @@
                 <div>
                     <span class="block text-xs text-slate-400 uppercase tracking-wide">Peso Inicial</span>
                     <span class="text-slate-800">{% if paciente.peso %}{{ paciente.peso }} kg{% else %}—{% endif %}</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-slate-400 uppercase tracking-wide">Talla Inicial</span>
+                    <span class="text-slate-800">{% if paciente.talla %}{{ paciente.talla }} cm{% else %}—{% endif %}</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-slate-400 uppercase tracking-wide">IMC Inicial</span>
+                    <span class="text-slate-800">
+                        {% if paciente.imc_inicial %}
+                            <span class="font-semibold px-1.5 py-0.5 rounded {% if paciente.imc_inicial < 18.5 %}bg-amber-50 text-amber-600{% elif paciente.imc_inicial < 25 %}bg-emerald-50 text-emerald-600{% elif paciente.imc_inicial < 30 %}bg-amber-50 text-amber-600{% else %}bg-red-50 text-red-600{% endif %}">
+                                {{ paciente.imc_inicial }}
+                            </span>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
                 </div>
                 <div>
                     <span class="block text-xs text-slate-400 uppercase tracking-wide">Ocupación</span>
@@ -278,6 +299,70 @@
             <a href="{% url 'seguimiento:medidas_nueva' paciente.pk %}"
                class="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium transition-colors">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Registrar primera medida
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Fila 4: Notas Clínicas (full width) -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="w-4 h-4 text-teal-600"></i>
+                Notas Clínicas Recientes
+            </h3>
+            <div class="flex items-center gap-2">
+                <a href="{% url 'seguimiento:notas_nueva' paciente.pk %}"
+                   class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 flex items-center gap-1.5">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nueva Nota
+                </a>
+                {% if notas_recientes %}
+                <a href="{% url 'seguimiento:notas_lista' paciente.pk %}"
+                   class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1.5">
+                    <i data-lucide="list" class="w-3.5 h-3.5"></i> Ver Todas
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if notas_recientes %}
+        <div class="space-y-3">
+            {% for nota in notas_recientes %}
+            <div class="p-3.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/30 hover:bg-slate-50/70 transition-all duration-200">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
+                                {% if nota.tipo == 'consulta' %}bg-blue-50 text-blue-700 border border-blue-200
+                                {% elif nota.tipo == 'seguimiento' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                {% elif nota.tipo == 'observacion' %}bg-amber-50 text-amber-700 border border-amber-200
+                                {% elif nota.tipo == 'receta' %}bg-purple-50 text-purple-700 border border-purple-200
+                                {% endif %}">
+                                {{ nota.get_tipo_display }}
+                            </span>
+                            <span class="text-xs text-slate-400">{{ nota.fecha|date:"d/m/Y" }}</span>
+                        </div>
+                        <h4 class="text-sm font-semibold text-slate-800">
+                            <a href="{% url 'seguimiento:notas_detalle' nota.pk %}" class="hover:text-teal-600 transition-colors">
+                                {{ nota.titulo }}
+                            </a>
+                        </h4>
+                        <p class="text-xs text-slate-600 mt-1 line-clamp-2">{{ nota.contenido }}</p>
+                    </div>
+                    <a href="{% url 'seguimiento:notas_detalle' nota.pk %}"
+                       class="text-slate-400 hover:text-teal-600 transition-colors p-1 flex-shrink-0">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-6 px-4 border border-dashed border-slate-200 rounded-lg">
+            <p class="text-xs text-slate-400 mb-2">No se han registrado notas clínicas para este paciente.</p>
+            <a href="{% url 'seguimiento:notas_nueva' paciente.pk %}"
+               class="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium transition-colors">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Registrar primera nota
             </a>
         </div>
         {% endif %}
