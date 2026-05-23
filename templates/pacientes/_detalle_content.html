@@ -194,10 +194,16 @@
             {% else %}
             <p class="text-xs text-slate-400 mb-3">Sin plan activo</p>
             {% endif %}
+            {% if not plan_activo %}
             <a href="{% url 'nutricion:plan_nuevo' paciente.pk %}"
                 class="text-xs text-teal-600 hover:text-teal-800 font-medium flex items-center gap-1 transition-colors">
                 <i data-lucide="plus" class="w-3 h-3"></i> Nuevo plan
             </a>
+            {% else %}
+            <span class="text-[11px] text-slate-400 italic block mt-1">
+                Para crear un nuevo plan, primero debes desactivar o finalizar el actual.
+            </span>
+            {% endif %}
             {% if planes_count > 0 %}
             <p class="text-xs text-slate-400 mt-1">
                 {{ planes_count }} plan{{ planes_count|pluralize }} en total
