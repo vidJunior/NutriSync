@@ -66,6 +66,107 @@ class MedidaCorporal(models.Model):
         validators=[MinValueValidator(20), MaxValueValidator(200)],
         verbose_name="Cadera (cm)",
     )
+    # Nuevos campos solicitados
+    peso_objetivo_kg = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name="Peso objetivo (kg)",
+    )
+    cuello_cm = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(10), MaxValueValidator(150)],
+        verbose_name="Cuello (cm)",
+    )
+    pecho_cm = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(20), MaxValueValidator(250)],
+        verbose_name="Pecho (cm)",
+    )
+    brazo_cm = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(5), MaxValueValidator(100)],
+        verbose_name="Brazo (cm)",
+    )
+    muslo_cm = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(10), MaxValueValidator(150)],
+        verbose_name="Muslo (cm)",
+    )
+    pantorrilla_cm = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(10), MaxValueValidator(100)],
+        verbose_name="Pantorrilla (cm)",
+    )
+    masa_grasa_kg = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(500)],
+        verbose_name="Masa grasa (kg)",
+    )
+    masa_muscular_kg = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(500)],
+        verbose_name="Masa muscular (kg)",
+    )
+    masa_muscular_pct = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name="% masa muscular",
+    )
+    agua_corporal_pct = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name="Agua corporal (%)",
+    )
+    grasa_visceral = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(60)],
+        verbose_name="Grasa visceral",
+    )
+    masa_osea_kg = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(50)],
+        verbose_name="Masa ósea (kg)",
+    )
+    tmb = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(100), MaxValueValidator(10000)],
+        verbose_name="Tasa metabólica basal (TMB)",
+    )
     notas = models.TextField(blank=True, verbose_name="Notas")
     fecha_registro = models.DateTimeField(
         auto_now_add=True, verbose_name="Fecha de registro"
@@ -96,18 +197,18 @@ class MedidaCorporal(models.Model):
 
         # Sincronización inteligente de base de datos con el peso y la talla de referencia del paciente
         paciente = self.paciente
-        update_fields = []
+        need_save = False
 
         if self.talla_cm and paciente.talla != self.talla_cm:
             paciente.talla = self.talla_cm
-            update_fields.append("talla")
+            need_save = True
 
         if self.peso_kg and paciente.peso != self.peso_kg:
             paciente.peso = self.peso_kg
-            update_fields.append("peso")
+            need_save = True
 
-        if update_fields:
-            paciente.save(update_fields=update_fields)
+        if need_save:
+            paciente.save()
 
 
 class NotaClinica(models.Model):
