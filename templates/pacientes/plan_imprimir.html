@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Alimentario — {{ paciente.nombre_completo }}</title>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        @media print {
+            body {
+                background-color: #ffffff;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-card {
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin-bottom: 2rem !important;
+                page-break-inside: avoid;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Barra de herramientas (Solo pantalla) -->
+    <div class="max-w-4xl mx-auto mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between no-print">
+        <div class="flex items-center gap-2">
+            <a href="{% url 'pacientes:detalle' paciente.pk %}" class="text-xs font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Volver a la Ficha
+            </a>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Plan
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenido del Plan Imprimible -->
+    <div class="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm print-card">
+        
+        <!-- Encabezado Clínico -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-200 mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <span class="text-teal-600 font-extrabold">Nutri</span>Sync
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Plataforma de gestión nutricional profesional</p>
+            </div>
+            <div class="text-left md:text-right">
+                <h2 class="text-lg font-bold text-slate-800">{{ plan.nombre }}</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Fecha de inicio: {{ plan.fecha_inicio|date:"d/m/Y" }}</p>
+                <p class="text-xs text-slate-500">Nutricionista: {{ paciente.nutricionista.username }}</p>
+            </div>
+        </div>
+
+        <!-- Ficha de Datos del Paciente -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-slate-50 rounded-xl mb-8 text-xs border border-slate-100">
+            <div>
+                <span class="text-slate-400 block font-medium">Paciente</span>
+                <strong class="text-slate-700 block mt-0.5">{{ paciente.nombre_completo }}</strong>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Edad</span>
+                <strong class="text-slate-700 block mt-0.5">{{ paciente.edad }} años</strong>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Tipo de Plan</span>
+                <strong class="text-slate-700 block mt-0.5">{{ plan.tipo_plan|default:"Estándar" }}</strong>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Peso Referencia</span>
+                <strong class="text-slate-700 block mt-0.5">{{ paciente.peso|default:"—" }} kg</strong>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Estatura</span>
+                <strong class="text-slate-700 block mt-0.5">{{ paciente.talla|default:"—" }} cm</strong>
+            </div>
+        </div>
+
+        <!-- 1. Distribución Calórica y Macronutrientes -->
+        <div class="mb-8 print-card">
+            <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-teal-650"></i> Prescripción y Objetivos Diarios
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                <div class="p-3 bg-teal-50/50 rounded-xl border border-teal-100">
+                    <span class="text-[10px] text-teal-700 font-bold block uppercase tracking-wider">Calorías</span>
+                    <strong class="text-xl text-teal-900 block mt-1">{{ plan.calorias }} <span class="text-xs font-normal">kcal</span></strong>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Proteínas</span>
+                    <strong class="text-base text-slate-800 block mt-1">{{ plan.proteinas }}g <span class="text-xs font-normal text-slate-400">({{ macronutrientes_pct.proteinas }}%)</span></strong>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Carbohidratos</span>
+                    <strong class="text-base text-slate-800 block mt-1">{{ plan.carbohidratos }}g <span class="text-xs font-normal text-slate-400">({{ macronutrientes_pct.carbohidratos }}%)</span></strong>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Grasas</span>
+                    <strong class="text-base text-slate-800 block mt-1">{{ plan.grasas }}g <span class="text-xs font-normal text-slate-400">({{ macronutrientes_pct.grasas }}%)</span></strong>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 col-span-2 md:col-span-1">
+                    <span class="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Agua Sugerida</span>
+                    <strong class="text-base text-slate-800 block mt-1">{{ plan.agua_recomendada }} <span class="text-xs font-normal text-slate-450">L/día</span></strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Plan de Comidas -->
+        <div class="mb-8 print-card">
+            <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i data-lucide="utensils" class="w-4 h-4 text-teal-650"></i> Distribución Diaria de Comidas
+            </h3>
+            
+            {% if plan.comidas %}
+                <div class="flex flex-col gap-4">
+                    {% for comida in plan.comidas %}
+                        <div class="p-4 border border-slate-200 rounded-xl bg-white flex flex-col md:flex-row gap-3 md:gap-6">
+                            <div class="md:w-44 flex-shrink-0">
+                                <span class="text-xs font-bold text-teal-700 block uppercase tracking-wider">{{ comida.tipo }}</span>
+                                {% if comida.hora %}
+                                    <span class="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                                        <i data-lucide="clock" class="w-3 h-3"></i> {{ comida.hora }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold text-slate-800">{{ comida.alimentos }}</p>
+                                {% if comida.cantidad %}
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        <span class="font-medium">Cantidad sugerida:</span> {{ comida.cantidad }} {{ comida.unidad }}
+                                    </p>
+                                {% endif %}
+                                {% if comida.observaciones %}
+                                    <p class="text-xs text-slate-400 italic mt-1.5 border-t border-slate-50 pt-1">
+                                        Obs: {{ comida.observaciones }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-xs text-slate-455 italic">No se han registrado comidas específicas en este plan.</p>
+            {% endif %}
+        </div>
+
+        <!-- 3. Sustituciones y Equivalencias -->
+        {% if plan.sustituciones %}
+            <div class="mb-8 print-card">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4 text-teal-650"></i> Tabla de Sustituciones Sugeridas
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% for sust in plan.sustituciones %}
+                        <div class="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50/50 text-xs">
+                            <span class="font-bold text-slate-700">{{ sust.alimento }}</span>
+                            <span class="text-slate-400 font-medium">puede sustituirse por</span>
+                            <span class="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-100">{{ sust.sustituto }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- 4. Recomendaciones -->
+        {% if plan.recomendaciones %}
+            <div class="mb-8 print-card">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 text-teal-650"></i> Recomendaciones Generales
+                </h3>
+                <ul class="list-disc list-inside space-y-2 text-xs text-slate-650">
+                    {% for rec in plan.recomendaciones %}
+                        <li>{{ rec }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- 5. Suplementación -->
+        {% if plan.suplementacion %}
+            <div class="mb-8 print-card">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-teal-650"></i> Plan de Suplementación
+                </h3>
+                <div class="overflow-hidden border border-slate-200 rounded-xl">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 font-bold text-slate-600">
+                                <th class="p-3">Suplemento</th>
+                                <th class="p-3">Tipo</th>
+                                <th class="p-3">Dosis</th>
+                                <th class="p-3">Frecuencia / Horario</th>
+                                <th class="p-3">Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for supl in plan.suplementacion %}
+                                <tr class="text-slate-700 hover:bg-slate-50/50">
+                                    <td class="p-3 font-semibold text-slate-800">{{ supl.nombre }}</td>
+                                    <td class="p-3 text-slate-500">{{ supl.tipo|default:"—" }}</td>
+                                    <td class="p-3 text-slate-600">{{ supl.dosis|default:"—" }}</td>
+                                    <td class="p-3 text-slate-600">
+                                        {{ supl.frecuencia|default:"—" }}
+                                        {% if supl.horario %}<span class="text-slate-400">({{ supl.horario }})</span>{% endif %}
+                                    </td>
+                                    <td class="p-3 text-slate-400 italic">{{ supl.observaciones|default:"—" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Nota al pie -->
+        <div class="mt-12 pt-6 border-t border-slate-200 text-center text-[10px] text-slate-400">
+            Este plan ha sido diseñado específicamente para el paciente {{ paciente.nombre_completo }}. No compartir con terceros.
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'print') {
+            window.print();
+        }
+    </script>
+</body>
+</html>
