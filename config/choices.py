@@ -28,12 +28,16 @@ class TipoCita:
 
 class EstadoCita:
     PROGRAMADA = "programada"
+    EN_CONSULTA = "en_consulta"
+    FINALIZADA = "finalizada"
     COMPLETADA = "completada"
     CANCELADA = "cancelada"
     NO_ASISTIO = "no_asistio"
     BLOQUEADA = "bloqueada"
     CHOICES = [
         (PROGRAMADA, "Programada"),
+        (EN_CONSULTA, "En consulta"),
+        (FINALIZADA, "Finalizada"),
         (COMPLETADA, "Completada"),
         (CANCELADA, "Cancelada"),
         (NO_ASISTIO, "No asistió"),

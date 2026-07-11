@@ -162,6 +162,60 @@ class Paciente(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        # ─── Sincronización de Objetivo de Tratamiento ───
+        def get_motivo_from_notas(notas):
+            if notas and "Motivo de Consulta:" in notas:
+                parts = notas.split("Motivo de Consulta:")
+                if len(parts) > 1:
+                    return parts[1].split("\nObservaciones Iniciales:\n")[0].strip()
+            return None
+
+        # Valores actuales en memoria
+        current_in_eval = self.evaluacion.get("objetivo_principal") if self.evaluacion else None
+        current_in_info = self.informacion_clinica.get("objetivo_principal") if self.informacion_clinica else None
+        current_in_notas = get_motivo_from_notas(self.notas_generales)
+
+        # Buscar el valor antiguo de la base de datos para ver cuál cambió
+        db_obj = None
+        if self.pk:
+            try:
+                db_obj = Paciente.objects.get(pk=self.pk)
+            except Paciente.DoesNotExist:
+                pass
+
+        nuevo_objetivo = None
+        if db_obj:
+            old_in_eval = db_obj.evaluacion.get("objetivo_principal") if db_obj.evaluacion else None
+            old_in_info = db_obj.informacion_clinica.get("objetivo_principal") if db_obj.informacion_clinica else None
+            old_in_notas = get_motivo_from_notas(db_obj.notas_generales)
+
+            if current_in_eval != old_in_eval:
+                nuevo_objetivo = current_in_eval
+            elif current_in_info != old_in_info:
+                nuevo_objetivo = current_in_info
+            elif current_in_notas != old_in_notas:
+                nuevo_objetivo = current_in_notas
+        
+        # Si es un paciente nuevo o no se detectó cambio diferencial, usar el primero no nulo
+        if not nuevo_objetivo:
+            nuevo_objetivo = current_in_eval or current_in_info or current_in_notas or "Pérdida de peso"
+
+        # Sincronizar todos al valor ganador
+        if self.evaluacion is None:
+            self.evaluacion = {}
+        self.evaluacion["objetivo_principal"] = nuevo_objetivo
+
+        if self.informacion_clinica is None:
+            self.informacion_clinica = {}
+        self.informacion_clinica["objetivo_principal"] = nuevo_objetivo
+
+        observaciones = ""
+        if self.notas_generales and "Observaciones Iniciales:\n" in self.notas_generales:
+            parts = self.notas_generales.split("Observaciones Iniciales:\n")
+            if len(parts) > 1:
+                observaciones = parts[1].strip()
+        self.notas_generales = f"Motivo de Consulta: {nuevo_objetivo}\nObservaciones Iniciales:\n{observaciones}"
+
         # Calcular edad
         if self.fecha_nacimiento:
             from datetime import date
@@ -222,6 +276,118 @@ class Paciente(models.Model):
         return self.estado
 
 
+class Consulta(models.Model):
+    paciente = models.ForeignKey(
+        "Paciente",
+        on_delete=models.CASCADE,
+        related_name="consultas",
+        verbose_name="Paciente",
+    )
+    numero_consulta = models.PositiveIntegerField(
+        verbose_name="Número de consulta",
+    )
+    
+    TIPOS = [
+        ("primera_consulta", "Primera consulta"),
+        ("seguimiento", "Seguimiento"),
+        ("reevaluacion", "Reevaluación"),
+        ("control", "Control"),
+        ("deportiva", "Consulta deportiva"),
+        ("clinica", "Consulta clínica"),
+        ("otro", "Otro"),
+    ]
+    tipo = models.CharField(
+        max_length=50,
+        choices=TIPOS,
+        default="seguimiento",
+        verbose_name="Tipo de consulta",
+    )
+    
+    fecha = models.DateField(
+        default=timezone.now,
+        verbose_name="Fecha",
+    )
+    hora_inicio = models.TimeField(
+        default=timezone.now,
+        verbose_name="Hora de inicio",
+    )
+    hora_fin = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="Hora de fin",
+    )
+    
+    ESTADOS = [
+        ("en_curso", "En curso"),
+        ("finalizada", "Finalizada"),
+        ("cancelada", "Cancelada"),
+    ]
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS,
+        default="en_curso",
+        verbose_name="Estado",
+    )
+    
+    profesional = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="consultas_atendidas",
+        verbose_name="Nutricionista",
+    )
+    cita = models.ForeignKey(
+        "citas.Cita",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="consultas",
+        verbose_name="Cita originaria",
+    )
+    consulta_anterior = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="consultas_siguientes",
+        verbose_name="Consulta anterior",
+    )
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones de la consulta",
+    )
+    
+    informacion_clinica = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Información Clínica de la Consulta",
+    )
+    evaluacion = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Evaluación y Diagnóstico de la Consulta",
+    )
+    seguimiento = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Seguimiento de la Consulta",
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Consulta"
+        verbose_name_plural = "Consultas"
+        ordering = ["paciente", "numero_consulta"]
+        unique_together = ("paciente", "numero_consulta")
+
+    def __str__(self):
+        return f"Consulta #{self.numero_consulta} ({self.tipo}) — {self.paciente}"
+
+
 class PlanAlimentario(models.Model):
     ESTADOS = [
         ('Borrador', 'Borrador'),
@@ -234,6 +400,13 @@ class PlanAlimentario(models.Model):
         'Paciente',
         on_delete=models.CASCADE,
         related_name='planes_alimentarios_sync'
+    )
+    consulta = models.ForeignKey(
+        'Consulta',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='planes_alimentarios'
     )
     nombre = models.CharField(max_length=200, default="Plan Alimentario Basal")
     tipo_plan = models.CharField(max_length=100, default="Estándar")
@@ -278,6 +451,14 @@ class ArchivoPaciente(models.Model):
         on_delete=models.CASCADE,
         related_name='archivos',
         verbose_name="Paciente"
+    )
+    consulta = models.ForeignKey(
+        'Consulta',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='archivos',
+        verbose_name="Consulta"
     )
     nutricionista = models.ForeignKey(
         User,

@@ -106,10 +106,10 @@
 
             <!-- Bloque Derecho: ACCIONES PRINCIPALES -->
             <div class="flex flex-col sm:flex-row lg:flex-col gap-2 w-full lg:w-48 flex-shrink-0">
-                <a href="{% url 'seguimiento:notas_nueva' paciente.pk %}?titulo=Consulta+Inicial&tipo=consulta"
+                <button onclick="abrirModalNuevaConsulta()"
                    class="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200 shadow-sm hover:shadow-md">
                     <i data-lucide="clipboard-plus" class="w-4 h-4"></i> Nueva consulta
-                </a>
+                </button>
                 <button onclick="openModalEditar('{{ paciente.pk }}')"
                         class="flex items-center justify-center gap-2 border border-slate-300 text-slate-650 hover:bg-slate-50 font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200">
                     <i data-lucide="pencil" class="w-4 h-4"></i> Editar paciente
@@ -124,6 +124,68 @@
                 </button>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ─── CARD DE CONSULTA NUTRICIONAL ACTIVA ─── -->
+    <div class="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4 flex-1">
+            <div class="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-650 flex-shrink-0">
+                {% if active_consulta.estado == "finalizada" %}
+                    <i data-lucide="lock" class="w-6 h-6 text-emerald-600"></i>
+                {% else %}
+                    <i data-lucide="activity" class="w-6 h-6 text-teal-600 animate-pulse"></i>
+                {% endif %}
+            </div>
+            <div>
+                {% if active_consulta %}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm font-extrabold text-slate-800">Consulta #{{ active_consulta.numero_consulta }} - {{ active_consulta.get_tipo_display }}</span>
+                        {% if active_consulta.estado == "en_curso" %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                En curso
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                Finalizada
+                            </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Iniciada: {{ active_consulta.fecha|date:"d/m/Y" }} a las {{ active_consulta.hora_inicio|time:"H:i" }} 
+                        {% if active_consulta.hora_fin %}
+                            | Finalizada: {{ active_consulta.hora_fin|time:"H:i" }}
+                        {% endif %}
+                        | Profesional: {{ active_consulta.profesional.get_full_name|default:active_consulta.profesional.username }}
+                    </p>
+                {% else %}
+                    <span class="text-sm font-bold text-slate-700">Sin consultas registradas</span>
+                    <p class="text-xs text-slate-500 mt-0.5">El paciente no registra atenciones activas. Inicie una consulta para comenzar a registrar datos clínicos.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {% if consultas %}
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="active-consulta-select" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Historial de consultas</label>
+                    <select id="active-consulta-select" onchange="window.location.href='?consulta_id=' + this.value" class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700 outline-none focus:border-teal-500 min-w-[200px]">
+                        {% for c in consultas %}
+                            <option value="{{ c.id }}" {% if c.id == active_consulta.id %}selected{% endif %}>
+                                Consulta #{{ c.numero_consulta }} ({{ c.fecha|date:"d/m/Y" }}) - {{ c.get_tipo_display }} [{{ c.get_estado_display }}]
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+
+            {% if active_consulta and active_consulta.estado == "en_curso" %}
+                <button onclick="finalizarConsulta('{{ active_consulta.id }}')" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl py-2 px-4 text-xs transition-all duration-200 shadow-sm w-full sm:w-auto mt-4 sm:mt-0">
+                    <i data-lucide="check" class="w-4 h-4"></i> Finalizar consulta
+                </button>
+            {% endif %}
         </div>
     </div>
 
@@ -168,7 +230,7 @@
                 <i data-lucide="target" class="w-4 h-4 text-amber-500"></i>
             </div>
             <div>
-                <h3 class="text-sm font-bold text-slate-700 line-clamp-2 leading-tight">
+                <h3 id="header-objetivo-principal" class="text-sm font-bold text-slate-700 line-clamp-2 leading-tight">
                     {{ paciente.informacion_clinica.objetivo_principal|default:motivo_consulta|default:"Pérdida de peso" }}
                 </h3>
                 <span class="text-[10px] text-slate-400 mt-1 block">Meta del tratamiento</span>
@@ -227,8 +289,14 @@
                 <button onclick="switchTab(event, 'tab-plan')" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
                     <i data-lucide="utensils" class="w-4 h-4"></i> Plan Alimentario
                 </button>
+                <button onclick="switchTab(event, 'tab-recomendaciones')" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
+                    <i data-lucide="heart" class="w-4 h-4"></i> Recomendaciones
+                </button>
                 <button onclick="switchTab(event, 'tab-seguimiento')" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
                     <i data-lucide="activity" class="w-4 h-4"></i> Seguimiento
+                </button>
+                <button onclick="switchTab(event, 'tab-entregables')" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
+                    <i data-lucide="share-2" class="w-4 h-4"></i> Entregables
                 </button>
                 <button onclick="switchTab(event, 'tab-archivos')" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
                     <i data-lucide="folder-open" class="w-4 h-4"></i> Archivos
@@ -510,6 +578,69 @@
                         </div>
                     </div>
 
+                </div>
+
+                <!-- Historial de Consultas Timeline -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mt-6">
+                    <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-6">
+                        <i data-lucide="history" class="w-4.5 h-4.5 text-teal-600"></i>
+                        Historial de Consultas Nutricionales
+                    </h3>
+                    
+                    {% if consultas %}
+                        <div class="relative border-l-2 border-slate-100 ml-4 space-y-6">
+                            {% for c in consultas %}
+                                <div class="relative pl-6">
+                                    <!-- Marker icon -->
+                                    <div class="absolute -left-[15px] top-0.5 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-xs transition-colors {% if c.id == active_consulta.id %}bg-teal-500 border-teal-200 text-white{% elif c.estado == "finalizada" %}bg-white border-emerald-500 text-emerald-600{% else %}bg-white border-amber-500 text-amber-600{% endif %}">
+                                        {% if c.estado == "finalizada" %}
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                        {% else %}
+                                            <i data-lucide="activity" class="w-3.5 h-3.5 animate-pulse"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl p-4 transition-colors">
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="text-xs font-black text-slate-700">Consulta #{{ c.numero_consulta }}</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold {% if c.estado == "finalizada" %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-amber-50 text-amber-700 border border-amber-100{% endif %}">
+                                                    {{ c.get_estado_display }}
+                                                </span>
+                                                <span class="text-[10px] text-slate-400 font-semibold">{{ c.get_tipo_display }}</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 mt-1">
+                                                Fecha: {{ c.fecha|date:"d/m/Y" }} · Hora inicio: {{ c.hora_inicio|time:"H:i" }} 
+                                                {% if c.hora_fin %}
+                                                    · Fin: {{ c.hora_fin|time:"H:i" }}
+                                                {% endif %}
+                                            </p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                                Nutricionista: {{ c.profesional.get_full_name|default:c.profesional.username }}
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <a href="?consulta_id={{ c.id }}" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-teal-500 text-teal-650 hover:text-teal-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs">
+                                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                                Ver Detalles
+                                            </a>
+                                            {% if c.estado == "finalizada" %}
+                                                <a href="{% url 'pacientes:resumen_imprimir' paciente.pk %}?consulta_id={{ c.id }}" target="_blank" class="px-3 py-1.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-650 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5">
+                                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                                    Imprimir
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-6 text-slate-400 text-xs">
+                            <i data-lucide="calendar-x" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                            No hay consultas registradas para este paciente.
+                        </div>
+                    {% endif %}
                 </div>
 
             </div>
@@ -1430,6 +1561,62 @@
 
             </div>
 
+            <!-- Modal: Iniciar Nueva Consulta -->
+            <div id="modal-nueva-consulta" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <form id="form-nueva-consulta" onsubmit="iniciarNuevaConsultaSubmit(event)">
+                        {% csrf_token %}
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                            <h3 class="text-sm font-extrabold text-slate-700 flex items-center gap-2">
+                                <i data-lucide="clipboard-plus" class="w-4 h-4 text-teal-600"></i>
+                                Iniciar Nueva Consulta
+                            </h3>
+                            <button type="button" onclick="cerrarModalNuevaConsulta()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            {% if proxima_cita %}
+                                <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 text-xs text-teal-850 space-y-2">
+                                    <p class="font-bold flex items-center gap-1.5">
+                                        <i data-lucide="info" class="w-4 h-4 text-teal-650"></i>
+                                        Cita programada encontrada
+                                    </p>
+                                    <p>Existe una cita programada para este paciente el día <strong>{{ proxima_cita.fecha_hora|date:"d/m/Y a las H:i" }}</strong> (Motivo: {{ proxima_cita.motivo|default:"General" }}).</p>
+                                    
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <input type="checkbox" id="vincular-cita-check" name="vincular_cita" value="true" checked class="rounded text-teal-600 focus:ring-teal-500">
+                                        <label for="vincular-cita-check" class="font-semibold text-[11px] cursor-pointer">Vincular e iniciar esta cita programada</label>
+                                    </div>
+                                    <input type="hidden" name="cita_id" id="nueva-consulta-cita-id" value="{{ proxima_cita.id }}">
+                                </div>
+                            {% endif %}
+
+                            <div class="space-y-1.5">
+                                <label for="nueva-consulta-tipo" class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Tipo de Consulta</label>
+                                <select id="nueva-consulta-tipo" name="tipo" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                                    <option value="seguimiento">Control / Seguimiento</option>
+                                    <option value="primera_consulta">Primera Consulta</option>
+                                    <option value="evaluacion">Evaluación de Resultados</option>
+                                </select>
+                            </div>
+                            
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Al iniciar la consulta, se copiarán automáticamente los datos heredables (historial clínico, hábitos, diagnósticos, plan alimentario y recomendaciones) de la última consulta finalizada.
+                            </p>
+                        </div>
+                        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                            <button type="button" onclick="cerrarModalNuevaConsulta()" class="text-slate-650 hover:text-slate-800 text-xs font-bold px-4 py-2 bg-slate-100 rounded-xl transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+                                <i data-lucide="play" class="w-4 h-4"></i> Iniciar Consulta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Modales del Módulo Plan Alimentario -->
             
             <!-- Modal 1: Resumen -->
@@ -1873,6 +2060,354 @@
             </div>
 
 
+            <!-- Panel 5.5: Recomendaciones -->
+            <div id="tab-recomendaciones" class="tab-panel hidden space-y-6">
+                <!-- Header de la sección con selector de consultas -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-base font-extrabold text-slate-700">Recomendaciones Nutricionales e Indicaciones</h4>
+                        <p class="text-xs text-slate-400">Registra y consulta las indicaciones entregadas al paciente durante sus atenciones.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label for="recomendaciones-cita-select" class="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Consulta:</label>
+                        <select id="recomendaciones-cita-select" onchange="changeRecomendacionesConsulta()" class="text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none transition-colors max-w-xs">
+                            <!-- Citas populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Grid de tarjetas de recomendaciones -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Card 1: Hidratación -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="droplet" class="w-4 h-4 text-sky-500"></i> 1. Hidratación
+                                </span>
+                                <button onclick="openRecomendacionModal('hidratacion')" class="text-[10px] text-teal-650 hover:text-teal-800 font-bold transition-colors">
+                                    Editar
+                                </button>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Consumo Diario Recomendado</span>
+                                    <span id="rec-hidratacion-consumo" class="font-extrabold text-slate-800 text-sm">—</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Observaciones</span>
+                                    <p id="rec-hidratacion-obs" class="text-slate-500 italic leading-relaxed">—</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-55 flex items-center justify-between text-[9px] text-slate-400">
+                            <span id="rec-hidratacion-cumplimiento" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wider">Pendiente</span>
+                            <span id="rec-hidratacion-meta" class="font-semibold">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Actividad Física -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="dumbbell" class="w-4 h-4 text-violet-500"></i> 2. Actividad Física
+                                </span>
+                                <button onclick="openRecomendacionModal('actividad_fisica')" class="text-[10px] text-teal-650 hover:text-teal-800 font-bold transition-colors">
+                                    Editar
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Tipo de Actividad</span>
+                                    <span id="rec-actividad-tipo" class="font-extrabold text-slate-800">—</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Frecuencia</span>
+                                    <span id="rec-actividad-frecuencia" class="font-extrabold text-slate-800">—</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Duración</span>
+                                    <span id="rec-actividad-duracion" class="font-extrabold text-slate-800">—</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Intensidad</span>
+                                    <span id="rec-actividad-intensidad" class="font-extrabold text-slate-800">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-55 flex items-center justify-between text-[9px] text-slate-400">
+                            <span id="rec-actividad-cumplimiento" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wider">Pendiente</span>
+                            <span id="rec-actividad-meta" class="font-semibold">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Alimentos Recomendados -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="leaf" class="w-4 h-4 text-emerald-500"></i> 3. Alimentos Recomendados
+                                </span>
+                                <button onclick="openRecomendacionModal('alimentos_recomendados')" class="text-[10px] text-teal-650 hover:text-teal-800 font-bold transition-colors">
+                                    Editar
+                                </button>
+                            </div>
+                            <div id="rec-alimentos-recom-container" class="flex flex-wrap gap-1.5">
+                                <!-- Chips populated dynamically -->
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-55 flex items-center justify-between text-[9px] text-slate-400">
+                            <span id="rec-alimentos-recom-cumplimiento" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wider">Pendiente</span>
+                            <span id="rec-alimentos-recom-meta" class="font-semibold">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Alimentos a Limitar -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> 4. Alimentos a Limitar
+                                </span>
+                                <button onclick="openRecomendacionModal('alimentos_limitar')" class="text-[10px] text-teal-650 hover:text-teal-800 font-bold transition-colors">
+                                    Editar
+                                </button>
+                            </div>
+                            <div id="rec-alimentos-limitar-container" class="flex flex-wrap gap-1.5">
+                                <!-- Chips populated dynamically -->
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-55 flex items-center justify-between text-[9px] text-slate-400">
+                            <span id="rec-alimentos-limitar-cumplimiento" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wider">Pendiente</span>
+                            <span id="rec-alimentos-limitar-meta" class="font-semibold">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Recomendaciones Generales -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px] md:col-span-2 lg:col-span-1">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="check-square" class="w-4 h-4 text-amber-500"></i> 5. Recomendaciones Generales
+                                </span>
+                                <button onclick="openRecomendacionModal('generales')" class="text-[10px] text-teal-650 hover:text-teal-800 font-bold transition-colors">
+                                    Editar
+                                </button>
+                            </div>
+                            <ul id="rec-generales-container" class="space-y-1.5 text-xs text-slate-600 list-disc list-inside pl-1">
+                                <!-- List populated dynamically -->
+                            </ul>
+                        </div>
+                        <div class="pt-3 border-t border-slate-55 flex items-center justify-between text-[9px] text-slate-400">
+                            <span id="rec-generales-cumplimiento" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wider">Pendiente</span>
+                            <span id="rec-generales-meta" class="font-semibold">—</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Panel 5.8: Entregables -->
+            <div id="tab-entregables" class="tab-panel hidden space-y-6 animate-fade-in">
+                <!-- Header de la sección con selector de consultas -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-base font-extrabold text-slate-700">Entregables y Recursos Compartidos</h4>
+                        <p class="text-xs text-slate-400">Publica y gestiona planes, indicaciones, reportes de evolución y material educativo para la app del paciente.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label for="entregables-cita-select" class="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Consulta Asociada:</label>
+                        <select id="entregables-cita-select" onchange="changeEntregablesConsulta()" class="text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none transition-colors max-w-xs">
+                            <!-- Citas populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Grid de tarjetas de entregables -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- 1. Plan Alimentario -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="utensils" class="w-4 h-4 text-teal-600"></i> 1. Plan Alimentario
+                                </span>
+                            </div>
+                            <div id="entregables-plan-info" class="space-y-2 text-xs">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <div id="entregables-plan-actions" class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <!-- Buttons populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- 2. Recomendaciones -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i> 2. Recomendaciones
+                                </span>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Estado en Consulta</span>
+                                    <span id="entregables-recom-status" class="font-bold text-slate-700">Cargando...</span>
+                                </div>
+                                <div id="entregables-recom-categories" class="flex flex-wrap gap-1 mt-1">
+                                    <!-- Categories list chips -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+                            <button onclick="switchTab(event, 'tab-recomendaciones')" class="text-teal-650 hover:text-teal-800 font-bold transition-colors">Editar</button>
+                            <div class="flex gap-2">
+                                <button id="btn-entregables-recom-copy" onclick="copyRecomendacionesText()" class="text-slate-500 hover:text-slate-700 font-bold transition-colors">Compartir</button>
+                                <button id="btn-entregables-recom-pub" onclick="toggleRecomendacionesPublicacion()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition-colors">Publicar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Reportes -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i> 3. Reportes de Evolución
+                                </span>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                <p class="text-slate-450 text-[11px]">Comparte gráficos dinámicos de los avances del paciente.</p>
+                                <div class="space-y-2 pt-1">
+                                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                        <span class="font-bold text-slate-650">Historial de Peso e IMC</span>
+                                        <div class="flex gap-2">
+                                            <button onclick="openReportePreviewModal('peso')" class="text-teal-650 font-bold text-[10px]">Ver</button>
+                                            <button onclick="publishReporteEntregable('peso')" class="text-emerald-600 font-bold text-[10px]">Publicar</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                        <span class="font-bold text-slate-650">Grasa Corporal y Músculo</span>
+                                        <div class="flex gap-2">
+                                            <button onclick="openReportePreviewModal('grasa')" class="text-teal-650 font-bold text-[10px]">Ver</button>
+                                            <button onclick="publishReporteEntregable('grasa')" class="text-emerald-600 font-bold text-[10px]">Publicar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-3 flex items-center justify-between text-[10px] text-slate-400">
+                            <span>Sincronizado con Mediciones</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Material Educativo -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="book-open" class="w-4 h-4 text-violet-500"></i> 4. Material Educativo
+                                </span>
+                                <button onclick="openNewMaterialModal()" class="text-[10px] text-teal-650 hover:text-teal-800 font-bold">
+                                    + Subir Recurso
+                                </button>
+                            </div>
+                            <div id="entregables-material-list" class="space-y-2 max-h-24 overflow-y-auto pr-1 text-xs">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                            <span>Guías, recetas e infografías</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Lista de Compras -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="shopping-cart" class="w-4 h-4 text-amber-500"></i> 5. Lista de Compras
+                                </span>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                <p class="text-slate-450 text-[11px]">Genera automáticamente la lista de compras del supermercado en base a los menús recomendados.</p>
+                                <div id="entregables-compras-resumen" class="bg-amber-50/50 border border-amber-100 p-2 rounded-xl text-[11px] text-amber-800 font-semibold">
+                                    <!-- summary -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+                            <button onclick="openComprasPreviewModal()" class="text-teal-650 hover:text-teal-800 font-bold transition-colors">Previsualizar / Exportar</button>
+                            <button onclick="publishComprasEntregable()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition-colors">Publicar</button>
+                        </div>
+                    </div>
+
+                    <!-- 6. Resumen de Consulta -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="clipboard-check" class="w-4 h-4 text-indigo-500"></i> 6. Resumen de Consulta
+                                </span>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                <p class="text-slate-450 text-[11px]">Consolidado clínico de evolución, plan, metas y próxima cita para entregar al paciente.</p>
+                                <div id="entregables-resumen-preview-txt" class="text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                    <!-- summary -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+                            <button onclick="openResumenPreviewModal()" class="text-teal-650 hover:text-teal-800 font-bold transition-colors">Previsualizar</button>
+                            <div class="flex gap-2">
+                                <a id="link-entregables-resumen-print" href="#" target="_blank" class="text-slate-500 hover:text-slate-700 font-bold flex items-center gap-1">PDF</a>
+                                <button id="btn-entregables-resumen-pub" onclick="publishResumenConsulta()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition-colors">Publicar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ─── 7. TABLA DE HISTORIAL DE ENTREGABLES ─── -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <div>
+                            <h5 class="text-xs font-bold text-slate-455 uppercase tracking-wider">Historial de Recursos Publicados</h5>
+                            <p class="text-[10px] text-slate-400">Listado consolidado de recursos y accesos otorgados al paciente.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-450 uppercase font-bold text-[10px] tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-6">Fecha</th>
+                                    <th class="py-3 px-6">Tipo</th>
+                                    <th class="py-3 px-6">Título del Recurso</th>
+                                    <th class="py-3 px-6">Consulta</th>
+                                    <th class="py-3 px-6">Estado</th>
+                                    <th class="py-3 px-6">Profesional</th>
+                                    <th class="py-3 px-6 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entregables-table-body" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="entregables-empty-state" class="hidden p-8 text-center">
+                        <i data-lucide="share-2" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                        <p class="text-slate-400 text-xs italic">No hay recursos compartidos ni publicados aún.</p>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- Panel 6: Archivos -->
             <div id="tab-archivos" class="tab-panel hidden space-y-6">
                 <!-- Header / Search bar -->
@@ -1997,6 +2532,362 @@
 </div>
 
 <!-- ─── 5. MODALES INTERACTIVOS PARA CADA TARJETA ─── -->
+
+<!-- ─── MODALES DE RECOMENDACIONES ─── -->
+
+<!-- MODAL 1: Hidratación -->
+<div id="modal-rec-hidratacion" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="droplet" class="w-5 h-5 text-sky-500"></i> Editar Hidratación
+                </h3>
+                <button onclick="closeRecomendacionModal('hidratacion')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-rec-hidratacion" class="space-y-4" onsubmit="submitRecomendacionForm(event, 'form-rec-hidratacion', 'hidratacion')">
+                {% csrf_token %}
+                <input type="hidden" name="categoria" value="hidratacion">
+                <input type="hidden" name="cita_id" class="input-rec-cita-id">
+                <input type="hidden" name="fecha" class="input-rec-fecha">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consumo Diario Recomendado</label>
+                    <div class="relative">
+                        <input type="text" name="consumo_diario" id="input-rec-hid-consumo" placeholder="Ej: 2.5 L" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors pr-10">
+                        <span class="absolute right-3.5 top-3 text-xs text-slate-400 font-bold">L/día</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Observaciones</label>
+                    <textarea name="observaciones" id="input-rec-hid-obs" rows="3" placeholder="Ej: Distribuir durante el día, preferiblemente agua pura o infusiones sin azúcar." class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors resize-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRecomendacionModal('hidratacion')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: Actividad Física -->
+<div id="modal-rec-actividad" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="dumbbell" class="w-5 h-5 text-violet-500"></i> Editar Actividad Física
+                </h3>
+                <button onclick="closeRecomendacionModal('actividad_fisica')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-rec-actividad" class="space-y-4" onsubmit="submitRecomendacionForm(event, 'form-rec-actividad', 'actividad_fisica')">
+                {% csrf_token %}
+                <input type="hidden" name="categoria" value="actividad_fisica">
+                <input type="hidden" name="cita_id" class="input-rec-cita-id">
+                <input type="hidden" name="fecha" class="input-rec-fecha">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Actividad</label>
+                        <input type="text" name="tipo" id="input-rec-act-tipo" placeholder="Ej: Caminata rápida, Trote, Natación" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Frecuencia</label>
+                        <input type="text" name="frecuencia" id="input-rec-act-frecuencia" placeholder="Ej: 3-4 veces por semana" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Duración</label>
+                        <input type="text" name="duracion" id="input-rec-act-duracion" placeholder="Ej: 30-45 minutos" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Intensidad</label>
+                        <select name="intensidad" id="input-rec-act-intensidad" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                            <option value="">Seleccionar...</option>
+                            <option value="Baja">Baja</option>
+                            <option value="Moderada">Moderada</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Muy alta">Muy alta</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRecomendacionModal('actividad_fisica')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 3: Alimentos Recomendados -->
+<div id="modal-rec-alimentos-recom" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="leaf" class="w-5 h-5 text-emerald-500"></i> Alimentos Recomendados
+                </h3>
+                <button onclick="closeRecomendacionModal('alimentos_recomendados')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-rec-alimentos-recom" class="space-y-4" onsubmit="submitRecomendacionForm(event, 'form-rec-alimentos-recom', 'alimentos_recomendados')">
+                {% csrf_token %}
+                <input type="hidden" name="categoria" value="alimentos_recomendados">
+                <input type="hidden" name="cita_id" class="input-rec-cita-id">
+                <input type="hidden" name="fecha" class="input-rec-fecha">
+                
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Registrar Alimentos</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="input-add-recom-food" placeholder="Ej: Verduras de hoja verde, Avena, Pescado" class="flex-1 text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                        <button type="button" onclick="addFoodTag('alimentos_recomendados')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 rounded-xl text-xs transition-colors shadow-xs flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Agregar
+                        </button>
+                    </div>
+                    
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-3">Alimentos Agregados:</div>
+                    <div id="modal-recom-tags-container" class="flex flex-wrap gap-2 p-3 border border-slate-100 rounded-xl bg-slate-50 min-h-[80px]">
+                        <!-- Dynamic editable chips here -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRecomendacionModal('alimentos_recomendados')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 4: Alimentos a Limitar -->
+<div id="modal-rec-alimentos-limitar" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-rose-500"></i> Alimentos a Limitar/Evitar
+                </h3>
+                <button onclick="closeRecomendacionModal('alimentos_limitar')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-rec-alimentos-limitar" class="space-y-4" onsubmit="submitRecomendacionForm(event, 'form-rec-alimentos-limitar', 'alimentos_limitar')">
+                {% csrf_token %}
+                <input type="hidden" name="categoria" value="alimentos_limitar">
+                <input type="hidden" name="cita_id" class="input-rec-cita-id">
+                <input type="hidden" name="fecha" class="input-rec-fecha">
+                
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Registrar Alimentos a Limitar</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="input-add-limitar-food" placeholder="Ej: Azúcar refinada, Bebidas azucaradas, Alcohol" class="flex-1 text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                        <button type="button" onclick="addFoodTag('alimentos_limitar')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 rounded-xl text-xs transition-colors shadow-xs flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Agregar
+                        </button>
+                    </div>
+                    
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-3">Alimentos a Limitar Agregados:</div>
+                    <div id="modal-limitar-tags-container" class="flex flex-wrap gap-2 p-3 border border-slate-100 rounded-xl bg-slate-50 min-h-[80px]">
+                        <!-- Dynamic editable chips here -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRecomendacionModal('alimentos_limitar')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 5: Recomendaciones Generales -->
+<div id="modal-rec-generales" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="check-square" class="w-5 h-5 text-amber-500"></i> Recomendaciones Generales
+                </h3>
+                <button onclick="closeRecomendacionModal('generales')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-rec-generales" class="space-y-4" onsubmit="submitRecomendacionForm(event, 'form-rec-generales', 'generales')">
+                {% csrf_token %}
+                <input type="hidden" name="categoria" value="generales">
+                <input type="hidden" name="cita_id" class="input-rec-cita-id">
+                <input type="hidden" name="fecha" class="input-rec-fecha">
+                
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Añadir Indicación</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="input-add-general-item" placeholder="Ej: Comer despacio, Dormir al menos 7 horas" class="flex-1 text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                        <button type="button" onclick="addFoodTag('generales')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 rounded-xl text-xs transition-colors shadow-xs flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Añadir
+                        </button>
+                    </div>
+                    
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-3">Indicaciones Generales Agregadas:</div>
+                    <div id="modal-generales-tags-container" class="flex flex-col gap-2 p-3 border border-slate-100 rounded-xl bg-slate-50 min-h-[80px] max-h-48 overflow-y-auto">
+                        <!-- Dynamic checklist items with delete button -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRecomendacionModal('generales')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ─── MODALES DE ENTREGABLES ─── -->
+
+<!-- MODAL: Material Educativo (Subir/Editar) -->
+<div id="modal-entregables-educativo" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 id="modal-educativo-title" class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-5 h-5 text-violet-500"></i> Registrar Material Educativo
+                </h3>
+                <button type="button" onclick="closeEntregableModal('modal-entregables-educativo')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-entregables-educativo" class="space-y-4" onsubmit="submitEntregableForm(event)">
+                {% csrf_token %}
+                <input type="hidden" name="id" id="input-edu-id">
+                <input type="hidden" name="tipo" value="material_educativo">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Título del Recurso</label>
+                    <input type="text" name="titulo" id="input-edu-titulo" placeholder="Ej: Guía de snacks saludables, Recetario Keto" required class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Descripción / Indicaciones</label>
+                    <textarea name="descripcion" id="input-edu-descripcion" rows="3" placeholder="Ej: Recomendaciones para consumir entre comidas y opciones bajas en calorías." class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors resize-none"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consulta Relacionada</label>
+                        <select name="cita_id" id="select-edu-cita" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+                        <select name="estado" id="select-edu-estado" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                            <option value="borrador">Borrador</option>
+                            <option value="publicado">Publicado</option>
+                            <option value="archivado">Archivado</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Subir Archivo (PDF, Img, Doc)</label>
+                    <input type="file" name="archivo" id="input-edu-archivo" class="w-full text-xs border border-slate-200 rounded-xl p-2 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
+                    <p id="label-edu-archivo-existente" class="text-[10px] text-slate-400 italic mt-1 hidden">Ya existe un archivo asociado.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeEntregableModal('modal-entregables-educativo')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar entregable</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Resumen de Consulta Preview -->
+<div id="modal-entregables-resumen-preview" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="clipboard-check" class="w-5 h-5 text-indigo-500"></i> Vista Previa: Resumen de Consulta
+                </h3>
+                <button type="button" onclick="closeEntregableModal('modal-entregables-resumen-preview')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="resumen-preview-container" class="space-y-4 text-xs text-slate-700 p-4 bg-slate-50 rounded-xl border border-slate-150">
+                <!-- Dynamic preview populated via JS -->
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+            <button type="button" onclick="closeEntregableModal('modal-entregables-resumen-preview')" class="px-4 py-2 text-xs font-semibold text-slate-500 bg-slate-100 rounded-xl transition-colors">Cerrar</button>
+            <a id="btn-resumen-print-action" href="#" target="_blank" class="bg-teal-650 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs flex items-center gap-1"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF</a>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Lista de Compras Preview -->
+<div id="modal-entregables-compras-preview" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 text-amber-500"></i> Vista Previa: Lista de Compras
+                </h3>
+                <button type="button" onclick="closeEntregableModal('modal-entregables-compras-preview')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="compras-preview-container" class="space-y-4 text-xs text-slate-700 p-4 bg-slate-50 rounded-xl border border-slate-150">
+                <!-- Dynamic categories and list populated via JS -->
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+            <button type="button" onclick="closeEntregableModal('modal-entregables-compras-preview')" class="px-4 py-2 text-xs font-semibold text-slate-500 bg-slate-100 rounded-xl transition-colors">Cerrar</button>
+            <button type="button" onclick="exportComprasToClipboard()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 text-xs rounded-xl transition-colors">Copiar texto</button>
+            <button type="button" onclick="window.print()" class="bg-teal-650 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs flex items-center gap-1"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Reporte Clínico Preview -->
+<div id="modal-entregables-reporte-preview" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+                <h3 id="modal-reporte-title" class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-5 h-5 text-emerald-500"></i> Vista Previa del Reporte
+                </h3>
+                <button type="button" onclick="closeEntregableModal('modal-entregables-reporte-preview')" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="reporte-preview-container" class="space-y-4 text-xs text-slate-700 p-4 bg-slate-50 rounded-xl border border-slate-150">
+                <!-- Dynamic charts and numbers -->
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+            <button type="button" onclick="closeEntregableModal('modal-entregables-reporte-preview')" class="px-4 py-2 text-xs font-semibold text-slate-500 bg-slate-100 rounded-xl transition-colors">Cerrar</button>
+            <button type="button" onclick="window.print()" class="bg-teal-650 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs flex items-center gap-1"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir Reporte</button>
+        </div>
+    </div>
+</div>
 
 <!-- MODAL 1: Datos Personales -->
 <div id="modal-datos-personales" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
@@ -3465,6 +4356,8 @@
 <!-- ─── 6. SCRIPTS DE CONTROL DE NAVEGACIÓN Y CÁLCULOS ─── -->
 {{ paciente.informacion_clinica.medicacion_suplementacion|json_script:"meds-data-json" }}
 <script>
+    const activeConsultaId = {% if active_consulta %}"{{ active_consulta.id }}"{% else %}null{% endif %};
+
     // Control de Pestañas
     function switchTab(event, tabId) {
         document.querySelectorAll('.tab-panel').forEach(panel => {
@@ -3474,6 +4367,9 @@
         if (targetPanel) {
             targetPanel.classList.remove('hidden');
         }
+        
+        // Lock finalized elements if consultation is finalized
+        setTimeout(lockFinalizedFields, 50);
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('border-teal-500', 'text-teal-650', 'font-bold');
@@ -3489,6 +4385,10 @@
             loadEvaluacion();
         } else if (tabId === 'tab-plan') {
             loadPlanAlimentario();
+        } else if (tabId === 'tab-recomendaciones') {
+            loadRecomendaciones();
+        } else if (tabId === 'tab-entregables') {
+            loadEntregables();
         } else if (tabId === 'tab-archivos') {
             loadArchivos();
         } else if (tabId === 'tab-seguimiento') {
@@ -3527,6 +4427,9 @@
         event.preventDefault();
         const form = document.getElementById(formId);
         const formData = new FormData(form);
+        if (activeConsultaId) {
+            formData.append("consulta_id", activeConsultaId);
+        }
         const saveBtn = form.querySelector('button[type="submit"]');
         const originalBtnText = saveBtn.innerHTML;
         
@@ -3963,7 +4866,7 @@
     function editMeasurement(medidaId, fecha, valor, notas) {
         document.getElementById("quick-fecha").value = fecha;
         document.getElementById("quick-valor").value = valor;
-        document.getElementById("quick-notes").value = notas;
+        document.getElementById("quick-notas").value = notas;
         
         isEditing = true;
         editingMedidaId = medidaId;
@@ -4007,7 +4910,7 @@
             e.preventDefault();
             const fecha = document.getElementById("quick-fecha").value;
             const valor = document.getElementById("quick-valor").value;
-            const notas = document.getElementById("quick-notes").value;
+            const notas = document.getElementById("quick-notas").value;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             const formData = new FormData();
@@ -4016,6 +4919,9 @@
             formData.append("valor", valor);
             formData.append("notas", notas);
             formData.append("csrfmiddlewaretoken", csrfToken);
+            if (activeConsultaId) {
+                formData.append("consulta_id", activeConsultaId);
+            }
             if (isEditing && editingMedidaId) {
                 formData.append("medida_id", editingMedidaId);
             }
@@ -4147,6 +5053,9 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const formData = new FormData(form);
             formData.append("csrfmiddlewaretoken", csrfToken);
+            if (activeConsultaId) {
+                formData.append("consulta_id", activeConsultaId);
+            }
 
             const submitBtn = form.querySelector("button[type='submit']");
             const originalHtml = submitBtn.innerHTML;
@@ -4219,6 +5128,8 @@
                 if (summaryDiag) summaryDiag.innerText = data.diagnostico_principal || "Normopeso";
                 if (summaryLastUpdated) summaryLastUpdated.innerText = "Actualizado: " + data.last_updated;
                 if (summaryObj) summaryObj.innerText = data.objetivo_principal || "No especificado";
+                const headerObj = document.getElementById("header-objetivo-principal");
+                if (headerObj) headerObj.innerText = data.objetivo_principal || "Pérdida de peso";
                 
                 const imcVal = data.mediciones.imc;
                 const imcClasif = data.mediciones.imc_clasificacion;
@@ -4692,6 +5603,9 @@
         const formData = new FormData(form);
         formData.append("csrfmiddlewaretoken", csrfToken);
         formData.append("section", section);
+        if (activeConsultaId) {
+            formData.append("consulta_id", activeConsultaId);
+        }
 
         const submitBtn = form.querySelector("button[type='submit']");
         const originalHtml = submitBtn.innerHTML;
@@ -4743,6 +5657,11 @@
         let url = "{% url 'pacientes:plan_get' paciente.pk %}";
         if (planId) {
             url += `?plan_id=${planId}`;
+            if (activeConsultaId) {
+                url += `&consulta_id=${activeConsultaId}`;
+            }
+        } else if (activeConsultaId) {
+            url += `?consulta_id=${activeConsultaId}`;
         }
         fetch(url, {
             headers: {
@@ -5003,6 +5922,9 @@
         formData.append("nombre", "Plan Alimentario Inicial");
         formData.append("estado", "Borrador");
         formData.append("calorias", "2000");
+        if (activeConsultaId) {
+            formData.append("consulta_id", activeConsultaId);
+        }
 
         const url = "{% url 'pacientes:plan_guardar' paciente.pk %}";
         fetch(url, {
@@ -5241,6 +6163,9 @@
         const formData = new FormData(form);
         formData.append("csrfmiddlewaretoken", csrfToken);
         formData.append("section", section);
+        if (activeConsultaId) {
+            formData.append("consulta_id", activeConsultaId);
+        }
         
         if (activePlan) {
             formData.append("plan_id", activePlan.id);
@@ -6648,6 +7573,1231 @@
         };
         sendSeguimientoData(payload, 'modal-seg-logros');
     }
+    // ─── LÓGICA DEL MÓDULO DE RECOMENDACIONES ───
+    let recomendacionesData = null;
+    let tempRecomFoods = [];
+    let tempLimitarFoods = [];
+    let tempGeneralesItems = [];
+
+    function loadRecomendaciones(citaId = null) {
+        const url = "{% url 'pacientes:recomendaciones_get' paciente.pk %}" + (citaId ? "?cita_id=" + citaId : "");
+        fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                console.error("Error al obtener recomendaciones.");
+                return;
+            }
+
+            recomendacionesData = data.recomendaciones;
+
+            // 1. Poblar el selector de consultas si está vacío
+            const select = document.getElementById("recomendaciones-cita-select");
+            if (select && select.options.length === 0) {
+                // Opción por defecto (último o sin cita)
+                const optDefault = document.createElement("option");
+                optDefault.value = "null";
+                optDefault.innerText = "Sin consulta asociada (General)";
+                select.appendChild(optDefault);
+
+                if (data.citas && data.citas.length > 0) {
+                    data.citas.forEach(c => {
+                        const opt = document.createElement("option");
+                        opt.value = c.id;
+                        opt.innerText = `Consulta: ${c.fecha} (${c.tipo})`;
+                        select.appendChild(opt);
+                    });
+                }
+            }
+
+            // Seleccionar la cita activa en el dropdown
+            if (select) {
+                select.value = data.selected_cita_id || "null";
+            }
+
+            // 2. Poblar las tarjetas (Cards) de recomendaciones
+            populateRecomendacionesCards();
+        })
+        .catch(err => console.error("Error al cargar recomendaciones:", err));
+    }
+
+    function changeRecomendacionesConsulta() {
+        const select = document.getElementById("recomendaciones-cita-select");
+        const val = select.value;
+        loadRecomendaciones(val === "null" ? null : val);
+    }
+
+    function populateRecomendacionesCards() {
+        if (!recomendacionesData) return;
+
+        const categorias = ["hidratacion", "actividad_fisica", "alimentos_recomendados", "alimentos_limitar", "generales"];
+
+        categorias.forEach(cat => {
+            const r = recomendacionesData[cat];
+            const metaEl = document.getElementById(`rec-${cat.replace('_', '-')}-meta`);
+            const cumpliEl = document.getElementById(`rec-${cat.replace('_', '-')}-cumplimiento`);
+
+            // 1. Poblar Metadatos (Fecha, Profesional, Cumplimiento)
+            if (metaEl) {
+                metaEl.innerText = r.fecha ? `${r.fecha} — Por ${r.profesional}` : "—";
+            }
+            if (cumpliEl) {
+                cumpliEl.innerText = translateCumplimiento(r.estado_cumplimiento);
+                cumpliEl.className = getCumplimientoClass(r.estado_cumplimiento);
+            }
+
+            // 2. Poblar contenido específico
+            if (cat === "hidratacion") {
+                const consumo = r.descripcion.consumo_diario || "—";
+                document.getElementById("rec-hidratacion-consumo").innerText = r.descripcion.consumo_diario ? `${r.descripcion.consumo_diario} L/día` : "—";
+                document.getElementById("rec-hidratacion-obs").innerText = r.descripcion.observaciones || "Sin observaciones específicas.";
+            }
+            else if (cat === "actividad_fisica") {
+                document.getElementById("rec-actividad-tipo").innerText = r.descripcion.tipo || "—";
+                document.getElementById("rec-actividad-frecuencia").innerText = r.descripcion.frecuencia || "—";
+                document.getElementById("rec-actividad-duracion").innerText = r.descripcion.duracion || "—";
+                document.getElementById("rec-actividad-intensidad").innerText = r.descripcion.intensidad || "—";
+            }
+            else if (cat === "alimentos_recomendados") {
+                const container = document.getElementById("rec-alimentos-recom-container");
+                container.innerHTML = "";
+                const items = r.descripcion.items || [];
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        const chip = document.createElement("span");
+                        chip.className = "px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-100 uppercase tracking-wide";
+                        chip.innerText = item;
+                        container.appendChild(chip);
+                    });
+                } else {
+                    container.innerHTML = `<span class="text-slate-400 italic text-xs">No se han registrado alimentos recomendados.</span>`;
+                }
+            }
+            else if (cat === "alimentos_limitar") {
+                const container = document.getElementById("rec-alimentos-limitar-container");
+                container.innerHTML = "";
+                const items = r.descripcion.items || [];
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        const chip = document.createElement("span");
+                        chip.className = "px-2.5 py-1 bg-rose-50 text-rose-700 text-xs font-bold rounded-xl border border-rose-100 uppercase tracking-wide";
+                        chip.innerText = item;
+                        container.appendChild(chip);
+                    });
+                } else {
+                    container.innerHTML = `<span class="text-slate-400 italic text-xs">No se han registrado alimentos a limitar.</span>`;
+                }
+            }
+            else if (cat === "generales") {
+                const container = document.getElementById("rec-generales-container");
+                container.innerHTML = "";
+                const items = r.descripcion.items || [];
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        const li = document.createElement("li");
+                        li.className = "text-slate-650 leading-relaxed";
+                        li.innerText = item;
+                        container.appendChild(li);
+                    });
+                } else {
+                    container.innerHTML = `<span class="text-slate-400 italic text-xs">No se han registrado recomendaciones profesionales.</span>`;
+                }
+            }
+        });
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function translateCumplimiento(estado) {
+        const trans = {
+            "pendiente": "Pendiente",
+            "cumplida": "Cumplida",
+            "parcial": "Parcial",
+            "no_cumplida": "No cumplida"
+        };
+        return trans[estado] || "Pendiente";
+    }
+
+    function getCumplimientoClass(estado) {
+        const base = "px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ";
+        if (estado === "cumplida") return base + "bg-emerald-50 text-emerald-700 border border-emerald-100";
+        if (estado === "parcial") return base + "bg-amber-50 text-amber-700 border border-amber-100";
+        if (estado === "no_cumplida") return base + "bg-rose-50 text-rose-700 border border-rose-100";
+        return base + "bg-slate-100 text-slate-600";
+    }
+
+    function openRecomendacionModal(categoria) {
+        if (!recomendacionesData) return;
+
+        const r = recomendacionesData[categoria];
+        const modal = document.getElementById(`modal-rec-${categoria.replace('_', '-')}`);
+        if (!modal) return;
+
+        // 1. Establecer cita_id y fecha actuales en los formularios
+        const select = document.getElementById("recomendaciones-cita-select");
+        const citaId = select ? select.value : "null";
+        
+        modal.querySelectorAll(".input-rec-cita-id").forEach(el => el.value = citaId);
+        
+        // Poner la fecha de hoy por defecto para el backend si no hay cita
+        modal.querySelectorAll(".input-rec-fecha").forEach(el => {
+            el.value = new Date().toISOString().split('T')[0];
+        });
+
+        // 2. Precargar campos específicos
+        if (categoria === "hidratacion") {
+            document.getElementById("input-rec-hid-consumo").value = r.descripcion.consumo_diario || "";
+            document.getElementById("input-rec-hid-obs").value = r.descripcion.observaciones || "";
+        }
+        else if (categoria === "actividad_fisica") {
+            document.getElementById("input-rec-act-tipo").value = r.descripcion.tipo || "";
+            document.getElementById("input-rec-act-frecuencia").value = r.descripcion.frecuencia || "";
+            document.getElementById("input-rec-act-duracion").value = r.descripcion.duracion || "";
+            document.getElementById("input-rec-act-intensidad").value = r.descripcion.intensidad || "";
+        }
+        else if (categoria === "alimentos_recomendados") {
+            tempRecomFoods = [...(r.descripcion.items || [])];
+            renderEditableFoodTags("alimentos_recomendados");
+            document.getElementById("input-add-recom-food").value = "";
+        }
+        else if (categoria === "alimentos_limitar") {
+            tempLimitarFoods = [...(r.descripcion.items || [])];
+            renderEditableFoodTags("alimentos_limitar");
+            document.getElementById("input-add-limitar-food").value = "";
+        }
+        else if (categoria === "generales") {
+            tempGeneralesItems = [...(r.descripcion.items || [])];
+            renderEditableFoodTags("generales");
+            document.getElementById("input-add-general-item").value = "";
+        }
+
+        modal.classList.remove("hidden");
+    }
+
+    function closeRecomendacionModal(categoria) {
+        const modal = document.getElementById(`modal-rec-${categoria.replace('_', '-')}`);
+        if (modal) modal.classList.add("hidden");
+    }
+
+    function addFoodTag(categoria) {
+        if (categoria === "alimentos_recomendados") {
+            const input = document.getElementById("input-add-recom-food");
+            const val = input.value.trim();
+            if (val && !tempRecomFoods.includes(val)) {
+                tempRecomFoods.push(val);
+                renderEditableFoodTags(categoria);
+                input.value = "";
+            }
+        }
+        else if (categoria === "alimentos_limitar") {
+            const input = document.getElementById("input-add-limitar-food");
+            const val = input.value.trim();
+            if (val && !tempLimitarFoods.includes(val)) {
+                tempLimitarFoods.push(val);
+                renderEditableFoodTags(categoria);
+                input.value = "";
+            }
+        }
+        else if (categoria === "generales") {
+            const input = document.getElementById("input-add-general-item");
+            const val = input.value.trim();
+            if (val && !tempGeneralesItems.includes(val)) {
+                tempGeneralesItems.push(val);
+                renderEditableFoodTags(categoria);
+                input.value = "";
+            }
+        }
+    }
+
+    function removeFoodTag(categoria, index) {
+        if (categoria === "alimentos_recomendados") {
+            tempRecomFoods.splice(index, 1);
+        }
+        else if (categoria === "alimentos_limitar") {
+            tempLimitarFoods.splice(index, 1);
+        }
+        else if (categoria === "generales") {
+            tempGeneralesItems.splice(index, 1);
+        }
+        renderEditableFoodTags(categoria);
+    }
+
+    function renderEditableFoodTags(categoria) {
+        if (categoria === "alimentos_recomendados") {
+            const container = document.getElementById("modal-recom-tags-container");
+            container.innerHTML = "";
+            tempRecomFoods.forEach((food, idx) => {
+                const chip = document.createElement("span");
+                chip.className = "flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold rounded-xl uppercase";
+                chip.innerHTML = `
+                    <span>${food}</span>
+                    <button type="button" onclick="removeFoodTag('${categoria}', ${idx})" class="text-emerald-500 hover:text-emerald-700 transition-colors p-0.5"><i data-lucide="x" class="w-3 h-3"></i></button>
+                `;
+                container.appendChild(chip);
+            });
+        }
+        else if (categoria === "alimentos_limitar") {
+            const container = document.getElementById("modal-limitar-tags-container");
+            container.innerHTML = "";
+            tempLimitarFoods.forEach((food, idx) => {
+                const chip = document.createElement("span");
+                chip.className = "flex items-center gap-1 px-2 py-1 bg-rose-50 border border-rose-100 text-rose-700 text-xs font-bold rounded-xl uppercase";
+                chip.innerHTML = `
+                    <span>${food}</span>
+                    <button type="button" onclick="removeFoodTag('${categoria}', ${idx})" class="text-rose-500 hover:text-rose-700 transition-colors p-0.5"><i data-lucide="x" class="w-3 h-3"></i></button>
+                `;
+                container.appendChild(chip);
+            });
+        }
+        else if (categoria === "generales") {
+            const container = document.getElementById("modal-generales-tags-container");
+            container.innerHTML = "";
+            tempGeneralesItems.forEach((item, idx) => {
+                const row = document.createElement("div");
+                row.className = "flex justify-between items-center bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs";
+                row.innerHTML = `
+                    <span class="font-semibold text-slate-650">${item}</span>
+                    <button type="button" onclick="removeFoodTag('${categoria}', ${idx})" class="text-slate-500 hover:text-slate-700 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function submitRecomendacionForm(event, formId, categoria) {
+        event.preventDefault();
+        const form = document.getElementById(formId);
+        const formData = new FormData(form);
+
+        // Si son categorías de tipo lista, adjuntar elementos de los arrays temporales
+        if (categoria === "alimentos_recomendados") {
+            tempRecomFoods.forEach(food => formData.append("items", food));
+        }
+        else if (categoria === "alimentos_limitar") {
+            tempLimitarFoods.forEach(food => formData.append("items", food));
+        }
+        else if (categoria === "generales") {
+            tempGeneralesItems.forEach(item => formData.append("items", item));
+        }
+
+        const saveBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline mr-1"></i> Guardando...`;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        const url = "{% url 'pacientes:recomendacion_guardar' paciente.pk %}";
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeRecomendacionModal(categoria);
+                const select = document.getElementById("recomendaciones-cita-select");
+                const currentCitaId = select ? select.value : null;
+                loadRecomendaciones(currentCitaId === "null" ? null : currentCitaId);
+            } else {
+                alert("Error al guardar: " + data.error);
+            }
+        })
+        .catch(err => {
+            console.error("Error al guardar recomendación:", err);
+            alert("Error de conexión al guardar cambios.");
+        })
+        .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalBtnText;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    }
+    }
+
+    // ─── LÓGICA DEL MÓDULO DE ENTREGABLES ───
+    let entregablesData = null;
+
+    function loadEntregables(citaId = null) {
+        const url = "{% url 'pacientes:entregables_get' paciente.pk %}" + (citaId ? "?cita_id=" + citaId : "");
+        fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                console.error("Error al cargar entregables.");
+                return;
+            }
+
+            entregablesData = data;
+
+            // 1. Selector de Consultas
+            const select = document.getElementById("entregables-cita-select");
+            if (select && select.options.length === 0) {
+                const optDefault = document.createElement("option");
+                optDefault.value = "null";
+                optDefault.innerText = "Sin consulta asociada (General)";
+                select.appendChild(optDefault);
+
+                if (data.citas && data.citas.length > 0) {
+                    data.citas.forEach(c => {
+                        const opt = document.createElement("option");
+                        opt.value = c.id;
+                        opt.innerText = `Consulta: ${c.fecha} (${c.tipo})`;
+                        select.appendChild(opt);
+                    });
+                }
+            }
+            if (select) {
+                select.value = data.selected_cita_id || "null";
+            }
+
+            // 2. Poblar tarjetas individuales
+            populatePlanAlimentarioCard(data.planes);
+            populateRecomendacionesCard(data.recomendaciones);
+            populateMaterialEducativoCard(data.entregables);
+            populateListaComprasCard(data.lista_compras);
+            populateResumenConsultaCard(data.resumen_consulta);
+            populateHistorialTable(data.entregables);
+        })
+        .catch(err => console.error("Error al obtener entregables:", err));
+    }
+
+    function changeEntregablesConsulta() {
+        const select = document.getElementById("entregables-cita-select");
+        const val = select.value;
+        loadEntregables(val === "null" ? null : val);
+    }
+
+    // --- Tarjeta 1: Plan Alimentario ---
+    function populatePlanAlimentarioCard(planes) {
+        const infoDiv = document.getElementById("entregables-plan-info");
+        const actionsDiv = document.getElementById("entregables-plan-actions");
+        
+        const activePlan = planes.find(p => p.estado === "Activo") || planes[0];
+
+        if (!activePlan) {
+            infoDiv.innerHTML = `<span class="text-slate-400 italic text-xs">No se ha creado ningún plan alimentario aún.</span>`;
+            actionsDiv.innerHTML = "";
+            return;
+        }
+
+        infoDiv.innerHTML = `
+            <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-2">
+                <div>
+                    <span class="font-extrabold text-slate-800 text-xs block">${activePlan.nombre}</span>
+                    <span class="text-[9px] text-slate-400 font-bold block">${activePlan.tipo_plan} — ${activePlan.fecha}</span>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-100 font-bold text-[9px] uppercase">${activePlan.estado}</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px] bg-slate-50/50 p-2 rounded-xl border border-slate-100">
+                <div><span class="text-slate-400 block font-semibold">Calorías</span><span class="font-bold text-slate-700">${activePlan.calorias}</span></div>
+                <div><span class="text-slate-400 block font-semibold">Proteínas</span><span class="font-bold text-slate-700">${activePlan.proteinas}g</span></div>
+                <div><span class="text-slate-400 block font-semibold">Carbos</span><span class="font-bold text-slate-700">${activePlan.carbohidratos}g</span></div>
+                <div><span class="text-slate-400 block font-semibold">Grasas</span><span class="font-bold text-slate-700">${activePlan.grasas}g</span></div>
+            </div>
+        `;
+
+        const printUrl = `/pacientes/{{ paciente.pk }}/plan/${activePlan.id}/imprimir/`;
+        actionsDiv.innerHTML = `
+            <button onclick="switchTab(event, 'tab-plan')" class="text-teal-650 hover:text-teal-850 text-xs font-bold transition-colors">Ver Plan</button>
+            <div class="flex gap-2">
+                <a href="${printUrl}" target="_blank" class="text-slate-550 hover:text-slate-750 text-xs font-bold flex items-center gap-1">PDF</a>
+                <button onclick="togglePlanPublicacion(${activePlan.id})" class="${activePlan.enviado ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-teal-600 hover:bg-teal-700 text-white'} font-bold px-3 py-1.5 rounded-lg text-[10px] transition-colors shadow-xs">
+                    ${activePlan.enviado ? 'Despublicar' : 'Publicar'}
+                </button>
+            </div>
+        `;
+    }
+
+    function togglePlanPublicacion(planId) {
+        const url = `/pacientes/{{ paciente.pk }}/plan/${planId}/publicar/`;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById("entregables-cita-select");
+                loadEntregables(select ? select.value : null);
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error al publicar plan:", err));
+    }
+
+    // --- Tarjeta 2: Recomendaciones ---
+    function populateRecomendacionesCard(recom) {
+        const statusEl = document.getElementById("entregables-recom-status");
+        const categoriesEl = document.getElementById("entregables-recom-categories");
+        const pubBtn = document.getElementById("btn-entregables-recom-pub");
+
+        if (recom.count === 0) {
+            statusEl.innerText = "Sin registrar";
+            statusEl.className = "font-bold text-slate-400";
+            categoriesEl.innerHTML = `<p class="text-slate-400 italic text-[11px] mt-1">No hay recomendaciones registradas en esta consulta.</p>`;
+            pubBtn.disabled = true;
+            pubBtn.className = "bg-slate-100 text-slate-400 px-3 py-1.5 rounded-lg text-[11px] cursor-not-allowed";
+            return;
+        }
+
+        statusEl.innerText = `${recom.count} indicaciones registradas`;
+        statusEl.className = "font-bold text-slate-750";
+
+        categoriesEl.innerHTML = "";
+        recom.categorias.forEach(cat => {
+            const chip = document.createElement("span");
+            chip.className = "px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded-md text-[9px] font-bold uppercase tracking-wide";
+            chip.innerText = cat;
+            categoriesEl.appendChild(chip);
+        });
+
+        pubBtn.disabled = false;
+        if (recom.publicada) {
+            pubBtn.innerText = "Despublicar";
+            pubBtn.className = "bg-rose-50 text-rose-700 border border-rose-100 font-bold px-3 py-1.5 rounded-lg text-[11px]";
+        } else {
+            pubBtn.innerText = "Publicar";
+            pubBtn.className = "bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px]";
+        }
+    }
+
+    function toggleRecomendacionesPublicacion() {
+        if (!entregablesData || entregablesData.recomendaciones.count === 0) return;
+
+        const select = document.getElementById("entregables-cita-select");
+        const citaId = select ? select.value : "null";
+        const publicada = entregablesData.recomendaciones.publicada;
+
+        const formData = new FormData();
+        formData.append("tipo", "recomendaciones");
+        formData.append("cita_id", citaId);
+        formData.append("titulo", `Recomendaciones Nutricionales`);
+        formData.append("descripcion", `Recomendaciones e indicaciones clínicas para el paciente.`);
+        formData.append("estado", publicada ? "borrador" : "publicado");
+
+        const url = "{% url 'pacientes:entregable_guardar' paciente.pk %}";
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                loadEntregables(citaId === "null" ? null : citaId);
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error al publicar recomendaciones:", err));
+    }
+
+    function copyRecomendacionesText() {
+        if (!recomendacionesData) {
+            alert("No hay datos de recomendaciones cargados.");
+            return;
+        }
+        let text = `NutriSync — Indicaciones de Consulta\n\n`;
+        const r = recomendacionesData;
+
+        if (r.hidratacion.descripcion.consumo_diario) {
+            text += `1. Hidratación: Consumir ${r.hidratacion.descripcion.consumo_diario} L/día.\nObs: ${r.hidratacion.descripcion.observaciones || '-'}\n\n`;
+        }
+        if (r.actividad_fisica.descripcion.tipo) {
+            text += `2. Actividad Física: ${r.actividad_fisica.descripcion.tipo}\nFrecuencia: ${r.actividad_fisica.descripcion.frecuencia || '-'}\nDuración: ${r.actividad_fisica.descripcion.duracion || '-'}\nIntensidad: ${r.actividad_fisica.descripcion.intensidad || '-'}\n\n`;
+        }
+        if (r.alimentos_recomendados.descripcion.items && r.alimentos_recomendados.descripcion.items.length > 0) {
+            text += `3. Alimentos Recomendados: ${r.alimentos_recomendados.descripcion.items.join(', ')}\n\n`;
+        }
+        if (r.alimentos_limitar.descripcion.items && r.alimentos_limitar.descripcion.items.length > 0) {
+            text += `4. Alimentos a Limitar: ${r.alimentos_limitar.descripcion.items.join(', ')}\n\n`;
+        }
+        if (r.generales.descripcion.items && r.generales.descripcion.items.length > 0) {
+            text += `5. Consejos Generales:\n` + r.generales.descripcion.items.map(i => `- ${i}`).join('\n') + `\n`;
+        }
+
+        navigator.clipboard.writeText(text)
+            .then(() => alert("Resumen de indicaciones copiado al portapapeles."))
+            .catch(err => console.error("Error al copiar texto:", err));
+    }
+
+    // --- Tarjeta 4: Material Educativo ---
+    function populateMaterialEducativoCard(entregables) {
+        const listContainer = document.getElementById("entregables-material-list");
+        listContainer.innerHTML = "";
+
+        const materiales = entregables.filter(e => e.tipo === "material_educativo");
+
+        if (materiales.length === 0) {
+            listContainer.innerHTML = `<span class="text-slate-400 italic text-[11px] block mt-4 text-center">No hay material asignado.</span>`;
+            return;
+        }
+
+        materiales.forEach(m => {
+            const div = document.createElement("div");
+            div.className = "flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100 gap-2";
+            div.innerHTML = `
+                <div class="truncate">
+                    <span class="font-bold text-slate-700 truncate block max-w-[180px]" title="${m.titulo}">${m.titulo}</span>
+                    <span class="text-[9px] text-slate-400 block">${m.fecha} — ${m.estado_display}</span>
+                </div>
+                <div class="flex gap-1.5 whitespace-nowrap">
+                    ${m.archivo_url ? `<a href="${m.archivo_url}" target="_blank" class="text-teal-650 hover:text-teal-850 font-semibold text-[10px]">Descargar</a>` : ''}
+                    <button onclick="eliminarEntregable(${m.id})" class="text-rose-600 hover:text-rose-800 font-semibold text-[10px]">Eliminar</button>
+                </div>
+            `;
+            listContainer.appendChild(div);
+        });
+    }
+
+    function openNewMaterialModal() {
+        const form = document.getElementById("form-entregables-educativo");
+        form.reset();
+        document.getElementById("input-edu-id").value = "";
+        document.getElementById("modal-educativo-title").innerHTML = `<i data-lucide="book-open" class="w-5 h-5 text-violet-500"></i> Registrar Material Educativo`;
+        document.getElementById("label-edu-archivo-existente").classList.add("hidden");
+
+        // Poblar citas
+        const select = document.getElementById("select-edu-cita");
+        select.innerHTML = '<option value="null">Sin consulta asociada</option>';
+        if (entregablesData && entregablesData.citas) {
+            entregablesData.citas.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id;
+                opt.innerText = `Consulta: ${c.fecha} (${c.tipo})`;
+                select.appendChild(opt);
+            });
+        }
+        
+        const activeCitaSelect = document.getElementById("entregables-cita-select");
+        if (activeCitaSelect) {
+            select.value = activeCitaSelect.value;
+        }
+
+        openEntregableModal("modal-entregables-educativo");
+    }
+
+    function openEntregableModal(id) {
+        document.getElementById(id).classList.remove("hidden");
+    }
+
+    function closeEntregableModal(id) {
+        document.getElementById(id).classList.add("hidden");
+    }
+
+    function submitEntregableForm(event) {
+        event.preventDefault();
+        const form = document.getElementById("form-entregables-educativo");
+        const formData = new FormData(form);
+
+        const saveBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline mr-1"></i> Guardando...`;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        const url = "{% url 'pacientes:entregable_guardar' paciente.pk %}";
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeEntregableModal("modal-entregables-educativo");
+                const select = document.getElementById("entregables-cita-select");
+                loadEntregables(select ? select.value : null);
+            } else {
+                alert("Error al guardar: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error al guardar:", err))
+        .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalBtnText;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    }
+
+    function eliminarEntregable(id) {
+        if (!confirm("¿Está seguro de eliminar este entregable permanentemente?")) return;
+
+        const url = `/pacientes/{{ paciente.pk }}/entregables/${id}/eliminar/`;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById("entregables-cita-select");
+                loadEntregables(select ? select.value : null);
+            } else {
+                alert("Error al eliminar: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error:", err));
+    }
+
+    // --- Tarjeta 5: Lista de Compras ---
+    function populateListaComprasCard(compras) {
+        const resEl = document.getElementById("entregables-compras-resumen");
+        if (compras.length === 0) {
+            resEl.innerText = "Plan Alimentario no activo.";
+            return;
+        }
+        resEl.innerText = `${compras.length} ingredientes recomendados por categorías`;
+    }
+
+    function openComprasPreviewModal() {
+        if (!entregablesData || !entregablesData.lista_compras) return;
+        const container = document.getElementById("compras-preview-container");
+        container.innerHTML = "";
+
+        // Agrupar compras por categoría
+        const categories = {};
+        entregablesData.lista_compras.forEach(item => {
+            if (!categories[item.categoria]) {
+                categories[item.categoria] = [];
+            }
+            categories[item.categoria].push(item);
+        });
+
+        for (const cat in categories) {
+            const div = document.createElement("div");
+            div.className = "space-y-1.5";
+            div.innerHTML = `
+                <span class="text-xs font-bold text-slate-700 flex items-center gap-1 border-b border-slate-200 pb-1 mb-2 uppercase tracking-wide">
+                    <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-500"></i> ${cat}
+                </span>
+                <ul class="list-disc list-inside space-y-1 text-xs text-slate-600 pl-1">
+                    ${categories[cat].map(i => `<li>${i.producto} <span class="font-extrabold text-slate-800">(${i.cantidad})</span></li>`).join("")}
+                </ul>
+            `;
+            container.appendChild(div);
+        }
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        openEntregableModal("modal-entregables-compras-preview");
+    }
+
+    function exportComprasToClipboard() {
+        if (!entregablesData || !entregablesData.lista_compras) return;
+        let text = `NutriSync — Lista de Compras Recomendada\n\n`;
+        
+        const categories = {};
+        entregablesData.lista_compras.forEach(item => {
+            if (!categories[item.categoria]) {
+                categories[item.categoria] = [];
+            }
+            categories[item.categoria].push(item);
+        });
+
+        for (const cat in categories) {
+            text += `[${cat.toUpperCase()}]\n`;
+            categories[cat].forEach(i => {
+                text += `- ${i.producto} (${i.cantidad})\n`;
+            });
+            text += `\n`;
+        }
+
+        navigator.clipboard.writeText(text)
+            .then(() => alert("Lista de compras copiada al portapapeles."))
+            .catch(err => console.error("Error al copiar:", err));
+    }
+
+    function publishComprasEntregable() {
+        const select = document.getElementById("entregables-cita-select");
+        const citaId = select ? select.value : "null";
+
+        const formData = new FormData();
+        formData.append("tipo", "lista_compras");
+        formData.append("cita_id", citaId);
+        formData.append("titulo", `Lista de Compras Supermercado`);
+        formData.append("descripcion", `Lista de ingredientes necesarios para seguir el Plan Alimentario recomendado.`);
+        formData.append("estado", "publicado");
+
+        const url = "{% url 'pacientes:entregable_guardar' paciente.pk %}";
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                loadEntregables(citaId === "null" ? null : citaId);
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error al publicar lista compras:", err));
+    }
+
+    // --- Tarjeta 6: Resumen de Consulta ---
+    function populateResumenConsultaCard(resumen) {
+        const container = document.getElementById("entregables-resumen-preview-txt");
+        const printLink = document.getElementById("link-entregables-resumen-print");
+        const pubBtn = document.getElementById("btn-entregables-resumen-pub");
+
+        if (!resumen.fecha) {
+            container.innerHTML = `<span class="text-slate-400 italic text-[11px] block text-center">No hay consulta seleccionada.</span>`;
+            pubBtn.disabled = true;
+            pubBtn.className = "bg-slate-100 text-slate-400 px-3 py-1.5 rounded-lg text-[11px] cursor-not-allowed";
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="grid grid-cols-2 gap-2 text-[10px] space-y-0.5">
+                <div><span class="text-slate-400 block font-semibold">Fecha:</span> <span class="font-bold">${resumen.fecha}</span></div>
+                <div><span class="text-slate-400 block font-semibold">Peso:</span> <span class="font-bold">${resumen.peso || '—'} kg</span></div>
+                <div class="col-span-2 text-slate-500 font-medium truncate">Meta: ${resumen.objetivo}</div>
+            </div>
+        `;
+
+        printLink.href = `/pacientes/{{ paciente.pk }}/resumen/${resumen.cita_id}/imprimir/`;
+
+        pubBtn.disabled = false;
+        if (resumen.publicado) {
+            pubBtn.innerText = "Despublicar";
+            pubBtn.className = "bg-rose-50 text-rose-700 border border-rose-100 font-bold px-3 py-1.5 rounded-lg text-[11px]";
+        } else {
+            pubBtn.innerText = "Publicar";
+            pubBtn.className = "bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px]";
+        }
+    }
+
+    function openResumenPreviewModal() {
+        if (!entregablesData || !entregablesData.resumen_consulta) return;
+        const container = document.getElementById("resumen-preview-container");
+        const resumen = entregablesData.resumen_consulta;
+
+        container.innerHTML = `
+            <div class="space-y-4 text-slate-700">
+                <div class="flex justify-between border-b pb-2">
+                    <span class="font-bold text-sm text-slate-800">Expediente Clínico Resumido</span>
+                    <span class="font-bold text-slate-550">${resumen.fecha}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 bg-white p-3 rounded-lg border border-slate-100">
+                    <div><span class="block text-[10px] text-slate-400 font-semibold">Objetivo Principal</span><span class="font-bold text-slate-700">${resumen.objetivo}</span></div>
+                    <div><span class="block text-[10px] text-slate-400 font-semibold">Diagnóstico Nutricional</span><span class="font-bold text-slate-700">${resumen.diagnostico}</span></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center bg-white p-3 rounded-lg border border-slate-100">
+                    <div><span class="block text-[10px] text-slate-400 font-semibold">Peso actual</span><span class="font-extrabold text-slate-800 text-sm">${resumen.peso || '—'} kg</span></div>
+                    <div><span class="block text-[10px] text-slate-400 font-semibold">IMC calculado</span><span class="font-extrabold text-slate-800 text-sm">${resumen.imc || '—'}</span></div>
+                    <div><span class="block text-[10px] text-slate-400 font-semibold">TMB aproximada</span><span class="font-extrabold text-slate-800 text-sm">${entregablesData.planes[0] ? entregablesData.planes[0].calorias : '—'} kcal</span></div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100 space-y-2">
+                    <span class="font-bold text-slate-800 block text-[11px]">Plan Alimentario Activo</span>
+                    <p class="text-[11px] text-slate-500">${entregablesData.planes[0] ? entregablesData.planes[0].nombre + ' — ' + entregablesData.planes[0].calorias + ' kcal.' : 'No registrado'}</p>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100 space-y-1">
+                    <span class="font-bold text-slate-800 block text-[11px]">Recomendaciones Clínicas</span>
+                    <p class="text-[11px] text-slate-500">${entregablesData.recomendaciones.count} indicaciones de alimentación y hábitos saludables entregadas.</p>
+                </div>
+            </div>
+        `;
+
+        document.getElementById("btn-resumen-print-action").href = `/pacientes/{{ paciente.pk }}/resumen/${resumen.cita_id}/imprimir/`;
+
+        openEntregableModal("modal-entregables-resumen-preview");
+    }
+
+    function publishResumenConsulta() {
+        if (!entregablesData || !entregablesData.resumen_consulta.fecha) return;
+
+        const select = document.getElementById("entregables-cita-select");
+        const citaId = select ? select.value : null;
+        const publicado = entregablesData.resumen_consulta.publicado;
+
+        const formData = new FormData();
+        formData.append("tipo", "resumen_consulta");
+        formData.append("cita_id", citaId);
+        formData.append("titulo", `Resumen Clínico de Consulta`);
+        formData.append("descripcion", `Resumen clínico detallado que incluye marcadores de peso, diagnósticos y metas.`);
+        formData.append("estado", publicado ? "borrador" : "publicado");
+
+        const url = "{% url 'pacientes:entregable_guardar' paciente.pk %}";
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                loadEntregables(citaId === "null" ? null : citaId);
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error al publicar resumen:", err));
+    }
+
+    // --- Tarjeta 3: Reportes de Evolución ---
+    function openReportePreviewModal(tipo) {
+        if (!entregablesData || !entregablesData.reportes.tiene_datos) {
+            alert("No hay suficientes mediciones corporales registradas para generar reportes.");
+            return;
+        }
+
+        const titleEl = document.getElementById("modal-reporte-title");
+        const container = document.getElementById("reporte-preview-container");
+
+        if (tipo === "peso") {
+            titleEl.innerHTML = `<i data-lucide="scale" class="w-5 h-5 text-emerald-500"></i> Evolución de Peso e IMC`;
+            
+            const r = entregablesData.reportes;
+            let rows = "";
+            r.fechas.forEach((f, idx) => {
+                rows += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-2 font-semibold text-slate-700">${f}</td>
+                        <td class="py-2 text-slate-650">${r.pesos[idx]} kg</td>
+                        <td class="py-2 text-slate-500">${r.imcs[idx]}</td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <span class="block font-bold text-xs text-slate-700 pb-1 border-b uppercase">Datos de Seguimiento</span>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-500 font-bold border-b border-slate-200">
+                                <th class="py-2">Fecha</th>
+                                <th class="py-2">Peso</th>
+                                <th class="py-2">IMC</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-150">
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        else if (tipo === "grasa") {
+            titleEl.innerHTML = `<i data-lucide="activity" class="w-5 h-5 text-emerald-500"></i> Grasa Corporal`;
+            
+            const r = entregablesData.reportes;
+            let rows = "";
+            r.fechas.forEach((f, idx) => {
+                rows += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-2 font-semibold text-slate-700">${f}</td>
+                        <td class="py-2 text-slate-650">${r.grasas[idx]} %</td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <span class="block font-bold text-xs text-slate-700 pb-1 border-b uppercase">Avance en Grasa Corporal</span>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-500 font-bold border-b border-slate-200">
+                                <th class="py-2">Fecha</th>
+                                <th class="py-2">% Grasa Corporal</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-150">
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        openEntregableModal("modal-entregables-reporte-preview");
+    }
+
+    function publishReporteEntregable(tipo) {
+        const select = document.getElementById("entregables-cita-select");
+        const citaId = select ? select.value : "null";
+
+        const formData = new FormData();
+        formData.append("tipo", "reporte");
+        formData.append("cita_id", citaId);
+        
+        if (tipo === "peso") {
+            formData.append("titulo", `Reporte de Peso e IMC`);
+            formData.append("descripcion", `Gráficos de evolución histórica de peso corporal e índice de masa corporal.`);
+        } else {
+            formData.append("titulo", `Reporte de Grasa Corporal`);
+            formData.append("descripcion", `Evolución histórica y comparativas de porcentaje de tejido adiposo.`);
+        }
+        formData.append("estado", "publicado");
+
+        const url = "{% url 'pacientes:entregable_guardar' paciente.pk %}";
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                loadEntregables(citaId === "null" ? null : citaId);
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => console.error("Error al publicar reporte:", err));
+    }
+
+    // --- Tabla de Historial ---
+    function populateHistorialTable(entregables) {
+        const tbody = document.getElementById("entregables-table-body");
+        const emptyState = document.getElementById("entregables-empty-state");
+        tbody.innerHTML = "";
+
+        if (entregables.length === 0) {
+            emptyState.classList.remove("hidden");
+            return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        entregables.forEach(e => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-slate-50 border-b border-slate-100";
+
+            let iconHtml = '<i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>';
+            if (e.tipo === "plan_alimentario") iconHtml = '<i data-lucide="utensils" class="w-4 h-4 text-teal-650"></i>';
+            else if (e.tipo === "recomendaciones") iconHtml = '<i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>';
+            else if (e.tipo === "reporte") iconHtml = '<i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i>';
+            else if (e.tipo === "material_educativo") iconHtml = '<i data-lucide="book-open" class="w-4 h-4 text-violet-500"></i>';
+            else if (e.tipo === "lista_compras") iconHtml = '<i data-lucide="shopping-cart" class="w-4 h-4 text-amber-500"></i>';
+            else if (e.tipo === "resumen_consulta") iconHtml = '<i data-lucide="clipboard-check" class="w-4 h-4 text-indigo-500"></i>';
+
+            const statusClass = getEntregableStatusClass(e.estado);
+
+            tr.innerHTML = `
+                <td class="py-3 px-6 font-bold text-slate-700">${e.fecha}</td>
+                <td class="py-3 px-6 font-semibold text-slate-650 uppercase text-[10px] tracking-wider">
+                    <span class="flex items-center gap-1.5">${iconHtml} ${e.tipo_display}</span>
+                </td>
+                <td class="py-3 px-6 font-bold text-slate-800">${e.titulo}</td>
+                <td class="py-3 px-6 text-slate-500">${e.cita_fecha}</td>
+                <td class="py-3 px-6">
+                    <span class="px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${statusClass}">
+                        ${e.estado_display}
+                    </span>
+                </td>
+                <td class="py-3 px-6 text-slate-450">${e.profesional}</td>
+                <td class="py-3 px-6 text-right space-x-1.5">
+                    ${e.archivo_url ? `<a href="${e.archivo_url}" target="_blank" class="text-teal-600 font-bold hover:text-teal-800">Descargar</a>` : ''}
+                    <button onclick="eliminarEntregable(${e.id})" class="text-rose-600 font-bold hover:text-rose-800">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function getEntregableStatusClass(estado) {
+        if (estado === "publicado") return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+        if (estado === "archivado") return "bg-amber-50 text-amber-700 border border-amber-100";
+        return "bg-slate-100 text-slate-600 border border-slate-200";
+    }
+
+    // ─── CONSULTAS NUTRICIONALES JS ───
+    function abrirModalNuevaConsulta() {
+        document.getElementById('modal-nueva-consulta').classList.remove('hidden');
+    }
+    
+    function cerrarModalNuevaConsulta() {
+        document.getElementById('modal-nueva-consulta').classList.add('hidden');
+    }
+
+    function iniciarNuevaConsultaSubmit(event) {
+        event.preventDefault();
+        const form = document.getElementById('form-nueva-consulta');
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        
+        fetch("{% url 'pacientes:consulta_iniciar' paciente.pk %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                cerrarModalNuevaConsulta();
+                window.location.href = `?consulta_id=${data.consulta_id}`;
+            } else {
+                alert("Error al iniciar la consulta: " + (data.error || "Ocurrió un problema."));
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("Error de conexión al iniciar la consulta.");
+        });
+    }
+
+    function finalizarConsulta(consultaId) {
+        if (!confirm("¿Está seguro que desea finalizar la consulta actual? Una vez finalizada, no se podrá editar la información clínica registrada en ella.")) {
+            return;
+        }
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const formData = new FormData();
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        
+        fetch(`/pacientes/{{ paciente.pk }}/consultas/${consultaId}/finalizar/`, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert("Error al finalizar la consulta: " + (data.error || "Ocurrió un problema."));
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("Error de conexión al finalizar la consulta.");
+        });
+    }
+
+    function lockFinalizedFields() {
+        const isFinalized = {% if active_consulta and active_consulta.estado == "finalizada" %}true{% else %}false{% endif %};
+        if (!isFinalized) return;
+        
+        console.log("Locking clinical fields because the consultation is finalized");
+
+        // List of all forms to disable
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            // Check if this is a save/action form (ignore navigation, search, print, toggle sidebar)
+            if (form.id && (form.id.includes('search') || form.id.includes('filter'))) {
+                return;
+            }
+            
+            // Disable all fields
+            const fields = form.querySelectorAll('input, select, textarea, button[type="submit"]');
+            fields.forEach(field => {
+                // Keep print/preview/download buttons enabled if any
+                if (field.classList.contains('btn-print') || field.classList.contains('btn-download') || field.id === 'active-consulta-select') {
+                    return;
+                }
+                field.disabled = true;
+                if (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA' || field.tagName === 'SELECT') {
+                    field.classList.add('bg-slate-100', 'cursor-not-allowed', 'opacity-80');
+                }
+            });
+
+            // Hide save buttons
+            const saveButtons = form.querySelectorAll('button[type="submit"], .btn-save, [id*="btn-save"], [id*="btn-guardar"]');
+            saveButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+        });
+
+        // Hide "Nueva medición", "Subir entregable", etc. buttons
+        const actionButtons = document.querySelectorAll(
+            'button[onclick*="guardar"], button[onclick*="subir"], button[onclick*="crear"], button[onclick*="eliminar"], ' +
+            'a[href*="guardar"], a[href*="subir"], a[href*="crear"], a[href*="eliminar"], ' +
+            '.btn-action, [id*="btn-nueva"], [id*="btn-subir"], [id*="btn-agregar"], [id*="btn-crear"], .btn-delete, [id*="btn-eliminar"]'
+        );
+        actionButtons.forEach(btn => {
+            // Make sure we don't hide navigation or switch tabs
+            if (btn.tagName === 'BUTTON' && (btn.getAttribute('onclick') || '').includes('switchTab')) {
+                return;
+            }
+            if (btn.id === 'btn-nueva-consulta' || btn.getAttribute('onclick') === 'abrirModalNuevaConsulta()') {
+                return;
+            }
+            btn.style.display = 'none';
+        });
+        
+        // Also show warning banner at the top of each tab/panel
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach(panel => {
+            // Ignore if already warning
+            if (panel.querySelector('.finalized-warning')) return;
+            
+            const warning = document.createElement('div');
+            warning.className = 'finalized-warning bg-rose-50 border border-rose-100 rounded-2xl p-4 mb-4 text-xs text-rose-800 flex items-center gap-2.5';
+            warning.innerHTML = `
+                <i class="w-4 h-4 text-rose-600 flex-shrink-0" data-lucide="lock"></i>
+                <div>
+                    <span class="font-bold">Consulta Finalizada:</span> La edición de información clínica está bloqueada para esta consulta.
+                </div>
+            `;
+            panel.insertBefore(warning, panel.firstChild);
+        });
+        
+        // Re-render Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // Call lockFinalizedFields on load
+    window.addEventListener('load', function() {
+        setTimeout(lockFinalizedFields, 100);
+    });
 </script>
 
 

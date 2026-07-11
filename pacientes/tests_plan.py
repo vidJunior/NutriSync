@@ -24,6 +24,13 @@ class PlanAlimentarioTestCase(TestCase):
             talla=180.0,
             telefono="987654321",
         )
+        from pacientes.models import Consulta
+        self.consulta = Consulta.objects.create(
+            paciente=self.paciente,
+            profesional=self.nutricionista,
+            numero_consulta=1,
+            estado="en_curso"
+        )
 
     def test_plan_get_empty_initially(self):
         """Verify that initially GET to plan returns success but no plan active if not created."""

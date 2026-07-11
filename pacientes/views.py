@@ -173,21 +173,38 @@ class PacienteDetailView(NutricionistaPacienteMixin, DetailView):
         context = super().get_context_data(**kwargs)
         paciente = self.object
 
-        # ─── Medidas Corporales ───
+        # ─── Consultas e Historial Clínico ───
+        active_consulta = get_consulta_context(paciente, self.request)
+        context['active_consulta'] = active_consulta
+        context['consultas'] = list(paciente.consultas.all().order_by('-numero_consulta'))
+
+        # Si hay una consulta seleccionada, sobreescribir temporalmente la información en memoria
+        if active_consulta:
+            paciente.informacion_clinica = active_consulta.informacion_clinica
+            paciente.evaluacion = active_consulta.evaluacion
+            paciente.seguimiento = active_consulta.seguimiento
+
+        # ─── Medidas Corporales de la Consulta ───
         try:
             from seguimiento.models import MedidaCorporal
-            medidas_qs = MedidaCorporal.objects.filter(paciente=paciente).order_by('-fecha', '-fecha_registro')
+            if active_consulta:
+                medidas_qs = MedidaCorporal.objects.filter(paciente=paciente, consulta=active_consulta).order_by('-fecha', '-fecha_registro')
+            else:
+                medidas_qs = MedidaCorporal.objects.filter(paciente=paciente).order_by('-fecha', '-fecha_registro')
             context['ultima_medida'] = medidas_qs.first()
             context['medidas_recientes'] = list(medidas_qs[:5])
         except Exception:
             context['ultima_medida'] = None
             context['medidas_recientes'] = []
 
-        # ─── Plan Nutricional Activo ───
+        # ─── Plan Nutricional Activo de la Consulta ───
         try:
-            from nutricion.models import PlanNutricional
-            planes = PlanNutricional.objects.filter(paciente=paciente)
-            context['plan_activo'] = planes.filter(estado=True).first()
+            from pacientes.models import PlanAlimentario
+            if active_consulta:
+                planes = PlanAlimentario.objects.filter(paciente=paciente, consulta=active_consulta)
+            else:
+                planes = PlanAlimentario.objects.filter(paciente=paciente)
+            context['plan_activo'] = planes.filter(estado="Activo").first() or planes.first()
             context['planes_count'] = planes.count()
         except Exception:
             context['plan_activo'] = None
@@ -203,12 +220,14 @@ class PacienteDetailView(NutricionistaPacienteMixin, DetailView):
         except Exception:
             context['proxima_cita'] = None
 
-        # ─── Notas Clínicas Recientes ───
+        # ─── Notas Clínicas de la Consulta ───
         try:
             from seguimiento.models import NotaClinica
-            context['notas_recientes'] = list(
-                NotaClinica.objects.filter(paciente=paciente).order_by('-fecha', '-fecha_creacion')[:5]
-            )
+            if active_consulta:
+                notas_qs = NotaClinica.objects.filter(paciente=paciente, consulta=active_consulta)
+            else:
+                notas_qs = NotaClinica.objects.filter(paciente=paciente)
+            context['notas_recientes'] = list(notas_qs.order_by('-fecha', '-fecha_creacion')[:5])
         except Exception:
             context['notas_recientes'] = []
 
@@ -261,6 +280,165 @@ class PacienteUpdateView(FormFragmentMixin, NutricionistaPacienteMixin, UpdateVi
 # ─── Activar / Desactivar paciente (soft-delete) ─────────────────────────────
 
 
+def get_consulta_context(paciente, request):
+    """
+    Retorna la consulta activa (enviada por parámetro consulta_id o cita_id) o la más reciente.
+    """
+    from pacientes.models import Consulta
+    consulta_id = request.GET.get("consulta_id") or request.POST.get("consulta_id") or request.GET.get("cita_id") or request.POST.get("cita_id")
+    if consulta_id and consulta_id != "null" and consulta_id != "undefined":
+        try:
+            return Consulta.objects.filter(id=int(consulta_id), paciente=paciente).first()
+        except ValueError:
+            pass
+    # Fallback a la más reciente de este paciente
+    return Consulta.objects.filter(paciente=paciente).order_by("-numero_consulta").first()
+
+
+@login_required
+@require_POST
+def paciente_consulta_iniciar(request, pk):
+    from django.http import JsonResponse
+    from datetime import date
+    from django.utils import timezone
+    from pacientes.models import Consulta, PlanAlimentario
+    from seguimiento.models import Recomendacion
+    from citas.models import Cita
+    from config.choices import EstadoCita
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    
+    tipo = request.POST.get("tipo", "seguimiento").strip()
+    cita_id = request.POST.get("cita_id")
+
+    # Si hay una consulta en curso para este paciente, no crear otra, retornar esa
+    consulta_existente = Consulta.objects.filter(paciente=paciente, estado="en_curso").first()
+    if consulta_existente:
+        return JsonResponse({
+            "success": True, 
+            "consulta_id": consulta_existente.id,
+            "message": "Ya existe una consulta en curso para este paciente."
+        })
+
+    # Numeración correlativa
+    num_consulta = Consulta.objects.filter(paciente=paciente).count() + 1
+
+    # Obtener última consulta completada
+    ultima_consulta = Consulta.objects.filter(paciente=paciente, estado="finalizada").order_by("-numero_consulta").first()
+
+    # Cita relacionada
+    cita = None
+    if cita_id and cita_id != "null" and cita_id != "undefined":
+        try:
+            cita = Cita.objects.filter(paciente=paciente, id=int(cita_id)).first()
+            if cita:
+                cita.estado = EstadoCita.EN_CONSULTA
+                cita.save()
+        except ValueError:
+            pass
+
+    # Crear nueva consulta
+    nueva_consulta = Consulta.objects.create(
+        paciente=paciente,
+        numero_consulta=num_consulta,
+        tipo=tipo,
+        fecha=date.today(),
+        hora_inicio=timezone.now().time(),
+        estado="en_curso",
+        profesional=request.user,
+        cita=cita,
+        consulta_anterior=ultima_consulta,
+    )
+
+    # Copiar información heredable
+    if ultima_consulta:
+        # Heredar del historial clínico anterior
+        nueva_consulta.informacion_clinica = ultima_consulta.informacion_clinica
+        nueva_consulta.evaluacion = ultima_consulta.evaluacion
+        # Nota: no se copia 'seguimiento' de la consulta anterior
+        nueva_consulta.save()
+
+        # Copiar Plan Alimentario vigente
+        plan_vigente = PlanAlimentario.objects.filter(paciente=paciente, consulta=ultima_consulta).first()
+        if plan_vigente:
+            # Duplicar el plan para la nueva consulta
+            PlanAlimentario.objects.create(
+                paciente=paciente,
+                consulta=nueva_consulta,
+                nombre=plan_vigente.nombre,
+                tipo_plan=plan_vigente.tipo_plan,
+                calorias=plan_vigente.calorias,
+                proteinas=plan_vigente.proteinas,
+                carbohidratos=plan_vigente.carbohidratos,
+                grasas=plan_vigente.grasas,
+                fibra=plan_vigente.fibra,
+                agua_recomendada=plan_vigente.agua_recomendada,
+                estado="Activo",
+                comidas=plan_vigente.comidas,
+                sustituciones=plan_vigente.sustituciones,
+                recomendaciones=plan_vigente.recomendaciones,
+                suplementacion=plan_vigente.suplementacion,
+            )
+
+        # Copiar Recomendaciones vigentes
+        recoms_vigentes = Recomendacion.objects.filter(paciente=paciente, consulta=ultima_consulta)
+        for r in recoms_vigentes:
+            Recomendacion.objects.create(
+                paciente=paciente,
+                consulta=nueva_consulta,
+                nutricionista=request.user,
+                categoria=r.categoria,
+                descripcion=r.descripcion,
+                fecha=date.today(),
+                estado_cumplimiento="pendiente",
+            )
+    else:
+        # Primera consulta: migrar datos iniciales del modelo de Paciente
+        nueva_consulta.informacion_clinica = paciente.informacion_clinica or {}
+        nueva_consulta.evaluacion = paciente.evaluacion or {}
+        nueva_consulta.save()
+
+        # Vincular planes existentes sin consulta a esta primera consulta
+        PlanAlimentario.objects.filter(paciente=paciente, consulta__isnull=True).update(consulta=nueva_consulta)
+        Recomendacion.objects.filter(paciente=paciente, consulta__isnull=True).update(consulta=nueva_consulta)
+
+    return JsonResponse({
+        "success": True, 
+        "consulta_id": nueva_consulta.id,
+        "numero_consulta": nueva_consulta.numero_consulta,
+    })
+
+
+@login_required
+@require_POST
+def paciente_consulta_finalizar(request, pk, consulta_id):
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from pacientes.models import Consulta
+    from citas.models import Cita
+    from config.choices import EstadoCita
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_object_or_404(Consulta, id=consulta_id, paciente=paciente)
+
+    consulta.estado = "finalizada"
+    consulta.hora_fin = timezone.now().time()
+    consulta.save()
+
+    # Si proviene de una cita, cambiar estado de la cita a FINALIZADA
+    if consulta.cita:
+        consulta.cita.estado = EstadoCita.FINALIZADA
+        consulta.cita.save()
+
+    # Sincronizar hacia el paciente como respaldo/caché para listados
+    paciente.informacion_clinica = consulta.informacion_clinica
+    paciente.evaluacion = consulta.evaluacion
+    paciente.seguimiento = consulta.seguimiento
+    paciente.save()
+
+    return JsonResponse({"success": True, "message": "Consulta finalizada correctamente."})
+
+
 @login_required
 @require_POST
 def paciente_toggle_estado(request, pk):
@@ -296,10 +474,16 @@ def paciente_guardar_informacion(request, pk):
     from django.http import JsonResponse
 
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
+
     section = request.POST.get("section")
 
-    if paciente.informacion_clinica is None:
-        paciente.informacion_clinica = {}
+    if consulta.informacion_clinica is None:
+        consulta.informacion_clinica = {}
 
     if section == "datos_personales":
         paciente.dni = request.POST.get("dni", "").strip()
@@ -308,35 +492,35 @@ def paciente_guardar_informacion(request, pk):
             paciente.fecha_nacimiento = fecha_nac
         paciente.sexo = request.POST.get("sexo", "").strip()
         paciente.ocupacion = request.POST.get("ocupacion", "").strip()
-        paciente.informacion_clinica["estado_civil"] = request.POST.get("estado_civil", "").strip()
-        paciente.informacion_clinica["ciudad"] = request.POST.get("ciudad", "").strip()
+        consulta.informacion_clinica["estado_civil"] = request.POST.get("estado_civil", "").strip()
+        consulta.informacion_clinica["ciudad"] = request.POST.get("ciudad", "").strip()
 
     elif section == "contacto":
         paciente.telefono = request.POST.get("telefono", "").strip()
         paciente.email = request.POST.get("email", "").strip()
         paciente.direccion = request.POST.get("direccion", "").strip()
-        paciente.informacion_clinica["contacto_emergencia"] = request.POST.get("contacto_emergencia", "").strip()
-        paciente.informacion_clinica["relacion_contacto"] = request.POST.get("relacion_contacto", "").strip()
-        paciente.informacion_clinica["telefono_emergencia"] = request.POST.get("telefono_emergencia", "").strip()
+        consulta.informacion_clinica["contacto_emergencia"] = request.POST.get("contacto_emergencia", "").strip()
+        consulta.informacion_clinica["relacion_contacto"] = request.POST.get("relacion_contacto", "").strip()
+        consulta.informacion_clinica["telefono_emergencia"] = request.POST.get("telefono_emergencia", "").strip()
 
     elif section == "historia_clinica":
-        paciente.informacion_clinica["objetivo_principal"] = request.POST.get("objetivo_principal", "").strip()
-        paciente.informacion_clinica["clinica_observaciones"] = request.POST.get("clinica_observaciones", "").strip()
-        paciente.informacion_clinica["enfermedades"] = request.POST.getlist("enfermedades")
-        paciente.informacion_clinica["enfermedad_personalizada"] = request.POST.get("enfermedad_personalizada", "").strip()
-        paciente.informacion_clinica["antecedentes_medicos"] = request.POST.getlist("antecedentes_medicos")
-        paciente.informacion_clinica["antecedentes_medicos_detalles"] = request.POST.get("antecedentes_medicos_detalles", "").strip()
-        paciente.informacion_clinica["antecedentes_familiares"] = request.POST.getlist("antecedentes_familiares")
-        paciente.informacion_clinica["antecedentes_familiares_detalles"] = request.POST.get("antecedentes_familiares_detalles", "").strip()
-        paciente.informacion_clinica["alergias_intolerancias"] = request.POST.getlist("alergias_intolerancias")
-        paciente.informacion_clinica["alergias_personalizadas"] = request.POST.get("alergias_personalizadas", "").strip()
+        consulta.informacion_clinica["objetivo_principal"] = request.POST.get("objetivo_principal", "").strip()
+        consulta.informacion_clinica["clinica_observaciones"] = request.POST.get("clinica_observaciones", "").strip()
+        consulta.informacion_clinica["enfermedades"] = request.POST.getlist("enfermedades")
+        consulta.informacion_clinica["enfermedad_personalizada"] = request.POST.get("enfermedad_personalizada", "").strip()
+        consulta.informacion_clinica["antecedentes_medicos"] = request.POST.getlist("antecedentes_medicos")
+        consulta.informacion_clinica["antecedentes_medicos_detalles"] = request.POST.get("antecedentes_medicos_detalles", "").strip()
+        consulta.informacion_clinica["antecedentes_familiares"] = request.POST.getlist("antecedentes_familiares")
+        consulta.informacion_clinica["antecedentes_familiares_detalles"] = request.POST.get("antecedentes_familiares_detalles", "").strip()
+        consulta.informacion_clinica["alergias_intolerancias"] = request.POST.getlist("alergias_intolerancias")
+        consulta.informacion_clinica["alergias_personalizadas"] = request.POST.get("alergias_personalizadas", "").strip()
         
         # Medicacion y Suplementacion (dynamic table data as JSON string)
         meds_json = request.POST.get("meds_data", "[]")
         try:
-            paciente.informacion_clinica["medicacion_suplementacion"] = json.loads(meds_json)
+            consulta.informacion_clinica["medicacion_suplementacion"] = json.loads(meds_json)
         except Exception:
-            paciente.informacion_clinica["medicacion_suplementacion"] = []
+            consulta.informacion_clinica["medicacion_suplementacion"] = []
 
     elif section == "habitos":
         habitos = {}
@@ -350,7 +534,7 @@ def paciente_guardar_informacion(request, pk):
         habitos["tabaco"] = request.POST.get("tabaco", "").strip()
         habitos["hidratacion"] = request.POST.get("hidratacion", "").strip()
         habitos["observaciones"] = request.POST.get("observaciones", "").strip()
-        paciente.informacion_clinica["habitos"] = habitos
+        consulta.informacion_clinica["habitos"] = habitos
 
     elif section == "historia_alimentaria":
         alimentaria = {}
@@ -367,14 +551,16 @@ def paciente_guardar_informacion(request, pk):
         alimentaria["comida_rapida"] = request.POST.get("comida_rapida", "").strip()
         alimentaria["recordatorio_24h"] = request.POST.get("recordatorio_24h", "").strip()
         alimentaria["observaciones"] = request.POST.get("observaciones", "").strip()
-        paciente.informacion_clinica["historia_alimentaria"] = alimentaria
+        consulta.informacion_clinica["historia_alimentaria"] = alimentaria
 
     # Registrar fecha de última actualización para esta sección
-    if "last_updated" not in paciente.informacion_clinica:
-        paciente.informacion_clinica["last_updated"] = {}
-    paciente.informacion_clinica["last_updated"][section] = datetime.now().strftime("%d/%m/%Y %H:%M")
+    if "last_updated" not in consulta.informacion_clinica:
+        consulta.informacion_clinica["last_updated"] = {}
+    consulta.informacion_clinica["last_updated"][section] = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    # Guardar paciente (dispara save() con validaciones nativas y auto-cálculos de edad/IMC)
+    # Guardar consulta y sincronizar con paciente
+    consulta.save()
+    paciente.informacion_clinica = consulta.informacion_clinica
     paciente.save()
 
     return JsonResponse({"success": True})
@@ -404,7 +590,11 @@ def paciente_mediciones_list(request, pk):
     from seguimiento.models import MedidaCorporal
 
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
-    medidas = MedidaCorporal.objects.filter(paciente=paciente).order_by("fecha", "fecha_registro")
+    consulta = get_consulta_context(paciente, request)
+    if consulta:
+        medidas = MedidaCorporal.objects.filter(paciente=paciente, consulta=consulta).order_by("fecha", "fecha_registro")
+    else:
+        medidas = MedidaCorporal.objects.filter(paciente=paciente).order_by("fecha", "fecha_registro")
 
     mediciones_data = []
     for m in medidas:
@@ -483,16 +673,38 @@ def paciente_medicion_guardar(request, pk):
     from seguimiento.models import MedidaCorporal
 
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
 
     fecha_str = request.POST.get("fecha", "").strip()
     fecha_val = parse_date(fecha_str) if fecha_str else date.today()
     if not fecha_val:
         fecha_val = date.today()
 
-    medida, created = MedidaCorporal.objects.get_or_create(paciente=paciente, fecha=fecha_val)
-
     campo_single = request.POST.get("campo")
     valor_single = request.POST.get("valor")
+
+    # Definir valores por defecto para peso_kg y talla_cm para evitar IntegrityError en nuevos registros
+    defaults = {}
+    if campo_single:
+        defaults["peso_kg"] = paciente.peso or 70.0
+        defaults["talla_cm"] = paciente.talla or 170.0
+    else:
+        peso_str = request.POST.get("peso_kg", "").strip()
+        talla_str = request.POST.get("talla_cm", "").strip()
+        defaults["peso_kg"] = to_decimal(peso_str) if peso_str else (paciente.peso or 70.0)
+        defaults["talla_cm"] = to_decimal(talla_str) if talla_str else (paciente.talla or 170.0)
+
+    # Buscar o crear medida para la consulta y fecha dadas
+    medida, created = MedidaCorporal.objects.get_or_create(
+        paciente=paciente, 
+        consulta=consulta,
+        fecha=fecha_val, 
+        defaults=defaults
+    )
 
     if campo_single:
         if hasattr(medida, campo_single):
@@ -530,6 +742,10 @@ def paciente_medicion_eliminar(request, pk, medida_id):
 
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
     medida = get_object_or_404(MedidaCorporal, id=medida_id, paciente=paciente)
+
+    if medida.consulta and medida.consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede eliminar mediciones de una consulta finalizada."}, status=400)
+
     medida.delete()
     return JsonResponse({"success": True})
 
@@ -540,11 +756,15 @@ def paciente_evaluacion_get(request, pk):
     from seguimiento.models import MedidaCorporal
 
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
 
     sexo_str = "Masculino" if paciente.sexo == "M" else "Femenino" if paciente.sexo == "F" else "No especificado"
     edad = paciente.edad
 
-    ultima_medida = MedidaCorporal.objects.filter(paciente=paciente).order_by("-fecha", "-fecha_registro").first()
+    if consulta:
+        ultima_medida = MedidaCorporal.objects.filter(paciente=paciente, consulta=consulta).order_by("-fecha", "-fecha_registro").first()
+    else:
+        ultima_medida = MedidaCorporal.objects.filter(paciente=paciente).order_by("-fecha", "-fecha_registro").first()
 
     mediciones_info = {
         "peso_kg": float(ultima_medida.peso_kg) if ultima_medida and ultima_medida.peso_kg else (float(paciente.peso) if paciente.peso else None),
@@ -653,12 +873,13 @@ def paciente_evaluacion_get(request, pk):
     if "si" in tabaco or "sí" in tabaco or "fumador" in tabaco or "frecuente" in tabaco:
         factores_autodetectados.append("Tabaquismo")
 
-    eval_data = paciente.evaluacion or {}
+    eval_data = consulta.evaluacion or {} if consulta else (paciente.evaluacion or {})
+    info_clinica = consulta.informacion_clinica or {} if consulta else (paciente.informacion_clinica or {})
 
     result = {
         "edad": edad,
         "sexo": sexo_str,
-        "objetivo_principal_info": paciente.informacion_clinica.get("objetivo_principal", "No especificado") if paciente.informacion_clinica else "No especificado",
+        "objetivo_principal_info": info_clinica.get("objetivo_principal", "No especificado"),
         "actividad_fisica": actividad_fisica,
         "mediciones": mediciones_info,
         "interpretaciones_calculadas": interpretaciones_calculadas,
@@ -670,7 +891,7 @@ def paciente_evaluacion_get(request, pk):
 
         "comentarios_nutricionista": eval_data.get("comentarios_nutricionista", ""),
 
-        "objetivo_principal": eval_data.get("objetivo_principal", paciente.informacion_clinica.get("objetivo_principal", "Pérdida de grasa") if paciente.informacion_clinica else "Pérdida de grasa"),
+        "objetivo_principal": eval_data.get("objetivo_principal", info_clinica.get("objetivo_principal", "Pérdida de grasa")),
         "objetivos_especificos": eval_data.get("objetivos_especificos", []),
 
         "factores_riesgo": eval_data.get("factores_riesgo", {
@@ -704,22 +925,27 @@ def paciente_evaluacion_guardar(request, pk):
     from django.http import JsonResponse
 
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
 
-    if paciente.evaluacion is None:
-        paciente.evaluacion = {}
+    if consulta.evaluacion is None:
+        consulta.evaluacion = {}
 
     section = request.POST.get("section")
 
     if section == "diagnostico":
-        paciente.evaluacion["diagnostico_principal"] = request.POST.get("diagnostico_principal", "").strip()
-        paciente.evaluacion["diagnosticos_secundarios"] = request.POST.getlist("diagnosticos_secundarios")
-        paciente.evaluacion["observaciones_clinicas"] = request.POST.get("observaciones_clinicas", "").strip()
+        consulta.evaluacion["diagnostico_principal"] = request.POST.get("diagnostico_principal", "").strip()
+        consulta.evaluacion["diagnosticos_secundarios"] = request.POST.getlist("diagnosticos_secundarios")
+        consulta.evaluacion["observaciones_clinicas"] = request.POST.get("observaciones_clinicas", "").strip()
 
     elif section == "interpretacion":
-        paciente.evaluacion["comentarios_nutricionista"] = request.POST.get("comentarios_nutricionista", "").strip()
+        consulta.evaluacion["comentarios_nutricionista"] = request.POST.get("comentarios_nutricionista", "").strip()
 
     elif section == "objetivos":
-        paciente.evaluacion["objetivo_principal"] = request.POST.get("objetivo_principal", "").strip()
+        consulta.evaluacion["objetivo_principal"] = request.POST.get("objetivo_principal", "").strip()
 
         objetivos_especificos = []
         texts = request.POST.getlist("obj_texto")
@@ -732,7 +958,7 @@ def paciente_evaluacion_guardar(request, pk):
                     "prioridad": p.strip(),
                     "fecha": d.strip()
                 })
-        paciente.evaluacion["objetivos_especificos"] = objetivos_especificos
+        consulta.evaluacion["objetivos_especificos"] = objetivos_especificos
 
     elif section == "riesgos":
         confirmados = request.POST.getlist("confirmados")
@@ -744,7 +970,7 @@ def paciente_evaluacion_guardar(request, pk):
             if val.strip():
                 personalizados.append(val.strip())
 
-        paciente.evaluacion["factores_riesgo"] = {
+        consulta.evaluacion["factores_riesgo"] = {
             "confirmados": confirmados,
             "descartados": descartados,
             "personalizados": personalizados
@@ -763,11 +989,11 @@ def paciente_evaluacion_guardar(request, pk):
             if val.strip():
                 barreras.append(val.strip())
 
-        paciente.evaluacion["fortalezas"] = fortalezas
-        paciente.evaluacion["barreras"] = barreras
+        consulta.evaluacion["fortalezas"] = fortalezas
+        consulta.evaluacion["barreras"] = barreras
 
     elif section == "adherencia":
-        paciente.evaluacion["adherencia"] = {
+        consulta.evaluacion["adherencia"] = {
             "nivel": request.POST.get("nivel", "Media"),
             "escala": to_int(request.POST.get("escala", "5")),
             "justificacion": request.POST.get("justificacion", "").strip(),
@@ -777,15 +1003,19 @@ def paciente_evaluacion_guardar(request, pk):
     elif section == "observaciones":
         obs_text = request.POST.get("observacion", "").strip()
         if obs_text:
-            historial = paciente.evaluacion.get("observaciones_profesionales", [])
+            historial = consulta.evaluacion.get("observaciones_profesionales", [])
             historial.insert(0, {
                 "fecha": datetime.now().strftime("%d/%m/%Y %H:%M"),
                 "profesional": request.user.username,
                 "observacion": obs_text
             })
-            paciente.evaluacion["observaciones_profesionales"] = historial
+            consulta.evaluacion["observaciones_profesionales"] = historial
 
-    paciente.evaluacion["last_updated"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+    consulta.evaluacion["last_updated"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+    consulta.save()
+
+    # Sincronizar de respaldo hacia el paciente
+    paciente.evaluacion = consulta.evaluacion
     paciente.save()
 
     return JsonResponse({"success": True})
@@ -800,17 +1030,24 @@ from decimal import Decimal
 @login_required
 def paciente_plan_get(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
     plan_id = request.GET.get("plan_id")
     
     if plan_id:
         plan = PlanAlimentario.objects.filter(paciente=paciente, id=plan_id).first()
     else:
-        plan = PlanAlimentario.objects.filter(paciente=paciente).first() # ordered by -fecha_creacion by default
+        if consulta:
+            plan = PlanAlimentario.objects.filter(paciente=paciente, consulta=consulta).first()
+        else:
+            plan = PlanAlimentario.objects.filter(paciente=paciente).first()
 
     # 1. Fetch reference data
     try:
         from seguimiento.models import MedidaCorporal
-        ultima = MedidaCorporal.objects.filter(paciente=paciente).order_by('-fecha', '-fecha_registro').first()
+        if consulta:
+            ultima = MedidaCorporal.objects.filter(paciente=paciente, consulta=consulta).order_by('-fecha', '-fecha_registro').first()
+        else:
+            ultima = MedidaCorporal.objects.filter(paciente=paciente).order_by('-fecha', '-fecha_registro').first()
     except Exception:
         ultima = None
 
@@ -830,15 +1067,17 @@ def paciente_plan_get(request, pk):
         else:
             tmb = round(447.593 + (9.247 * peso_actual) + (3.098 * talla_cm) - (4.330 * age))
 
-    estilo_vida = paciente.informacion_clinica.get("estilo_vida", {})
-    actividad_fisica = estilo_vida.get("actividad_fisica", "No registrada")
+    info_clinica = consulta.informacion_clinica or {} if consulta else (paciente.informacion_clinica or {})
+    eval_data = consulta.evaluacion or {} if consulta else (paciente.evaluacion or {})
+    habitos = info_clinica.get("habitos", {})
+    actividad_fisica = habitos.get("actividad_fisica", "No registrada")
     
-    confirmados_riesgo = paciente.evaluacion.get("factores_riesgo", {}).get("confirmados", [])
+    confirmados_riesgo = eval_data.get("factores_riesgo", {}).get("confirmados", [])
 
     referencia = {
-        "objetivo_principal": paciente.evaluacion.get("objetivo_principal", "No especificado"),
-        "diagnostico_principal": paciente.evaluacion.get("diagnostico_principal", "No registrado"),
-        "diagnosticos_secundarios": paciente.evaluacion.get("diagnosticos_secundarios", []),
+        "objetivo_principal": eval_data.get("objetivo_principal", "No especificado"),
+        "diagnostico_principal": eval_data.get("diagnostico_principal", "No registrado"),
+        "diagnosticos_secundarios": eval_data.get("diagnosticos_secundarios", []),
         "peso_actual": peso_actual,
         "peso_objetivo": peso_objetivo,
         "imc": imc,
@@ -893,18 +1132,25 @@ def paciente_plan_get(request, pk):
 @require_POST
 def paciente_plan_guardar(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
+
     section = request.POST.get("section")
     plan_id = request.POST.get("plan_id")
 
     if plan_id:
         plan = PlanAlimentario.objects.filter(paciente=paciente, id=plan_id).first()
     else:
-        plan = PlanAlimentario.objects.filter(paciente=paciente).first()
+        plan = PlanAlimentario.objects.filter(paciente=paciente, consulta=consulta).first()
 
     # If no plan exists, create a default one
     if not plan:
         plan = PlanAlimentario.objects.create(
             paciente=paciente,
+            consulta=consulta,
             nombre="Plan Alimentario Inicial",
             calorias=2000
         )
@@ -995,12 +1241,16 @@ def paciente_plan_guardar(request, pk):
 @require_POST
 def paciente_plan_nueva_version(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta or consulta.estado == 'finalizada':
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta finalizada o inexistente."}, status=400)
+
     plan_id = request.POST.get("plan_id")
     
     if plan_id:
         original = PlanAlimentario.objects.filter(paciente=paciente, id=plan_id).first()
     else:
-        original = PlanAlimentario.objects.filter(paciente=paciente).first()
+        original = PlanAlimentario.objects.filter(paciente=paciente, consulta=consulta).first()
 
     # Set old active plan to Finalizado
     if original:
@@ -1011,6 +1261,7 @@ def paciente_plan_nueva_version(request, pk):
         # Clone
         nuevo = PlanAlimentario.objects.create(
             paciente=paciente,
+            consulta=consulta,
             nombre=f"{original.nombre} (v2)" if not original.nombre.endswith(")") else original.nombre,
             tipo_plan=original.tipo_plan,
             calorias=original.calorias,
@@ -1028,6 +1279,7 @@ def paciente_plan_nueva_version(request, pk):
     else:
         nuevo = PlanAlimentario.objects.create(
             paciente=paciente,
+            consulta=consulta,
             nombre="Plan Alimentario Basal",
             estado='Borrador'
         )
@@ -1038,12 +1290,16 @@ def paciente_plan_nueva_version(request, pk):
 @require_POST
 def paciente_plan_duplicar(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta or consulta.estado == 'finalizada':
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta finalizada o inexistente."}, status=400)
+
     plan_id = request.POST.get("plan_id")
-    
     original = get_object_or_404(PlanAlimentario, paciente=paciente, id=plan_id)
     
     nuevo = PlanAlimentario.objects.create(
         paciente=paciente,
+        consulta=consulta,
         nombre=f"{original.nombre} (Copia)",
         tipo_plan=original.tipo_plan,
         calorias=original.calorias,
@@ -1065,8 +1321,11 @@ def paciente_plan_duplicar(request, pk):
 @require_POST
 def paciente_plan_eliminar(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta or consulta.estado == 'finalizada':
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta finalizada o inexistente."}, status=400)
+
     plan_id = request.POST.get("plan_id")
-    
     plan = get_object_or_404(PlanAlimentario, paciente=paciente, id=plan_id)
     plan.delete()
     
@@ -1113,6 +1372,7 @@ def paciente_seguimiento_get(request, pk):
     Combina datos de MedidaCorporal, Evaluación, Citas/Consultas, y el campo paciente.seguimiento.
     """
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
     
     import json
     from datetime import date
@@ -1120,7 +1380,7 @@ def paciente_seguimiento_get(request, pk):
     from seguimiento.models import MedidaCorporal
     
     # Asegurar que existe el dict de seguimiento
-    seg_data = paciente.seguimiento or {}
+    seg_data = consulta.seguimiento or {} if consulta else (paciente.seguimiento or {})
     
     # 1. Resumen de Evolución (usando MedidaCorporal)
     medidas = MedidaCorporal.objects.filter(paciente=paciente).order_by('fecha', 'id')
@@ -1168,7 +1428,7 @@ def paciente_seguimiento_get(request, pk):
     }
     
     # Progreso de Objetivos (combina Evaluacion y Seguimiento)
-    eval_data = paciente.evaluacion or {}
+    eval_data = consulta.evaluacion or {} if consulta else (paciente.evaluacion or {})
     objs_evaluacion = eval_data.get("objetivos_especificos", [])
     objs_progreso = seg_data.get("progreso_objetivos", {}) # { "obj_string": {"estado": "En progreso", "avance": 50} }
     
@@ -1199,42 +1459,52 @@ def paciente_seguimiento_get(request, pk):
 @require_POST
 def paciente_seguimiento_guardar(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
+
     import json
     
     try:
         data = json.loads(request.body)
         section = data.get("section")
         
-        if paciente.seguimiento is None:
-            paciente.seguimiento = {}
+        if consulta.seguimiento is None:
+            consulta.seguimiento = {}
             
         if section == "consultas":
-            consultas = paciente.seguimiento.get("consultas", [])
+            consultas = consulta.seguimiento.get("consultas", [])
             consultas.append(data.get("consulta"))
-            paciente.seguimiento["consultas"] = consultas
+            consulta.seguimiento["consultas"] = consultas
             
         elif section == "adherencia":
-            paciente.seguimiento["adherencia"] = data.get("adherencia", {})
+            consulta.seguimiento["adherencia"] = data.get("adherencia", {})
             
         elif section == "objetivos":
-            # Guarda un dict { "obj1": {"estado": "...", "avance": X} }
-            paciente.seguimiento["progreso_objetivos"] = data.get("progreso_objetivos", {})
+            consulta.seguimiento["progreso_objetivos"] = data.get("progreso_objetivos", {})
             
         elif section == "dificultades":
-            paciente.seguimiento["dificultades"] = data.get("dificultades", [])
+            consulta.seguimiento["dificultades"] = data.get("dificultades", [])
             
         elif section == "logros":
-            paciente.seguimiento["logros"] = data.get("logros", [])
+            consulta.seguimiento["logros"] = data.get("logros", [])
             
         elif section == "notas":
-            notas = paciente.seguimiento.get("notas", [])
+            notas = consulta.seguimiento.get("notas", [])
             notas.append(data.get("nota"))
-            paciente.seguimiento["notas"] = notas
+            consulta.seguimiento["notas"] = notas
             
         elif section == "proxima_cita":
-            paciente.seguimiento["proxima_cita"] = data.get("proxima_cita", {})
+            consulta.seguimiento["proxima_cita"] = data.get("proxima_cita", {})
             
+        consulta.save()
+
+        # Sincronizar de respaldo hacia el paciente
+        paciente.seguimiento = consulta.seguimiento
         paciente.save()
+
         return JsonResponse({"success": True})
         
     except Exception as e:
@@ -1342,6 +1612,510 @@ def paciente_archivo_eliminar(request, pk, archivo_id):
         
     archivo.delete()
     return JsonResponse({"success": True, "message": "Archivo eliminado correctamente."})
+
+
+@login_required
+def paciente_recomendaciones_get(request, pk):
+    """
+    Retorna las recomendaciones de un paciente, filtradas por la consulta activa.
+    """
+    from django.http import JsonResponse
+    from seguimiento.models import Recomendacion
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+
+    # 1. Obtener listado de consultas del paciente para el selector
+    consultas_qs = paciente.consultas.all().order_by("-numero_consulta")
+    citas_data = [
+        {
+            "id": c.id,
+            "numero": c.numero_consulta,
+            "fecha": c.fecha.strftime("%d/%m/%Y"),
+            "tipo": c.get_tipo_display(),
+            "estado": c.estado,
+        }
+        for c in consultas_qs
+    ]
+
+    # 2. Filtrar recomendaciones por la consulta especificada
+    if consulta:
+        recoms = Recomendacion.objects.filter(paciente=paciente, consulta=consulta)
+    else:
+        recoms = Recomendacion.objects.none()
+
+    # 3. Agrupar recomendaciones por categoría
+    categorias = ["hidratacion", "actividad_fisica", "alimentos_recomendados", "alimentos_limitar", "generales"]
+    recomendaciones_dict = {}
+
+    for cat in categorias:
+        r = recoms.filter(categoria=cat).first()
+        if r:
+            recomendaciones_dict[cat] = {
+                "id": r.id,
+                "categoria": r.categoria,
+                "descripcion": r.descripcion,
+                "fecha": r.fecha.strftime("%d/%m/%Y") if r.fecha else "",
+                "estado_cumplimiento": r.estado_cumplimiento,
+                "profesional": r.nutricionista.username,
+                "consulta_id": r.consulta_id,
+            }
+        else:
+            # Retornar estructura vacía por defecto
+            recomendaciones_dict[cat] = {
+                "id": None,
+                "categoria": cat,
+                "descripcion": {},
+                "fecha": "",
+                "estado_cumplimiento": "pendiente",
+                "profesional": "",
+                "consulta_id": None,
+            }
+
+    return JsonResponse({
+        "success": True,
+        "citas": citas_data,
+        "recomendaciones": recomendaciones_dict,
+        "selected_cita_id": consulta.id if consulta else None,
+    })
+
+
+@login_required
+@require_POST
+def paciente_recomendacion_guardar(request, pk):
+    """
+    Guarda o actualiza una recomendación para un paciente, categoría y consulta específicos.
+    """
+    from django.http import JsonResponse
+    from django.utils.dateparse import parse_date
+    from datetime import date
+    from seguimiento.models import Recomendacion
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
+
+    categoria = request.POST.get("categoria", "").strip()
+    fecha_str = request.POST.get("fecha", "").strip()
+
+    if not categoria:
+        return JsonResponse({"success": False, "error": "La categoría es requerida."}, status=400)
+
+    # Determinar Fecha
+    fecha_val = parse_date(fecha_str) if fecha_str else date.today()
+
+    # Procesar datos según categoría
+    descripcion = {}
+    if categoria == "hidratacion":
+        descripcion["consumo_diario"] = request.POST.get("consumo_diario", "").strip()
+        descripcion["observaciones"] = request.POST.get("observaciones", "").strip()
+    elif categoria == "actividad_fisica":
+        descripcion["tipo"] = request.POST.get("tipo", "").strip()
+        descripcion["frecuencia"] = request.POST.get("frecuencia", "").strip()
+        descripcion["duracion"] = request.POST.get("duracion", "").strip()
+        descripcion["intensidad"] = request.POST.get("intensidad", "").strip()
+    elif categoria in ["alimentos_recomendados", "alimentos_limitar", "generales"]:
+        # Se espera recibir una lista de elementos (chips/consejos)
+        items_raw = request.POST.getlist("items")
+        if not items_raw and "items[]" in request.POST:
+            items_raw = request.POST.getlist("items[]")
+        # Filtrar elementos vacíos
+        descripcion["items"] = [item.strip() for item in items_raw if item.strip()]
+
+    # Guardar o actualizar la recomendación
+    query_kwargs = {
+        "paciente": paciente,
+        "consulta": consulta,
+        "categoria": categoria,
+    }
+    query_kwargs["fecha"] = fecha_val
+
+    defaults = {
+        "descripcion": descripcion,
+        "fecha": fecha_val,
+        "nutricionista": request.user,
+    }
+
+    try:
+        recomendacion, created = Recomendacion.objects.update_or_create(
+            defaults=defaults,
+            **query_kwargs
+        )
+        return JsonResponse({
+            "success": True,
+            "recomendacion": {
+                "id": recomendacion.id,
+                "categoria": recomendacion.categoria,
+                "fecha": recomendacion.fecha.strftime("%d/%m/%Y"),
+                "estado_cumplimiento": recomendacion.estado_cumplimiento,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@login_required
+def paciente_entregables_get(request, pk):
+    """
+    Retorna la información consolidada para la pestaña Entregables.
+    Incluye listado de planes alimentarios, cantidad de recomendaciones de la consulta actual,
+    métricas de reportes rápidos, datos de lista de compras y el historial completo de entregables.
+    """
+    from django.http import JsonResponse
+    from datetime import date
+    from seguimiento.models import Entregable, Recomendacion, MedidaCorporal
+    from pacientes.models import PlanAlimentario
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+
+    # 1. Selector de Consultas
+    consultas_qs = paciente.consultas.all().order_by("-numero_consulta")
+    citas_data = [
+        {
+            "id": c.id,
+            "numero": c.numero_consulta,
+            "fecha": c.fecha.strftime("%d/%m/%Y"),
+            "tipo": c.get_tipo_display(),
+            "estado": c.estado,
+        }
+        for c in consultas_qs
+    ]
+
+    selected_consulta = consulta
+
+    # 2. Historial de Entregables
+    entregables_qs = Entregable.objects.filter(paciente=paciente).order_by("-fecha_publicacion", "-id")
+    entregables_data = [
+        {
+            "id": e.id,
+            "fecha": e.fecha_publicacion.strftime("%d/%m/%Y"),
+            "tipo": e.tipo,
+            "tipo_display": e.get_tipo_display(),
+            "titulo": e.titulo,
+            "descripcion": e.descripcion,
+            "consulta_id": e.consulta_id,
+            "consulta_fecha": e.consulta.fecha.strftime("%d/%m/%Y") if e.consulta else "General",
+            "estado": e.estado,
+            "estado_display": e.get_estado_display(),
+            "profesional": e.nutricionista.get_full_name() or e.nutricionista.username,
+            "archivo_url": e.archivo.url if e.archivo else None,
+            "recurso_asociado": e.recurso_asociado,
+        }
+        for e in entregables_qs
+    ]
+
+    # 3. Planes Alimentarios creados
+    planes_qs = PlanAlimentario.objects.filter(paciente=paciente).order_by("-fecha_creacion")
+    planes_data = [
+        {
+            "id": p.id,
+            "nombre": p.nombre,
+            "tipo_plan": p.tipo_plan,
+            "calorias": p.calorias,
+            "estado": p.estado,
+            "fecha": p.fecha_inicio.strftime("%d/%m/%Y") if p.fecha_inicio else "",
+            "enviado": p.enviado_al_paciente,
+            "fecha_envio": p.fecha_envio.strftime("%d/%m/%Y %H:%M") if p.fecha_envio else None,
+        }
+        for p in planes_qs
+    ]
+
+    # 4. Recomendaciones de la consulta seleccionada
+    recom_count = 0
+    recom_categorias = []
+    recom_publicada = False
+    if selected_consulta:
+        recom_qs = Recomendacion.objects.filter(paciente=paciente, consulta=selected_consulta)
+        recom_count = recom_qs.count()
+        recom_categorias = [r.get_categoria_display() for r in recom_qs]
+        recom_publicada = Entregable.objects.filter(
+            paciente=paciente, consulta=selected_consulta, tipo="recomendaciones", estado="publicado"
+        ).exists()
+
+    # 5. Reportes rápidos (Evolución)
+    medidas = MedidaCorporal.objects.filter(paciente=paciente).order_by("fecha")
+    reportes_disponibles = {
+        "pesos": [float(m.peso_kg) for m in medidas],
+        "imcs": [float(m.imc) for m in medidas],
+        "grasas": [float(m.grasa_corporal_pct) if m.grasa_corporal_pct else 0 for m in medidas],
+        "fechas": [m.fecha.strftime("%d/%m/%Y") for m in medidas],
+        "tiene_datos": medidas.exists(),
+    }
+
+    # 6. Lista de Compras (Generación automática simulada)
+    active_plan = planes_qs.filter(estado="Activo").first() or planes_qs.first()
+    lista_compras_items = []
+    if active_plan:
+        lista_compras_items = [
+            {"categoria": "Frutas y Verduras", "producto": "Espinacas frescas", "cantidad": "1 manojo"},
+            {"categoria": "Frutas y Verduras", "producto": "Manzanas verdes", "cantidad": "6 unidades"},
+            {"categoria": "Proteínas", "producto": "Pechuga de pollo", "cantidad": "1.2 kg"},
+            {"categoria": "Proteínas", "producto": "Filete de pescado fresco", "cantidad": "1 kg"},
+            {"categoria": "Lácteos y Derivados", "producto": "Yogurt griego natural (sin azúcar)", "cantidad": "1 L"},
+            {"categoria": "Cereales y Tubérculos", "producto": "Avena en hojuelas", "cantidad": "500 g"},
+            {"categoria": "Cereales y Tubérculos", "producto": "Camote amarillo", "cantidad": "1.5 kg"},
+            {"categoria": "Grasas Saludables", "producto": "Frutos secos (almendras/nueces)", "cantidad": "250 g"},
+            {"categoria": "Grasas Saludables", "producto": "Aceite de oliva extra virgen", "cantidad": "1 botella"},
+        ]
+
+    # 7. Resumen de consulta rápido
+    eval_data = selected_consulta.evaluacion or {} if selected_consulta else (paciente.evaluacion or {})
+    resumen_consulta_data = {
+        "fecha": selected_consulta.fecha.strftime("%d/%m/%Y") if selected_consulta else None,
+        "objetivo": eval_data.get("objetivo_principal", "No especificado"),
+        "diagnostico": eval_data.get("diagnostico_principal", "No registrado"),
+        "peso": float(paciente.peso) if paciente.peso else None,
+        "imc": float(paciente.imc_inicial) if paciente.imc_inicial else None,
+        "consulta_id": selected_consulta.id if selected_consulta else None,
+        "publicado": Entregable.objects.filter(
+            paciente=paciente, consulta=selected_consulta, tipo="resumen_consulta", estado="publicado"
+        ).exists() if selected_consulta else False,
+    }
+
+    return JsonResponse({
+        "success": True,
+        "citas": citas_data,
+        "selected_cita_id": selected_consulta.id if selected_consulta else None,
+        "entregables": entregables_data,
+        "planes": planes_data,
+        "recomendaciones": {
+            "count": recom_count,
+            "categorias": recom_categorias,
+            "publicada": recom_publicada,
+        },
+        "reportes": reportes_disponibles,
+        "lista_compras": lista_compras_items,
+        "resumen_consulta": resumen_consulta_data,
+    })
+
+
+@login_required
+@require_POST
+def paciente_entregable_guardar(request, pk):
+    """
+    Crea o edita un entregable (como subir material educativo o publicar un reporte).
+    """
+    from django.http import JsonResponse
+    from django.utils.dateparse import parse_date
+    from datetime import date
+    from seguimiento.models import Entregable
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
+
+    entregable_id = request.POST.get("id")
+    tipo = request.POST.get("tipo", "").strip()
+    titulo = request.POST.get("titulo", "").strip()
+    descripcion = request.POST.get("descripcion", "").strip()
+    estado = request.POST.get("estado", "borrador").strip()
+    fecha_pub_str = request.POST.get("fecha_publicacion", "").strip()
+
+    if not tipo or not titulo:
+        return JsonResponse({"success": False, "error": "El tipo y título son obligatorios."}, status=400)
+
+    # Fecha de publicación
+    fecha_pub = parse_date(fecha_pub_str) if fecha_pub_str else None
+    if not fecha_pub:
+        fecha_pub = date.today()
+
+    # Procesar archivo si se sube
+    archivo = request.FILES.get("archivo")
+
+    # Guardar o actualizar
+    try:
+        if entregable_id:
+            entregable = get_object_or_404(Entregable, id=entregable_id, paciente=paciente)
+            entregable.titulo = titulo
+            entregable.descripcion = descripcion
+            entregable.estado = estado
+            entregable.fecha_publicacion = fecha_pub
+            if archivo:
+                entregable.archivo = archivo
+            entregable.save()
+        else:
+            entregable = Entregable.objects.create(
+                paciente=paciente,
+                consulta=consulta,
+                nutricionista=request.user,
+                tipo=tipo,
+                titulo=titulo,
+                descripcion=descripcion,
+                fecha_publicacion=fecha_pub,
+                estado=estado,
+                archivo=archivo,
+            )
+        return JsonResponse({"success": True, "message": "Entregable guardado correctamente."})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def paciente_entregable_eliminar(request, pk, entregable_id):
+    """
+    Elimina permanentemente un entregable del historial.
+    """
+    from django.http import JsonResponse
+    from seguimiento.models import Entregable
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    entregable = get_object_or_404(Entregable, id=entregable_id, paciente=paciente)
+
+    if entregable.consulta and entregable.consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede eliminar entregables de una consulta finalizada."}, status=400)
+
+    # Eliminar archivo físico
+    if entregable.archivo:
+        entregable.archivo.delete(save=False)
+
+    entregable.delete()
+    return JsonResponse({"success": True, "message": "Entregable eliminado correctamente."})
+
+
+@login_required
+@require_POST
+def paciente_plan_publicar(request, pk, plan_id):
+    """
+    Publica o despublica un plan alimentario al paciente.
+    Sincroniza la publicación con el historial de entregables.
+    """
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from datetime import date
+    from pacientes.models import PlanAlimentario
+    from seguimiento.models import Entregable
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    consulta = get_consulta_context(paciente, request)
+    if not consulta:
+        return JsonResponse({"success": False, "error": "No existe una consulta iniciada para este paciente."}, status=400)
+    if consulta.estado == "finalizada":
+        return JsonResponse({"success": False, "error": "No se puede editar una consulta que ya ha sido finalizada."}, status=400)
+
+    plan = get_object_or_404(PlanAlimentario, id=plan_id, paciente=paciente)
+
+    # Toggle estado
+    if plan.enviado_al_paciente:
+        plan.enviado_al_paciente = False
+        plan.fecha_envio = None
+        plan.save()
+        # Eliminar del historial de entregables
+        Entregable.objects.filter(
+            paciente=paciente, tipo="plan_alimentario", recurso_asociado__plan_id=plan.id
+        ).delete()
+        message = "Plan despublicado correctamente."
+    else:
+        plan.enviado_al_paciente = True
+        plan.fecha_envio = timezone.now()
+        plan.save()
+        # Crear entregable correspondiente
+        Entregable.objects.update_or_create(
+            paciente=paciente,
+            consulta=consulta,
+            tipo="plan_alimentario",
+            recurso_asociado={"plan_id": plan.id},
+            defaults={
+                "titulo": f"Plan Alimentario: {plan.nombre}",
+                "descripcion": f"Plan activo del paciente con {plan.calorias} kcal y distribución balanceada.",
+                "fecha_publicacion": date.today(),
+                "estado": "publicado",
+                "nutricionista": request.user,
+            }
+        )
+        message = "Plan publicado al paciente correctamente."
+
+    return JsonResponse({"success": True, "message": message})
+
+
+@login_required
+def paciente_resumen_imprimir(request, pk, cita_id):
+    """
+    Muestra la página de impresión en PDF del resumen completo de una consulta.
+    """
+    from django.shortcuts import render
+    from seguimiento.models import Recomendacion, MedidaCorporal
+    from pacientes.models import PlanAlimentario, Consulta
+
+    paciente = get_object_or_404(Paciente, pk=pk, nutricionista=request.user)
+    
+    # Resolver consulta por ID o por cita asociada
+    consulta = Consulta.objects.filter(id=cita_id, paciente=paciente).first()
+    if not consulta:
+        consulta = Consulta.objects.filter(cita_id=cita_id, paciente=paciente).first()
+
+    if consulta:
+        eval_data = consulta.evaluacion or {}
+        # Sobreescribir en memoria
+        paciente.evaluacion = eval_data
+        paciente.informacion_clinica = consulta.informacion_clinica or {}
+        plan_activo = PlanAlimentario.objects.filter(paciente=paciente, consulta=consulta).first() or PlanAlimentario.objects.filter(paciente=paciente).first()
+        recoms = Recomendacion.objects.filter(paciente=paciente, consulta=consulta)
+        medida_cons = MedidaCorporal.objects.filter(paciente=paciente, consulta=consulta).order_by("-fecha", "-fecha_registro").first()
+    else:
+        eval_data = paciente.evaluacion or {}
+        plan_activo = PlanAlimentario.objects.filter(paciente=paciente, estado="Activo").first() or PlanAlimentario.objects.filter(paciente=paciente).first()
+        recoms = Recomendacion.objects.filter(paciente=paciente)
+        medida_cons = MedidaCorporal.objects.filter(paciente=paciente).order_by("-fecha", "-fecha_registro").first()
+
+    recom_hid = recoms.filter(categoria="hidratacion").first()
+    recom_act = recoms.filter(categoria="actividad_fisica").first()
+    recom_al_rec = recoms.filter(categoria="alimentos_recomendados").first()
+    recom_al_lim = recoms.filter(categoria="alimentos_limitar").first()
+    recom_gen = recoms.filter(categoria="generales").first()
+
+    # Buscar la siguiente consulta o cita
+    proxima_data = None
+    if consulta and consulta.cita:
+        proxima_cita = paciente.citas.filter(fecha_hora__gt=consulta.cita.fecha_hora).order_by("fecha_hora").first()
+        if proxima_cita:
+            proxima_data = {
+                "fecha": proxima_cita.fecha_hora.strftime("%d/%m/%Y"),
+                "hora": proxima_cita.fecha_hora.strftime("%H:%M"),
+                "tipo": proxima_cita.get_tipo_display(),
+            }
+
+    # Datos clínicos
+    peso = float(medida_cons.peso_kg) if (medida_cons and medida_cons.peso_kg) else (float(paciente.peso) if paciente.peso else "—")
+    talla = float(medida_cons.talla_cm) if (medida_cons and medida_cons.talla_cm) else (float(paciente.talla) if paciente.talla else "—")
+    imc = float(medida_cons.imc) if (medida_cons and medida_cons.imc) else (float(paciente.imc_inicial) if paciente.imc_inicial else "—")
+    
+    tmb = None
+    if peso != "—" and talla != "—":
+        age = paciente.edad or 30
+        if paciente.sexo == "M":
+            tmb = round(88.362 + (13.397 * float(peso)) + (4.799 * float(talla)) - (5.677 * age))
+        else:
+            tmb = round(447.593 + (9.247 * float(peso)) + (3.098 * float(talla)) - (4.330 * age))
+
+    context = {
+        "paciente": paciente,
+        "cita": consulta.cita if (consulta and consulta.cita) else None,
+        "consulta": consulta,
+        "plan": plan_activo,
+        "recom_hidratacion": recom_hid,
+        "recom_actividad": recom_act,
+        "recom_alimentos_recom": recom_al_rec,
+        "recom_alimentos_limitar": recom_al_lim,
+        "recom_generales": recom_gen,
+        "proxima_cita": proxima_data,
+        "objetivo": eval_data.get("objetivo_principal", "No especificado"),
+        "diagnostico": eval_data.get("diagnostico_principal", "No registrado"),
+        "peso": peso,
+        "talla": talla,
+        "imc": imc,
+        "tmb": tmb,
+    }
+    return render(request, "pacientes/resumen_imprimir.html", context)
+
+
 
 
 

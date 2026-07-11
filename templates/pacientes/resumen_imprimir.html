@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen de Consulta — {{ paciente.nombre_completo }}</title>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        @media print {
+            body {
+                background-color: #ffffff;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-card {
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin-bottom: 2rem !important;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Barra de herramientas (Solo pantalla) -->
+    <div class="max-w-4xl mx-auto mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between no-print">
+        <div class="flex items-center gap-2">
+            <a href="{% url 'pacientes:detalle' paciente.pk %}" class="text-xs font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Volver a la Ficha
+            </a>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-sm">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Resumen
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenido del Resumen -->
+    <div class="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm print-card">
+        
+        <!-- Encabezado Clínico -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-200 mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="heart" class="w-6 h-6 text-teal-650"></i> NutriSync
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Plataforma Inteligente de Nutrición y Salud</p>
+            </div>
+            <div class="text-right md:text-right">
+                <h2 class="text-base font-extrabold text-slate-700">Resumen de Consulta Clínica</h2>
+                <p class="text-xs text-slate-500">Fecha de Consulta: {{ cita.fecha_hora|date:"d/m/Y" }}</p>
+                <p class="text-xs text-slate-450">Profesional: {{ cita.nutricionista.get_full_name|default:cita.nutricionista.username }}</p>
+            </div>
+        </div>
+
+        <!-- 1. Datos Generales del Paciente -->
+        <div class="mb-8">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <i data-lucide="user" class="w-4 h-4 text-teal-650"></i> Datos del Paciente
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Nombre</span>
+                    <span class="font-bold text-slate-700">{{ paciente.nombre_completo }}</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">DNI</span>
+                    <span class="font-bold text-slate-700">{{ paciente.dni }}</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Edad</span>
+                    <span class="font-bold text-slate-700">{{ paciente.edad }} años</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Sexo</span>
+                    <span class="font-bold text-slate-700">{% if paciente.sexo == 'M' %}Masculino{% else %}Femenino{% endif %}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Objetivos y Diagnóstico -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <i data-lucide="target" class="w-4 h-4 text-amber-500"></i> Objetivo del Tratamiento
+                </h3>
+                <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs min-h-[80px]">
+                    <p class="text-slate-600 leading-relaxed font-semibold">{{ objetivo|default:"No especificado" }}</p>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <i data-lucide="clipboard-list" class="w-4 h-4 text-violet-500"></i> Diagnóstico Nutricional
+                </h3>
+                <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs min-h-[80px]">
+                    <p class="text-slate-600 leading-relaxed font-semibold">{{ diagnostico|default:"No registrado" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Parámetros Clínicos e Indicadores -->
+        <div class="mb-8">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i> Parámetros Clínicos
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="bg-white border border-slate-200 p-4 rounded-xl">
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Peso Corporal</span>
+                    <span class="text-xl font-black text-slate-800">{{ peso|default:"—" }} <span class="text-xs font-bold">kg</span></span>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-xl">
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Estatura</span>
+                    <span class="text-xl font-black text-slate-800">{{ talla|default:"—" }} <span class="text-xs font-bold">cm</span></span>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-xl">
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">IMC Actual</span>
+                    <span class="text-xl font-black text-slate-800">{{ imc|default:"—" }}</span>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-xl">
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tasa Metabólica (TMB)</span>
+                    <span class="text-xl font-black text-slate-800">{{ tmb|default:"—" }} <span class="text-xs font-bold">kcal</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Plan Alimentario Activo -->
+        {% if plan %}
+        <div class="mb-8">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <i data-lucide="utensils" class="w-4 h-4 text-teal-650"></i> Plan Alimentario Asignado
+            </h3>
+            <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl text-xs space-y-4">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+                    <div>
+                        <span class="font-bold text-sm text-slate-800">{{ plan.nombre }}</span>
+                        <span class="text-[10px] ml-2 px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-bold uppercase">Activo</span>
+                    </div>
+                    <span class="text-slate-400 text-[10px] font-bold">Inicio: {{ plan.fecha_inicio|date:"d/m/Y" }}</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Calorías</span>
+                        <span class="font-extrabold text-slate-700 text-sm">{{ plan.calorias }} kcal</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Proteínas</span>
+                        <span class="font-extrabold text-slate-700 text-sm">{{ plan.proteinas }} g</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Carbohidratos</span>
+                        <span class="font-extrabold text-slate-700 text-sm">{{ plan.carbohidratos }} g</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Grasas</span>
+                        <span class="font-extrabold text-slate-700 text-sm">{{ plan.grasas }} g</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 5. Recomendaciones de la Consulta -->
+        <div class="mb-8">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <i data-lucide="clipboard-check" class="w-4 h-4 text-teal-650"></i> Recomendaciones e Indicaciones
+            </h3>
+            <div class="space-y-4">
+                
+                <!-- Hidratación y Actividad Física -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if recom_hidratacion.descripcion %}
+                    <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs space-y-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1"><i data-lucide="droplet" class="w-3.5 h-3.5 text-sky-500"></i> Hidratación</span>
+                        <p class="font-semibold text-slate-800">Consumo diario: {{ recom_hidratacion.descripcion.consumo_diario|default:"—" }} L/día</p>
+                        <p class="text-slate-500 italic">{{ recom_hidratacion.descripcion.observaciones }}</p>
+                    </div>
+                    {% endif %}
+                    {% if recom_actividad.descripcion %}
+                    <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs space-y-1.5">
+                        <span class="font-bold text-slate-700 flex items-center gap-1"><i data-lucide="dumbbell" class="w-3.5 h-3.5 text-violet-500"></i> Actividad Física</span>
+                        <p class="text-slate-800 font-semibold">Actividad: {{ recom_actividad.descripcion.tipo|default:"—" }}</p>
+                        <div class="grid grid-cols-3 gap-2 text-[10px] text-slate-500">
+                            <div><span class="font-bold block">Frecuencia</span>{{ recom_actividad.descripcion.frecuencia }}</div>
+                            <div><span class="font-bold block">Duración</span>{{ recom_actividad.descripcion.duracion }}</div>
+                            <div><span class="font-bold block">Intensidad</span>{{ recom_actividad.descripcion.intensidad }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Alimentos Recomendados y a Limitar -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if recom_alimentos_recom.descripcion.items %}
+                    <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs space-y-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1"><i data-lucide="leaf" class="w-3.5 h-3.5 text-emerald-500"></i> Alimentos Recomendados</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for item in recom_alimentos_recom.descripcion.items %}
+                            <span class="px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg uppercase">{{ item }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if recom_alimentos_limitar.descripcion.items %}
+                    <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs space-y-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-500"></i> Alimentos a Evitar/Limitar</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for item in recom_alimentos_limitar.descripcion.items %}
+                            <span class="px-2 py-0.5 bg-rose-50 border border-rose-100 text-rose-700 text-[10px] font-bold rounded-lg uppercase">{{ item }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recomendaciones Generales -->
+                {% if recom_generales.descripcion.items %}
+                <div class="bg-white border border-slate-200 p-4 rounded-xl text-xs space-y-2">
+                    <span class="font-bold text-slate-700 flex items-center gap-1"><i data-lucide="check-square" class="w-3.5 h-3.5 text-amber-500"></i> Indicaciones Generales</span>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        {% for item in recom_generales.descripcion.items %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- 6. Próxima Cita -->
+        {% if proxima_cita %}
+        <div class="mb-8 bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i data-lucide="calendar" class="w-5 h-5 text-amber-600"></i>
+                <div>
+                    <span class="font-bold text-slate-800">Próxima Consulta Agendada</span>
+                    <p class="text-slate-500 mt-0.5">Recuerda asistir a tu próxima sesión de control para dar seguimiento a tus metas.</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="block font-black text-slate-700 text-sm">{{ proxima_cita.fecha }}</span>
+                <span class="text-[10px] text-slate-500 font-bold uppercase">{{ proxima_cita.hora }} ({{ proxima_cita.tipo }})</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Pie de página clínico -->
+        <div class="pt-8 border-t border-slate-200 mt-12 flex justify-between items-center text-[10px] text-slate-400">
+            <span>NutriSync — Documento informativo para el Paciente</span>
+            <span>Profesional responsable: {{ cita.nutricionista.get_full_name|default:cita.nutricionista.username }}</span>
+        </div>
+
+    </div>
+
+    <script>
+        // Init Lucide Icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

@@ -519,3 +519,326 @@ class MedidaCorporalSyncTestCase(TestCase):
         self.assertEqual(notas_context[0].titulo, "Control Rutinario")
 
 
+class PacienteRecomendacionesTestCase(TestCase):
+    def setUp(self):
+        self.nutricionista = User.objects.create_user(
+            username="nutri_test", email="nutri_test@gmail.com", password="password123"
+        )
+        self.client.login(username="nutri_test", password="password123")
+        
+        self.paciente = Paciente.objects.create(
+            nombre="María",
+            apellido="Rosas",
+            dni="87654321",
+            sexo="F",
+            fecha_nacimiento="1995-08-20",
+            peso=60.0,
+            talla=165.0,
+            telefono="987654321",
+            nutricionista=self.nutricionista
+        )
+
+    def test_get_recomendaciones_vacias(self):
+        """Valida que la vista GET retorne el listado de categorías vacías y sin citas."""
+        response = self.client.get(
+            reverse("pacientes:recomendaciones_get", kwargs={"pk": self.paciente.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(len(data["citas"]), 0)
+        self.assertEqual(data["recomendaciones"]["hidratacion"]["id"], None)
+        self.assertEqual(data["recomendaciones"]["hidratacion"]["descripcion"], {})
+
+    def test_guardar_y_obtener_recomendacion_hidratacion(self):
+        """Valida el guardado de una recomendación de hidratación."""
+        from pacientes.models import Consulta
+        Consulta.objects.create(
+            paciente=self.paciente,
+            profesional=self.nutricionista,
+            numero_consulta=1,
+            estado="en_curso"
+        )
+        post_data = {
+            "categoria": "hidratacion",
+            "consumo_diario": "3.0",
+            "observaciones": "Beber agua pura durante el entrenamiento.",
+            "fecha": "2026-07-11"
+        }
+        response = self.client.post(
+            reverse("pacientes:recomendacion_guardar", kwargs={"pk": self.paciente.pk}),
+            data=post_data
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["recomendacion"]["categoria"], "hidratacion")
+
+        # Verificar en base de datos
+        from seguimiento.models import Recomendacion
+        recom = Recomendacion.objects.filter(paciente=self.paciente, categoria="hidratacion").first()
+        self.assertIsNotNone(recom)
+        self.assertEqual(recom.descripcion["consumo_diario"], "3.0")
+        self.assertEqual(recom.descripcion["observaciones"], "Beber agua pura durante el entrenamiento.")
+
+        # Verificar GET
+        response_get = self.client.get(
+            reverse("pacientes:recomendaciones_get", kwargs={"pk": self.paciente.pk})
+        )
+        data_get = response_get.json()
+        self.assertEqual(data_get["recomendaciones"]["hidratacion"]["descripcion"]["consumo_diario"], "3.0")
+
+    def test_guardar_y_obtener_recomendacion_alimentos(self):
+        """Valida el guardado de alimentos recomendados (chips)."""
+        from pacientes.models import Consulta
+        Consulta.objects.create(
+            paciente=self.paciente,
+            profesional=self.nutricionista,
+            numero_consulta=1,
+            estado="en_curso"
+        )
+        post_data = {
+            "categoria": "alimentos_recomendados",
+            "items": ["Manzana", "Pescado", "Espinaca"],
+            "fecha": "2026-07-11"
+        }
+        response = self.client.post(
+            reverse("pacientes:recomendacion_guardar", kwargs={"pk": self.paciente.pk}),
+            data=post_data
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+
+        # Verificar en base de datos
+        from seguimiento.models import Recomendacion
+        recom = Recomendacion.objects.filter(paciente=self.paciente, categoria="alimentos_recomendados").first()
+        self.assertIsNotNone(recom)
+        self.assertEqual(recom.descripcion["items"], ["Manzana", "Pescado", "Espinaca"])
+
+
+class PacienteEntregablesTestCase(TestCase):
+    def setUp(self):
+        self.nutricionista = User.objects.create_user(
+            username="nutri_test", email="nutri_test@gmail.com", password="password123"
+        )
+        self.client.login(username="nutri_test", password="password123")
+        
+        self.paciente = Paciente.objects.create(
+            nombre="Pedro",
+            apellido="Suárez",
+            dni="87654322",
+            sexo="M",
+            fecha_nacimiento="1992-04-10",
+            peso=80.0,
+            talla=180.0,
+            telefono="987654322",
+            nutricionista=self.nutricionista
+        )
+        from pacientes.models import Consulta
+        self.consulta = Consulta.objects.create(
+            paciente=self.paciente,
+            profesional=self.nutricionista,
+            numero_consulta=1,
+            estado="en_curso"
+        )
+
+    def test_get_entregables_vacios(self):
+        """Valida que la vista GET retorne el listado de entregables vacío."""
+        response = self.client.get(
+            reverse("pacientes:entregables_get", kwargs={"pk": self.paciente.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(len(data["entregables"]), 0)
+
+    def test_guardar_entregable_material_educativo(self):
+        """Valida el guardado de un entregable de material educativo."""
+        post_data = {
+            "tipo": "material_educativo",
+            "titulo": "Guía de Hidratación Deportiva",
+            "descripcion": "Indicaciones para atletas de alto rendimiento.",
+            "estado": "publicado",
+            "fecha_publicacion": "2026-07-11"
+        }
+        response = self.client.post(
+            reverse("pacientes:entregable_guardar", kwargs={"pk": self.paciente.pk}),
+            data=post_data
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+
+        # Verificar en base de datos
+        from seguimiento.models import Entregable
+        ent = Entregable.objects.filter(paciente=self.paciente, tipo="material_educativo").first()
+        self.assertIsNotNone(ent)
+        self.assertEqual(ent.titulo, "Guía de Hidratación Deportiva")
+        self.assertEqual(ent.estado, "publicado")
+
+    def test_publicar_plan_alimentario_sincronizado(self):
+        """Valida que publicar un plan alimentario cree un Entregable del tipo plan_alimentario."""
+        from pacientes.models import PlanAlimentario
+        from seguimiento.models import Entregable
+
+        plan = PlanAlimentario.objects.create(
+            paciente=self.paciente,
+            nombre="Plan Test",
+            calorias=1800,
+            estado="Activo"
+        )
+
+        # Publicar el plan
+        response = self.client.post(
+            reverse("pacientes:plan_publicar", kwargs={"pk": self.paciente.pk, "plan_id": plan.id})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+
+        # Verificar que el plan está marcado como enviado
+        plan.refresh_from_db()
+        self.assertTrue(plan.enviado_al_paciente)
+
+        # Verificar que se creó el entregable en el historial
+        ent = Entregable.objects.filter(paciente=self.paciente, tipo="plan_alimentario").first()
+        self.assertIsNotNone(ent)
+        self.assertEqual(ent.recurso_asociado["plan_id"], plan.id)
+        self.assertEqual(ent.estado, "publicado")
+
+    def test_eliminar_entregable(self):
+        """Valida que se pueda eliminar un entregable."""
+        from seguimiento.models import Entregable
+        ent = Entregable.objects.create(
+            paciente=self.paciente,
+            nutricionista=self.nutricionista,
+            tipo="material_educativo",
+            titulo="Eliminar Test",
+            fecha_publicacion="2026-07-11",
+            estado="borrador"
+        )
+        self.assertEqual(Entregable.objects.filter(paciente=self.paciente).count(), 1)
+
+        response = self.client.post(
+            reverse("pacientes:entregable_eliminar", kwargs={"pk": self.paciente.pk, "entregable_id": ent.id})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+        self.assertEqual(Entregable.objects.filter(paciente=self.paciente).count(), 0)
+
+
+class ConsultaFlowTestCase(TestCase):
+    def setUp(self):
+        self.nutricionista = User.objects.create_user(
+            username="nutri_flow", email="nutri_flow@gmail.com", password="password123"
+        )
+        self.client.login(username="nutri_flow", password="password123")
+        
+        self.paciente = Paciente.objects.create(
+            nombre="Clara",
+            apellido="Mendoza",
+            dni="87654399",
+            sexo="F",
+            fecha_nacimiento="1994-11-05",
+            peso=65.0,
+            talla=160.0,
+            telefono="987654399",
+            nutricionista=self.nutricionista,
+            informacion_clinica={"enfermedades": ["Anemia"], "habitos": {"sueno": "7 horas"}}
+        )
+
+    def test_consulta_iniciar_y_finalizar_flow(self):
+        """Valida el inicio, herencia, finalización y bloqueo de una consulta."""
+        from pacientes.models import Consulta
+
+        # 1. Iniciar consulta
+        response = self.client.post(
+            reverse("pacientes:consulta_iniciar", kwargs={"pk": self.paciente.pk}),
+            data={"tipo": "primera_consulta"}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        consulta_id = data["consulta_id"]
+
+        consulta = Consulta.objects.get(id=consulta_id)
+        self.assertEqual(consulta.numero_consulta, 1)
+        self.assertEqual(consulta.estado, "en_curso")
+        
+        # Debe haber heredado datos del paciente dentro de informacion_clinica
+        self.assertIsNotNone(consulta.informacion_clinica)
+        self.assertEqual(consulta.informacion_clinica.get("enfermedades"), ["Anemia"])
+        self.assertEqual(consulta.informacion_clinica.get("habitos", {}).get("sueno"), "7 horas")
+
+        # 2. Finalizar la consulta
+        response_fin = self.client.post(
+            reverse("pacientes:consulta_finalizar", kwargs={"pk": self.paciente.pk, "consulta_id": consulta_id})
+        )
+        self.assertEqual(response_fin.status_code, 200)
+        self.assertTrue(response_fin.json()["success"])
+
+        consulta.refresh_from_db()
+        self.assertEqual(consulta.estado, "finalizada")
+        self.assertIsNotNone(consulta.hora_fin)
+
+        # 3. Intentar editar con la consulta finalizada (debe dar 400 Bad Request)
+        post_data = {
+            "categoria": "hidratacion",
+            "consumo_diario": "3.5",
+            "observaciones": "Test",
+            "fecha": "2026-07-11",
+            "consulta_id": consulta_id
+        }
+        response_post = self.client.post(
+            reverse("pacientes:recomendacion_guardar", kwargs={"pk": self.paciente.pk}),
+            data=post_data
+        )
+        self.assertEqual(response_post.status_code, 400)
+        self.assertFalse(response_post.json()["success"])
+
+    def test_consulta_vinculo_con_cita(self):
+        """Valida que iniciar y finalizar una consulta vinculada actualice el estado de la cita."""
+        from citas.models import Cita
+        from pacientes.models import Consulta
+        from datetime import datetime
+
+        from django.utils import timezone as tz
+        future_dt = tz.now() + __import__("datetime").timedelta(days=1)
+        cita = Cita.objects.create(
+            paciente=self.paciente,
+            nutricionista=self.nutricionista,
+            fecha_hora=future_dt,
+            motivo="Control",
+            estado="programada"
+        )
+
+        # Iniciar consulta vinculando la cita
+        response = self.client.post(
+            reverse("pacientes:consulta_iniciar", kwargs={"pk": self.paciente.pk}),
+            data={"tipo": "seguimiento", "vincular_cita": "true", "cita_id": cita.id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        consulta_id = data["consulta_id"]
+
+        # Verificar estado de la cita paso a "en_consulta"
+        cita.refresh_from_db()
+        self.assertEqual(cita.estado, "en_consulta")
+
+        # Finalizar la consulta
+        response_fin = self.client.post(
+            reverse("pacientes:consulta_finalizar", kwargs={"pk": self.paciente.pk, "consulta_id": consulta_id})
+        )
+        self.assertEqual(response_fin.status_code, 200)
+        self.assertTrue(response_fin.json()["success"])
+
+        # Verificar estado de la cita paso a "finalizada"
+        cita.refresh_from_db()
+        self.assertEqual(cita.estado, "finalizada")
+
+
+
+
+
