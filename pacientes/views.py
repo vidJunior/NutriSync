@@ -1140,7 +1140,9 @@ def paciente_plan_get(request, pk):
     from django.db.models import Q
     from nutricion.models import Receta
     recetas_qs = Receta.objects.filter(
-        Q(creado_por=request.user) | Q(es_sistema=True) | Q(paciente=paciente)
+        (Q(creado_por=request.user) & Q(paciente__isnull=True)) | 
+        Q(es_sistema=True) | 
+        Q(paciente=paciente)
     ).distinct()
     
     recetas_list = []
