@@ -169,9 +169,22 @@
                   <div class="flex flex-wrap gap-1.5 mt-2">
                     {% for alimento in comida.alimentos_sugeridos.all %}
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-600">
-                      <i data-lucide="circle" class="w-2 h-2 fill-current text-teal-500"></i>
+                      <i data-lucide="circle" class="w-2.5 h-2.5 fill-current text-teal-400"></i>
                       {{ alimento.nombre }}
                     </span>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+
+                  <!-- Recetas sugeridas -->
+                  {% if comida.recetas_sugeridas.all %}
+                  <div class="flex flex-wrap gap-1.5 mt-1.5">
+                    {% for receta in comida.recetas_sugeridas.all %}
+                    <a href="{% url 'nutricion:receta_detalle' receta.pk %}"
+                       class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-100/50 transition-colors font-medium">
+                      <i data-lucide="chef-hat" class="w-3 h-3 text-teal-600"></i>
+                      {{ receta.nombre }}
+                    </a>
                     {% endfor %}
                   </div>
                   {% endif %}
@@ -263,16 +276,37 @@
               Alimentos sugeridos
               <span class="text-slate-400 font-normal normal-case">(selección múltiple)</span>
             </label>
-            <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-3 space-y-1.5">
+            <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-3 space-y-1.5 bg-slate-50/50">
               {% for checkbox in comida_form.alimentos_sugeridos %}
-              <label class="flex items-start gap-2 cursor-pointer hover:bg-slate-50 rounded px-1 py-0.5 text-sm text-slate-700">
+              <label class="flex items-start gap-2 cursor-pointer hover:bg-slate-100 rounded px-1 py-0.5 text-sm text-slate-700">
                 {{ checkbox.tag }}
                 <span>{{ checkbox.choice_label }}</span>
               </label>
               {% empty %}
               <p class="text-xs text-slate-400 text-center py-4">
                 No hay alimentos en el catálogo.
-                <a href="{% url 'nutricion:alimentos' %}" class="text-teal-600 hover:underline">Agregar alimentos</a>
+                <a href="{% url 'nutricion:alimentos' %}" class="text-teal-600 hover:underline font-semibold">Agregar alimentos</a>
+              </p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Recetas sugeridas -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-2 uppercase tracking-wide">
+              Recetas sugeridas
+              <span class="text-slate-400 font-normal normal-case">(selección múltiple)</span>
+            </label>
+            <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-3 space-y-1.5 bg-slate-50/50">
+              {% for checkbox in comida_form.recetas_sugeridas %}
+              <label class="flex items-start gap-2 cursor-pointer hover:bg-slate-100 rounded px-1 py-0.5 text-sm text-slate-700">
+                {{ checkbox.tag }}
+                <span>{{ checkbox.choice_label }}</span>
+              </label>
+              {% empty %}
+              <p class="text-xs text-slate-400 text-center py-4">
+                No tienes recetas creadas.
+                <a href="{% url 'nutricion:receta_nueva' %}" class="text-teal-600 hover:underline font-semibold">Crear receta</a>
               </p>
               {% endfor %}
             </div>

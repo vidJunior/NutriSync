@@ -3,7 +3,7 @@
 <!-- Se incluye desde base.html solo cuando el usuario está autenticado. -->
 
 <aside id="sidebar"
-    class="w-60 bg-slate-900 min-h-screen fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition duration-200 flex flex-col z-20">
+    class="w-60 bg-slate-900 h-screen fixed inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition duration-200 flex flex-col z-20">
 
     <!-- Logo / Nombre del sistema -->
     <div class="px-6 py-5 border-b border-slate-800">
@@ -39,6 +39,11 @@
         <a href="{% url 'nutricion:alimentos' %}"
             class="sidebar-link {% if request.resolver_match.namespace and 'nutricion' in request.resolver_match.namespace and 'alimento' in request.resolver_match.url_name %}active{% endif %}">
             <i data-lucide="apple" class="w-5 h-5"></i> Alimentos
+        </a>
+
+        <a href="{% url 'nutricion:recetas' %}"
+            class="sidebar-link {% if request.resolver_match.namespace and 'nutricion' in request.resolver_match.namespace and 'receta' in request.resolver_match.url_name %}active{% endif %}">
+            <i data-lucide="chef-hat" class="w-5 h-5"></i> Recetas
         </a>
 
         <a href="{% url 'nutricion:planes' %}"

@@ -1,0 +1,680 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} — NutriSync{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-slate-400">
+    <a href="{% url 'nutricion:recetas' %}" class="hover:text-teal-600 transition-colors flex items-center gap-1">
+      <i data-lucide="chef-hat" class="w-4 h-4"></i> Recetas
+    </a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <span class="text-slate-600">{{ titulo }}</span>
+  </nav>
+
+  <form id="receta-form" method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    {% csrf_token %}
+
+    <!-- ─── Columna Izquierda: Formulario (2/3) ──────────────────────────────── -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Ficha de datos básicos -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <h3 class="font-semibold text-slate-700 flex items-center gap-2 pb-3 border-b border-slate-100">
+          <i data-lucide="file-text" class="w-5 h-5 text-teal-600"></i>
+          Información básica de la receta
+        </h3>
+
+        <!-- Errores del formulario global -->
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Nombre -->
+          <div class="sm:col-span-2">
+            <label for="{{ form.nombre.id_for_label }}" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+              Nombre de la receta <span class="text-red-500">*</span>
+            </label>
+            {{ form.nombre }}
+            {% if form.nombre.errors %}
+              <p class="text-xs text-red-500 mt-1">{{ form.nombre.errors.as_text }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Descripción -->
+          <div class="sm:col-span-2">
+            <label for="{{ form.descripcion.id_for_label }}" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+              Descripción corta
+            </label>
+            {{ form.descripcion }}
+            {% if form.descripcion.errors %}
+              <p class="text-xs text-red-500 mt-1">{{ form.descripcion.errors.as_text }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Tiempo de preparación -->
+          <div>
+            <label for="{{ form.tiempo_preparacion.id_for_label }}" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+              Tiempo preparación (min) <span class="text-red-500">*</span>
+            </label>
+            {{ form.tiempo_preparacion }}
+            {% if form.tiempo_preparacion.errors %}
+              <p class="text-xs text-red-500 mt-1">{{ form.tiempo_preparacion.errors.as_text }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Porciones -->
+          <div>
+            <label for="{{ form.porciones.id_for_label }}" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+              Porciones que rinde <span class="text-red-500">*</span>
+            </label>
+            {{ form.porciones }}
+            {% if form.porciones.errors %}
+              <p class="text-xs text-red-500 mt-1">{{ form.porciones.errors.as_text }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Imagen predeterminada -->
+          <div class="sm:col-span-2">
+            <label for="{{ form.imagen_predeterminada.id_for_label }}" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+              Ilustración / Categoría visual <span class="text-red-500">*</span>
+            </label>
+            {{ form.imagen_predeterminada }}
+            {% if form.imagen_predeterminada.errors %}
+              <p class="text-xs text-red-500 mt-1">{{ form.imagen_predeterminada.errors.as_text }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Ficha de ingredientes -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-semibold text-slate-700 flex items-center gap-2">
+            <i data-lucide="apple" class="w-5 h-5 text-teal-600"></i>
+            Ingredientes de la receta
+          </h3>
+          <span class="text-xs text-slate-400">Total en gramos (g)</span>
+        </div>
+
+        <!-- Buscador interactivo de alimentos (Autocomplete) -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 relative">
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+            Buscar y agregar ingrediente
+          </label>
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="food-search-input" autocomplete="off"
+                   placeholder="Escribe el nombre del alimento (ej: avena, pollo)..."
+                   class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+          </div>
+          <!-- Dropdown de resultados -->
+          <div id="search-results-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 max-h-56 overflow-y-auto divide-y divide-slate-100">
+            <!-- Cargado por JS -->
+          </div>
+        </div>
+
+        <!-- Errores del formset -->
+        {% if ingredientes_formset.non_form_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+          {% for error in ingredientes_formset.non_form_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Tabla de ingredientes del Formset -->
+        <div class="overflow-x-auto border border-slate-100 rounded-lg">
+          {{ ingredientes_formset.management_form }}
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wide text-xs">
+                <th class="px-4 py-2.5 font-medium">Alimento</th>
+                <th class="px-4 py-2.5 font-medium w-28">Cantidad (g)</th>
+                <th class="px-4 py-2.5 font-medium">Nota / Medida casera</th>
+                <th class="px-4 py-2.5 font-medium text-center w-16">Quitar</th>
+              </tr>
+            </thead>
+            <tbody id="ingredients-formset-container" class="divide-y divide-slate-100">
+              {% for formset_form in ingredientes_formset %}
+              <tr class="ingredient-row hover:bg-slate-50/50 transition-colors duration-150" data-index="{{ forloop.counter0 }}">
+                <!-- Hidden fields -->
+                {% for hidden in formset_form.hidden_fields %}
+                  {{ hidden }}
+                {% endfor %}
+                
+                <td class="px-4 py-3">
+                  {% if formset_form.instance.pk %}
+                    <span class="font-medium text-slate-800">{{ formset_form.instance.alimento.nombre }}</span>
+                    <!-- Conservamos el select original oculto para que Django procese la relación al editar -->
+                    <div class="hidden">{{ formset_form.alimento }}</div>
+                  {% else %}
+                    {{ formset_form.alimento }}
+                  {% endif %}
+                  {% if formset_form.alimento.errors %}
+                    <p class="text-xs text-red-500 mt-1">{{ formset_form.alimento.errors.as_text }}</p>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                  {{ formset_form.cantidad }}
+                  {% if formset_form.cantidad.errors %}
+                    <p class="text-xs text-red-500 mt-1">{{ formset_form.cantidad.errors.as_text }}</p>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                  {{ formset_form.nota }}
+                  {% if formset_form.nota.errors %}
+                    <p class="text-xs text-red-500 mt-1">{{ formset_form.nota.errors.as_text }}</p>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <!-- Django Checkbox DELETE original -->
+                  {% if formset_form.instance.pk %}
+                    <div class="flex items-center justify-center">
+                      {{ formset_form.DELETE }}
+                    </div>
+                  {% else %}
+                    <!-- Botón para remover filas nuevas localmente -->
+                    <button type="button" class="btn-remove-row text-slate-300 hover:text-red-500 transition-colors duration-150 p-1 rounded">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Ficha de pasos de preparación (Instrucciones) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-semibold text-slate-700 flex items-center gap-2">
+            <i data-lucide="list-ordered" class="w-5 h-5 text-teal-600"></i>
+            Método de preparación
+          </h3>
+          <button type="button" id="btn-add-step"
+                  class="text-xs bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 rounded-lg px-2.5 py-1.5 font-medium transition-all flex items-center gap-1">
+            <i data-lucide="plus" class="w-3 h-3"></i> Agregar paso
+          </button>
+        </div>
+
+        <div id="preparation-steps-container" class="space-y-3">
+          {% if object.instrucciones %}
+            {% for paso in object.instrucciones %}
+            <div class="step-item flex items-start gap-3">
+              <span class="step-number text-sm font-bold text-slate-400 bg-slate-100 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-2">
+                {{ forloop.counter }}
+              </span>
+              <textarea name="pasos_instrucciones" rows="2" required
+                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 resize-none"
+                        placeholder="Describe el paso de preparación...">{{ paso }}</textarea>
+              <button type="button" class="btn-remove-step text-slate-300 hover:text-red-500 transition-colors duration-150 p-1 rounded mt-2">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+            {% endfor %}
+          {% else %}
+            <!-- Fila inicial por defecto si es nueva receta -->
+            <div class="step-item flex items-start gap-3">
+              <span class="step-number text-sm font-bold text-slate-400 bg-slate-100 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-2">
+                1
+              </span>
+              <textarea name="pasos_instrucciones" rows="2" required
+                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 resize-none"
+                        placeholder="Describe el paso de preparación..."></textarea>
+              <button type="button" class="btn-remove-step text-slate-300 hover:text-red-500 transition-colors duration-150 p-1 rounded mt-2">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Botones de Guardar/Cancelar -->
+      <div class="flex items-center justify-end gap-3">
+        <a href="{% url 'nutricion:recetas' %}"
+           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors">
+          Cancelar
+        </a>
+        <button type="submit"
+                class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          {{ accion }}
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ─── Columna Derecha: Análisis Global Flotante (1/3) ────────────────────── -->
+    <div class="lg:col-span-1 space-y-6 sticky top-24">
+      
+      <!-- Card Análisis Nutricional -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-100 px-5 py-4">
+          <h4 class="font-semibold text-slate-700 flex items-center gap-2">
+            <i data-lucide="activity" class="w-5 h-5 text-teal-600"></i>
+            Análisis nutricional
+          </h4>
+          <p class="text-xs text-slate-400 mt-0.5">Cálculos en tiempo real según ingredientes</p>
+        </div>
+
+        <div class="p-5 space-y-6">
+          <!-- Gráfico de Dona SVG Autogenerado -->
+          <div class="flex flex-col items-center justify-center py-4 relative">
+            <svg class="w-44 h-44 transform -rotate-90" viewBox="0 0 42 42">
+              <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
+              <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f1f5f9" stroke-width="4.2"></circle>
+              
+              <!-- Segmentos de macros (se calcularán dinámicamente con JS) -->
+              <circle id="donut-segment-carb" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+              <circle id="donut-segment-prot" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+              <circle id="donut-segment-gras" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+            </svg>
+            
+            <!-- Calorías en el centro de la dona -->
+            <div class="absolute flex flex-col items-center text-center">
+              <span id="label-total-calories" class="text-3xl font-extrabold text-slate-800 leading-none">0</span>
+              <span class="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mt-1">kcal total</span>
+            </div>
+          </div>
+
+          <!-- Consolidado de Macronutrientes con barra de progreso -->
+          <div class="space-y-4">
+            <!-- Carbohidratos -->
+            <div>
+              <div class="flex items-center justify-between text-xs font-semibold mb-1">
+                <span class="flex items-center gap-1.5 text-slate-600">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  Carbohidratos
+                </span>
+                <span class="text-slate-700"><span id="lbl-total-carbs">0.0</span>g <span class="text-slate-400 font-normal">(<span id="lbl-pct-carbs">0</span>%)</span></span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-1.5">
+                <div id="bar-pct-carbs" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Proteínas -->
+            <div>
+              <div class="flex items-center justify-between text-xs font-semibold mb-1">
+                <span class="flex items-center gap-1.5 text-slate-600">
+                  <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                  Proteínas
+                </span>
+                <span class="text-slate-700"><span id="lbl-total-prots">0.0</span>g <span class="text-slate-400 font-normal">(<span id="lbl-pct-prots">0</span>%)</span></span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-1.5">
+                <div id="bar-pct-prots" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Grasas -->
+            <div>
+              <div class="flex items-center justify-between text-xs font-semibold mb-1">
+                <span class="flex items-center gap-1.5 text-slate-600">
+                  <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                  Grasas
+                </span>
+                <span class="text-slate-700"><span id="lbl-total-gras">0.0</span>g <span class="text-slate-400 font-normal">(<span id="lbl-pct-gras">0</span>%)</span></span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-1.5">
+                <div id="bar-pct-gras" class="bg-rose-500 h-1.5 rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Fibra -->
+            <div class="border-t border-slate-100 pt-3">
+              <div class="flex items-center justify-between text-xs font-semibold">
+                <span class="flex items-center gap-1.5 text-slate-500">
+                  <i data-lucide="leaf" class="w-3.5 h-3.5 text-slate-400"></i>
+                  Fibra alimentaria
+                </span>
+                <span class="text-slate-700"><span id="lbl-total-fibra">0.0</span>g</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desglose por Porción -->
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-sm space-y-2">
+            <h5 class="font-bold text-slate-700 border-b border-slate-200 pb-1.5 mb-2 text-xs uppercase tracking-wide">
+              Nutrientes por Porción
+            </h5>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Calorías</span>
+              <span class="font-bold text-slate-800"><span id="lbl-portion-calories">0</span> kcal</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Proteínas</span>
+              <span class="font-bold text-slate-800"><span id="lbl-portion-prots">0.0</span> g</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Carbohidratos</span>
+              <span class="font-bold text-slate-800"><span id="lbl-portion-carbs">0.0</span> g</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Grasas</span>
+              <span class="font-bold text-slate-800"><span id="lbl-portion-gras">0.0</span> g</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Template oculto de fila para Django Inline Formset -->
+<table class="hidden">
+  <tbody id="empty-row-template">
+    <tr class="ingredient-row hover:bg-slate-50/50 transition-colors duration-150" data-index="__prefix__">
+      <td class="px-4 py-3">
+        <!-- Selector oculto/normal que Django mapeará -->
+        <select name="ingredientes-__prefix__-alimento" id="id_ingredientes-__prefix__-alimento" class="{{ form.imagen_predeterminada.field.widget.attrs.class }}">
+          <!-- Rellenado por JS -->
+        </select>
+        <span class="font-semibold text-slate-800 label-alimento-nombre">Nombre Alimento</span>
+      </td>
+      <td class="px-4 py-3">
+        <input type="number" name="ingredientes-__prefix__-cantidad" step="0.1" min="0.1" id="id_ingredientes-__prefix__-cantidad" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-slate-300" placeholder="g">
+      </td>
+      <td class="px-4 py-3">
+        <input type="text" name="ingredientes-__prefix__-nota" max_length="150" id="id_ingredientes-__prefix__-nota" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Ej: 1 taza, picada">
+      </td>
+      <td class="px-4 py-3 text-center">
+        <!-- DELETE original oculto para filas nuevas -->
+        <input type="checkbox" name="ingredientes-__prefix__-DELETE" id="id_ingredientes-__prefix__-DELETE" class="hidden">
+        <button type="button" class="btn-remove-row text-slate-300 hover:text-red-500 transition-colors duration-150 p-1 rounded">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- LÓGICA FRONTEND: Autocompletado, Formsets e Interacción Nutricional -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  
+  // 1. Cargar catálogo de alimentos en memoria
+  const catalog = JSON.parse('{{ alimentos_json|escapejs }}');
+  const foodMap = {};
+  catalog.forEach(f => {
+    foodMap[f.id] = f;
+  });
+
+  const searchInput = document.getElementById("food-search-input");
+  const dropdown = document.getElementById("search-results-dropdown");
+  const container = document.getElementById("ingredients-formset-container");
+  const totalForms = document.getElementById("id_ingredientes-TOTAL_FORMS");
+
+  // 2. Buscador de Autocompletado
+  searchInput.addEventListener("input", function() {
+    const val = searchInput.value.toLowerCase().trim();
+    if (val.length < 2) {
+      dropdown.classList.add("hidden");
+      dropdown.innerHTML = "";
+      return;
+    }
+
+    const matches = catalog.filter(f => f.nombre.toLowerCase().includes(val)).slice(0, 8);
+    dropdown.innerHTML = "";
+    
+    if (matches.length === 0) {
+      const item = document.createElement("div");
+      item.className = "px-4 py-3 text-slate-400 text-xs italic text-center";
+      item.innerText = "No se encontraron alimentos en el catálogo";
+      dropdown.appendChild(item);
+    } else {
+      matches.forEach(f => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center justify-between transition-colors";
+        item.innerHTML = `
+          <div>
+            <span class="font-medium text-slate-800">${f.nombre}</span>
+            <span class="text-[10px] text-slate-400 ml-1.5">(${f.categoria})</span>
+          </div>
+          <span class="text-xs text-amber-600 font-semibold">${f.calorias_100g} kcal/100g</span>
+        `;
+        item.addEventListener("click", function() {
+          addIngredientRow(f);
+          searchInput.value = "";
+          dropdown.classList.add("hidden");
+          dropdown.innerHTML = "";
+        });
+        dropdown.appendChild(item);
+      });
+    }
+    dropdown.classList.remove("hidden");
+  });
+
+  // Cerrar dropdown al hacer click afuera
+  document.addEventListener("click", function(e) {
+    if (e.target !== searchInput && !dropdown.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  // 3. Agregar fila de ingrediente al Formset
+  function addIngredientRow(food) {
+    const index = parseInt(totalForms.value);
+    totalForms.value = index + 1;
+
+    // Obtener la fila template e inyectarle los valores
+    const templateHtml = document.getElementById("empty-row-template").innerHTML;
+    const filledHtml = templateHtml.replace(/__prefix__/g, index);
+    
+    // Crear el nodo temporal
+    const tr = document.createElement("tr");
+    tr.className = "ingredient-row hover:bg-slate-50/50 transition-colors duration-150";
+    tr.setAttribute("data-index", index);
+    tr.innerHTML = filledHtml;
+
+    // Colocar el nombre del alimento en la etiqueta visual
+    tr.querySelector(".label-alimento-nombre").innerText = food.nombre;
+
+    // Configurar el input select oculto
+    const select = tr.querySelector("select");
+    select.innerHTML = `<option value="${food.id}" selected>${food.nombre}</option>`;
+
+    // Prellenar cantidad por defecto (100g)
+    const qtyInput = tr.querySelector(`input[name="ingredientes-${index}-cantidad"]`);
+    qtyInput.value = 100;
+
+    // Agregar fila a la tabla
+    container.appendChild(tr);
+
+    // Reinicializar iconos Lucide para el nuevo botón de eliminar
+    lucide.createIcons();
+
+    // Enlazar eventos de eliminación y recálculo
+    bindRowEvents(tr);
+    recalculateNutrients();
+  }
+
+  // Enlazar eventos de inputs y botones a una fila
+  function bindRowEvents(row) {
+    const index = row.getAttribute("data-index");
+    
+    // Evento de input de cantidad
+    const qtyInput = row.querySelector(`input[name="ingredientes-${index}-cantidad"]`);
+    if (qtyInput) {
+      qtyInput.addEventListener("input", recalculateNutrients);
+    }
+
+    // Evento del botón eliminar
+    const removeBtn = row.querySelector(".btn-remove-row");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", function() {
+        const deleteCheckbox = row.querySelector(`input[name="ingredientes-${index}-DELETE"]`);
+        if (deleteCheckbox) {
+          // Si ya existe en la DB, lo marcamos para borrar y ocultamos la fila
+          deleteCheckbox.checked = true;
+          row.classList.add("hidden");
+        } else {
+          // Si es nuevo, simplemente removemos el nodo y disminuimos totalForms
+          row.remove();
+        }
+        recalculateNutrients();
+      });
+    }
+  }
+
+  // Enlazar eventos a todas las filas existentes en la carga inicial (ej. al editar)
+  document.querySelectorAll(".ingredient-row").forEach(row => {
+    bindRowEvents(row);
+  });
+
+  // Enlazar evento a input de porciones
+  const portionsInput = document.getElementById("id_porciones");
+  if (portionsInput) {
+    portionsInput.addEventListener("input", recalculateNutrients);
+  }
+
+  // 4. Lógica de Recálculo en tiempo real
+  function recalculateNutrients() {
+    let totalCals = 0;
+    let totalCarbs = 0;
+    let totalProts = 0;
+    let totalGras = 0;
+    let totalFibra = 0;
+
+    document.querySelectorAll(".ingredient-row").forEach(row => {
+      // Si la fila está oculta (marcada para borrar), no la sumamos
+      if (row.classList.contains("hidden")) return;
+
+      const index = row.getAttribute("data-index");
+      const select = row.querySelector(`select[name="ingredientes-${index}-alimento"]`);
+      const qtyInput = row.querySelector(`input[name="ingredientes-${index}-cantidad"]`);
+
+      if (select && qtyInput) {
+        const foodId = select.value;
+        const qty = parseFloat(qtyInput.value) || 0;
+        const food = foodMap[foodId];
+
+        if (food && qty > 0) {
+          totalCals += (food.calorias_100g * qty) / 100;
+          totalCarbs += (food.carbohidratos_100g * qty) / 100;
+          totalProts += (food.proteinas_100g * qty) / 100;
+          totalGras += (food.grasas_100g * qty) / 100;
+          totalFibra += (food.fibra_100g * qty) / 100;
+        }
+      }
+    });
+
+    // Calcular distribución de macros (%) para el gráfico de dona
+    const totalGrams = totalCarbs + totalProts + totalGras;
+    let pctCarbs = 0;
+    let pctProts = 0;
+    let pctGras = 0;
+
+    if (totalGrams > 0) {
+      pctCarbs = Math.round((totalCarbs / totalGrams) * 100);
+      pctProts = Math.round((totalProts / totalGrams) * 100);
+      pctGras = 100 - pctCarbs - pctProts; // para asegurar sumatoria 100%
+      if (pctGras < 0) pctGras = 0;
+    }
+
+    // Actualizar campos de la UI (Totales)
+    document.getElementById("label-total-calories").innerText = Math.round(totalCals);
+    document.getElementById("lbl-total-carbs").innerText = totalCarbs.toFixed(1);
+    document.getElementById("lbl-total-prots").innerText = totalProts.toFixed(1);
+    document.getElementById("lbl-total-gras").innerText = totalGras.toFixed(1);
+    document.getElementById("lbl-total-fibra").innerText = totalFibra.toFixed(1);
+
+    document.getElementById("lbl-pct-carbs").innerText = pctCarbs;
+    document.getElementById("lbl-pct-prots").innerText = pctProts;
+    document.getElementById("lbl-pct-gras").innerText = pctGras;
+
+    // Actualizar barras de progreso
+    document.getElementById("bar-pct-carbs").style.width = pctCarbs + "%";
+    document.getElementById("bar-pct-prots").style.width = pctProts + "%";
+    document.getElementById("bar-pct-gras").style.width = pctGras + "%";
+
+    // Actualizar gráfico de dona SVG interactivo
+    // Usamos stroke-dasharray para pintar segmentos del círculo de radio 15.915
+    // Perímetro del círculo = 2 * PI * r = 100 unidades de dasharray
+    const segmentCarb = document.getElementById("donut-segment-carb");
+    const segmentProt = document.getElementById("donut-segment-prot");
+    const segmentGras = document.getElementById("donut-segment-gras");
+
+    segmentCarb.setAttribute("stroke-dasharray", `${pctCarbs} ${100 - pctCarbs}`);
+    segmentCarb.setAttribute("stroke-dashoffset", "0");
+
+    segmentProt.setAttribute("stroke-dasharray", `${pctProts} ${100 - pctProts}`);
+    segmentProt.setAttribute("stroke-dashoffset", `-${pctCarbs}`);
+
+    segmentGras.setAttribute("stroke-dasharray", `${pctGras} ${100 - pctGras}`);
+    segmentGras.setAttribute("stroke-dashoffset", `-${pctCarbs + pctProts}`);
+
+    // Actualizar datos por porción
+    const porciones = parseInt(portionsInput ? portionsInput.value : 1) || 1;
+    document.getElementById("lbl-portion-calories").innerText = Math.round(totalCals / porciones);
+    document.getElementById("lbl-portion-carbs").innerText = (totalCarbs / porciones).toFixed(1);
+    document.getElementById("lbl-portion-prots").innerText = (totalProts / porciones).toFixed(1);
+    document.getElementById("lbl-portion-gras").innerText = (totalGras / porciones).toFixed(1);
+  }
+
+  // 5. Gestión de Pasos de Preparación (Añadir/Eliminar dinámicamente)
+  const stepsContainer = document.getElementById("preparation-steps-container");
+  const addStepBtn = document.getElementById("btn-add-step");
+
+  addStepBtn.addEventListener("click", function() {
+    const stepsCount = stepsContainer.querySelectorAll(".step-item").length;
+    const nextStep = stepsCount + 1;
+
+    const stepDiv = document.createElement("div");
+    stepDiv.className = "step-item flex items-start gap-3";
+    stepDiv.innerHTML = `
+      <span class="step-number text-sm font-bold text-slate-400 bg-slate-100 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-2">
+        ${nextStep}
+      </span>
+      <textarea name="pasos_instrucciones" rows="2" required
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 resize-none"
+                placeholder="Describe el paso de preparación..."></textarea>
+      <button type="button" class="btn-remove-step text-slate-300 hover:text-red-500 transition-colors duration-150 p-1 rounded mt-2">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    `;
+    stepsContainer.appendChild(stepDiv);
+    lucide.createIcons();
+    bindStepRemoveEvent(stepDiv);
+  });
+
+  function bindStepRemoveEvent(stepItem) {
+    const btn = stepItem.querySelector(".btn-remove-step");
+    btn.addEventListener("click", function() {
+      stepItem.remove();
+      reindexSteps();
+    });
+  }
+
+  function reindexSteps() {
+    stepsContainer.querySelectorAll(".step-item").forEach((item, index) => {
+      item.querySelector(".step-number").innerText = index + 1;
+    });
+  }
+
+  // Vincular eventos de eliminación a los pasos iniciales cargados en edición
+  stepsContainer.querySelectorAll(".step-item").forEach(item => {
+    bindStepRemoveEvent(item);
+  });
+
+  // Ejecutar recálculo inicial
+  recalculateNutrients();
+
+});
+</script>
+{% endblock %}

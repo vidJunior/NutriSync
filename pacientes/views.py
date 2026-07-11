@@ -228,6 +228,21 @@ class PacienteDetailView(NutricionistaPacienteMixin, DetailView):
         # Determinar si mostrar la tarjeta de resumen rápido (si no hay notas clínicas registradas aún)
         context["mostrar_tarjeta_resumen"] = len(context.get("notas_recientes", [])) == 0
 
+        # ─── Recetas Específicas del Paciente ───
+        try:
+            from nutricion.models import Receta
+            context["recetas_paciente"] = Receta.objects.filter(
+                paciente=paciente, creado_por=self.request.user
+            ).order_by("nombre")
+            
+            # Recetas Globales (Plantillas) listas para importar
+            context["recetas_globales"] = Receta.objects.filter(
+                (Q(es_sistema=True) | Q(creado_por=self.request.user)) & Q(paciente__isnull=True)
+            ).order_by("nombre")
+        except Exception:
+            context["recetas_paciente"] = []
+            context["recetas_globales"] = []
+
         return context
 
 

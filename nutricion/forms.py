@@ -4,7 +4,7 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Alimento, PlanNutricional, ComidaPlan, CategoriaAlimento
+from .models import Alimento, PlanNutricional, ComidaPlan, CategoriaAlimento, Receta, IngredienteReceta
 from config.choices import DiaSemana, TipoComida, Objetivo
 
 
@@ -177,7 +177,7 @@ class ComidaPlanForm(forms.ModelForm):
         model = ComidaPlan
         fields = [
             "dia_semana", "tipo_comida", "descripcion",
-            "alimentos_sugeridos", "calorias_estimadas",
+            "alimentos_sugeridos", "recetas_sugeridas", "calorias_estimadas",
         ]
         widgets = {
             "dia_semana": forms.Select(attrs={"class": SELECT_CLASSES}),
@@ -187,23 +187,39 @@ class ComidaPlanForm(forms.ModelForm):
                 "placeholder": "Ej: Avena con frutas y miel, vaso de leche descremada",
             }),
             "alimentos_sugeridos": forms.CheckboxSelectMultiple(),
+            "recetas_sugeridas": forms.CheckboxSelectMultiple(),
             "calorias_estimadas": forms.NumberInput(attrs={
                 "class": INPUT_CLASSES, "min": "0",
             }),
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        plan = kwargs.pop("plan", None)
         super().__init__(*args, **kwargs)
+        if plan:
+            self.plan = plan
+
         # Solo mostramos alimentos activos en el selector
-        # Un alimento dado de baja no debería aparecer como opción
         self.fields["alimentos_sugeridos"].queryset = (
             Alimento.objects.filter(estado=True).order_by("nombre")
         )
+        
+        # Solo mostramos recetas del sistema o del nutricionista actual
+        from django.db.models import Q
+        from .models import Receta
+        if user:
+            self.fields["recetas_sugeridas"].queryset = (
+                Receta.objects.filter(Q(es_sistema=True) | Q(creado_por=user)).order_by("nombre")
+            )
+        else:
+            self.fields["recetas_sugeridas"].queryset = (
+                Receta.objects.filter(es_sistema=True).order_by("nombre")
+            )
 
     def clean(self):
         """
         Valida unicidad día+tipo_comida dentro del plan.
-        Django ya la valida vía unique_together, pero damos un mensaje más claro.
         """
         cleaned_data = super().clean()
         dia = cleaned_data.get("dia_semana")
@@ -215,7 +231,150 @@ class ComidaPlanForm(forms.ModelForm):
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise ValidationError(
-                    f"Ya existe una entrada de {self.instance.get_tipo_comida_display()} "
-                    f"para el {self.instance.get_dia_semana_display()} en este plan."
+                    f"Ya existe una entrada de {dict(TipoComida.CHOICES).get(tipo, tipo)} "
+                    f"para el {dict(DiaSemana.CHOICES).get(dia, dia)} en este plan."
                 )
         return cleaned_data
+
+
+# ─── RecetaForm ───────────────────────────────────────────────────────────────
+
+class RecetaForm(forms.ModelForm):
+    """Formulario para crear y editar recetas (datos básicos)."""
+
+    class Meta:
+        model = Receta
+        fields = ["nombre", "descripcion", "tiempo_preparacion", "porciones", "imagen_predeterminada"]
+        widgets = {
+            "nombre": forms.TextInput(attrs={
+                "class": INPUT_CLASSES,
+                "placeholder": "Ej: Ensalada César Saludable",
+            }),
+            "descripcion": forms.Textarea(attrs={
+                "class": TEXTAREA_CLASSES,
+                "rows": 2,
+                "placeholder": "Breve descripción de la receta (opcional)...",
+            }),
+            "tiempo_preparacion": forms.NumberInput(attrs={
+                "class": INPUT_CLASSES,
+                "min": "1",
+                "max": "480",
+            }),
+            "porciones": forms.NumberInput(attrs={
+                "class": INPUT_CLASSES,
+                "min": "1",
+                "max": "100",
+            }),
+            "imagen_predeterminada": forms.Select(
+                choices=[
+                    ("salad", "Ensalada / Verde"),
+                    ("soup", "Sopa / Crema"),
+                    ("chicken", "Carnes / Pollo / Pescado"),
+                    ("dessert", "Postres / Dulces"),
+                    ("beverage", "Bebidas / Batidos"),
+                    ("breakfast", "Desayuno / Avena / Huevo"),
+                    ("snack", "Snack / Frutos secos"),
+                ],
+                attrs={"class": SELECT_CLASSES}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get("nombre", "").strip()
+        if not nombre:
+            raise ValidationError("El nombre de la receta es obligatorio.")
+        
+        # Validación de unicidad de nombre de receta por nutricionista y paciente específico
+        from .models import Receta
+        if self.user:
+            paciente = getattr(self.instance, "paciente", None)
+            qs = Receta.objects.filter(nombre__iexact=nombre, creado_por=self.user, paciente=paciente)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                if paciente:
+                    raise ValidationError(f"Ya tienes una receta registrada con el nombre «{nombre}» para este paciente.")
+                else:
+                    raise ValidationError(f"Ya tienes una plantilla de receta registrada con el nombre «{nombre}».")
+        return nombre
+
+
+# ─── IngredienteRecetaForm & FormSet ──────────────────────────────────────────
+
+class IngredienteRecetaForm(forms.ModelForm):
+    """Formulario individual para un ingrediente dentro de una receta."""
+    from .models import IngredienteReceta
+
+    class Meta:
+        model = IngredienteReceta
+        fields = ["alimento", "cantidad", "nota"]
+        widgets = {
+            "alimento": forms.Select(attrs={"class": SELECT_CLASSES}),
+            "cantidad": forms.NumberInput(attrs={
+                "class": INPUT_CLASSES,
+                "step": "0.1",
+                "min": "0.1",
+                "placeholder": "Cantidad en gramos (g)",
+            }),
+            "nota": forms.TextInput(attrs={
+                "class": INPUT_CLASSES,
+                "placeholder": "Ej: 1 taza, picada en cubos",
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["alimento"].queryset = Alimento.objects.filter(estado=True).order_by("nombre")
+
+
+class BaseIngredienteRecetaFormSet(forms.BaseInlineFormSet):
+    """Formset personalizado para validar los ingredientes de una receta."""
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        ingredientes_validos = 0
+        alimentos_seleccionados = set()
+
+        for form in self.forms:
+            # Si el form está marcado para borrado o vacío/sin cambios, lo ignoramos
+            if self._should_delete_form(form):
+                continue
+            
+            alimento = form.cleaned_data.get("alimento")
+            cantidad = form.cleaned_data.get("cantidad")
+
+            if alimento:
+                # Comprobar duplicados
+                if alimento in alimentos_seleccionados:
+                    form.add_error("alimento", f"El alimento «{alimento.nombre}» ya está en la lista.")
+                alimentos_seleccionados.add(alimento)
+                
+                # Comprobar cantidad positiva
+                if not cantidad or cantidad <= 0:
+                    form.add_error("cantidad", "La cantidad debe ser mayor a 0.")
+                
+                ingredientes_validos += 1
+
+        if ingredientes_validos < 1:
+            raise ValidationError("Debes agregar al menos un ingrediente válido a la receta.")
+
+
+from django.forms import inlineformset_factory
+from .models import Receta, IngredienteReceta
+
+IngredienteRecetaFormSet = inlineformset_factory(
+    Receta,
+    IngredienteReceta,
+    form=IngredienteRecetaForm,
+    formset=BaseIngredienteRecetaFormSet,
+    extra=0,
+    can_delete=True,
+)
+

@@ -8,13 +8,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, View
 from django.urls import reverse_lazy, reverse
 from django.db.models import Q
+from django.db import transaction
+from django.http import JsonResponse
 from pacientes.models import Paciente
-from .models import Alimento, PlanNutricional, ComidaPlan, CategoriaAlimento
-from .forms import AlimentoForm, PlanNutricionalForm, ComidaPlanForm
-from config.choices import DiaSemana
+from .models import Alimento, PlanNutricional, ComidaPlan, CategoriaAlimento, Receta, IngredienteReceta
+from .forms import AlimentoForm, PlanNutricionalForm, ComidaPlanForm, RecetaForm, IngredienteRecetaFormSet
+from config.choices import DiaSemana, TipoComida
+
 
 
 # ─── Orden canónico de días de semana ────────────────────────────────────────
@@ -262,7 +265,7 @@ class PlanDetailView(LoginRequiredMixin, DetailView):
         context["calorias_total_plan"] = calorias_total
 
         # Formulario para agregar comidas directamente desde el detalle del plan
-        context["comida_form"] = ComidaPlanForm()
+        context["comida_form"] = ComidaPlanForm(user=self.request.user, plan=plan)
         return context
 
 
@@ -351,7 +354,7 @@ def comida_crear(request, plan_pk):
     plan = get_object_or_404(
         PlanNutricional, pk=plan_pk, paciente__nutricionista=request.user
     )
-    form = ComidaPlanForm(request.POST)
+    form = ComidaPlanForm(request.POST, user=request.user, plan=plan)
 
     if form.is_valid():
         comida = form.save(commit=False)
@@ -636,29 +639,356 @@ def cargar_alimentos_ejemplo(request):
             "nombre": "Palta / Aguacate",
             "categoria": "grasas",
             "calorias_100g": 160,
-            "proteinas_100g": 2,
-            "carbohidratos_100g": 9,
-            "grasas_100g": 15,
-            "fibra_100g": 7,
+"fibra_100g": 7,
             "porcion_referencia": "1/2 unidad (100g)",
         },
     ]
 
-    creados = 0
+    if not request.user.is_superuser:
+        messages.error(
+            request, "Esta acción solo está disponible para superusuarios."
+        )
+        return redirect("nutricion:alimentos")
+
+    # Cargar alimentos si no existen
+    cargados = 0
     for data in alimentos_iniciales:
-        # Evitamos duplicados — solo creamos si no existe con ese nombre
         if not Alimento.objects.filter(nombre__iexact=data["nombre"]).exists():
             Alimento.objects.create(**data)
-            creados += 1
+            cargados += 1
 
-    if creados > 0:
-        messages.success(
-            request,
-            f"{creados} alimentos de ejemplo cargados correctamente en el catálogo.",
-        )
-    else:
-        messages.info(
-            request, "Todos los alimentos de ejemplo ya estaban en el catálogo."
-        )
-
+    messages.success(
+        request,
+        f"Se cargaron {cargados} alimentos de ejemplo en la base de datos.",
+    )
     return redirect("nutricion:alimentos")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  CRUD DE RECETAS Y VISTAS DE INTERFAZ
+# ═══════════════════════════════════════════════════════════════════════════
+
+class RecetaListView(LoginRequiredMixin, ListView):
+    """
+    Catálogo de recetas globales creadas por el nutricionista.
+    Aislamiento multi-tenant garantizado.
+    """
+    model = Receta
+    template_name = "nutricion/recetas.html"
+    context_object_name = "recetas"
+    paginate_by = 12
+
+    def get_queryset(self):
+        # Solo mostramos las plantillas de recetas globales del nutricionista actual
+        qs = Receta.objects.filter(
+            creado_por=self.request.user, paciente__isnull=True
+        )
+            
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(nombre__icontains=q)
+            
+        categoria = self.request.GET.get("categoria", "")
+        if categoria:
+            qs = qs.filter(imagen_predeterminada=categoria)
+
+        # Filtrar por rango de fechas de creación
+        fecha_desde = self.request.GET.get("fecha_desde", "").strip()
+        if fecha_desde:
+            qs = qs.filter(fecha_creacion__date__gte=fecha_desde)
+            
+        fecha_hasta = self.request.GET.get("fecha_hasta", "").strip()
+        if fecha_hasta:
+            qs = qs.filter(fecha_creacion__date__lte=fecha_hasta)
+
+        # Ordenar queryset (por defecto: más recientes primero)
+        ordenar = self.request.GET.get("ordenar", "-fecha_creacion").strip()
+        if ordenar in ["nombre", "fecha_creacion", "-fecha_creacion"]:
+            qs = qs.order_by(ordenar)
+        else:
+            qs = qs.order_by("-fecha_creacion")
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.request.GET.get("q", "")
+        context["filtro_categoria"] = self.request.GET.get("categoria", "")
+        context["fecha_desde"] = self.request.GET.get("fecha_desde", "")
+        context["fecha_hasta"] = self.request.GET.get("fecha_hasta", "")
+        context["ordenar"] = self.request.GET.get("ordenar", "-fecha_creacion")
+        context["total_recetas"] = Receta.objects.filter(
+            creado_por=self.request.user, paciente__isnull=True
+        ).count()
+        return context
+
+
+class RecetaCreateView(LoginRequiredMixin, CreateView):
+    """Crea una nueva receta asociándole ingredientes a través del inline formset."""
+    model = Receta
+    form_class = RecetaForm
+    template_name = "nutricion/receta_form.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_success_url(self):
+        paciente_id = self.request.GET.get("paciente_id")
+        if paciente_id:
+            return reverse("pacientes:detalle", kwargs={"pk": paciente_id}) + "?tab=recetas"
+        return reverse("nutricion:recetas")
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data["ingredientes_formset"] = IngredienteRecetaFormSet(self.request.POST)
+        else:
+            data["ingredientes_formset"] = IngredienteRecetaFormSet()
+        
+        paciente_id = self.request.GET.get("paciente_id")
+        if paciente_id:
+            from pacientes.models import Paciente
+            paciente = get_object_or_404(Paciente, pk=paciente_id, nutricionista=self.request.user)
+            data["paciente"] = paciente
+            data["titulo"] = f"Crear receta para {paciente.nombre_completo}"
+        else:
+            data["titulo"] = "Crear nueva receta"
+            
+        data["accion"] = "Publicar receta"
+        
+        # Pasamos el catálogo completo de alimentos en JSON para el selector dinámico
+        import json
+        from django.core.serializers.json import DjangoJSONEncoder
+        alimentos_list = list(
+            Alimento.objects.filter(estado=True).values(
+                "id", "nombre", "categoria", "calorias_100g", "proteinas_100g", "carbohidratos_100g", "grasas_100g", "fibra_100g"
+            )
+        )
+        for a in alimentos_list:
+            a["calorias_100g"] = float(a["calorias_100g"])
+            a["proteinas_100g"] = float(a["proteinas_100g"])
+            a["carbohidratos_100g"] = float(a["carbohidratos_100g"])
+            a["grasas_100g"] = float(a["grasas_100g"])
+            a["fibra_100g"] = float(a["fibra_100g"])
+
+        data["alimentos_json"] = json.dumps(alimentos_list, cls=DjangoJSONEncoder)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context["ingredientes_formset"]
+        paciente = context.get("paciente")
+        
+        if formset.is_valid():
+            with transaction.atomic():
+                form.instance.creado_por = self.request.user
+                if paciente:
+                    form.instance.paciente = paciente
+                
+                # Obtener las instrucciones dinámicas del POST (lista de strings)
+                pasos = self.request.POST.getlist("pasos_instrucciones")
+                pasos_limpios = [p.strip() for p in pasos if p.strip()]
+                form.instance.instrucciones = pasos_limpios
+
+                self.object = form.save()
+                formset.instance = self.object
+                formset.save()
+                
+            messages.success(self.request, f"Receta «{self.object.nombre}» creada correctamente.")
+            return redirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
+
+
+class RecetaUpdateView(LoginRequiredMixin, UpdateView):
+    """Edita los datos básicos e ingredientes de una receta existente."""
+    model = Receta
+    form_class = RecetaForm
+    template_name = "nutricion/receta_form.html"
+
+    def get_queryset(self):
+        # Aislamiento: Solo puede editar sus propias recetas, no las de otros ni las de sistema
+        return Receta.objects.filter(creado_por=self.request.user, es_sistema=False)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_success_url(self):
+        paciente = self.object.paciente
+        if paciente:
+            return reverse("pacientes:detalle", kwargs={"pk": paciente.pk}) + "?tab=recetas"
+        return reverse("nutricion:recetas")
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data["ingredientes_formset"] = IngredienteRecetaFormSet(self.request.POST, instance=self.object)
+        else:
+            data["ingredientes_formset"] = IngredienteRecetaFormSet(instance=self.object)
+        
+        paciente = self.object.paciente
+        if paciente:
+            data["paciente"] = paciente
+            data["titulo"] = f"Editar receta de {paciente.nombre_completo}"
+        else:
+            data["titulo"] = "Editar receta"
+            
+        data["accion"] = "Guardar cambios"
+        
+        # Pasamos el catálogo completo de alimentos en JSON para el selector dinámico
+        import json
+        from django.core.serializers.json import DjangoJSONEncoder
+        alimentos_list = list(
+            Alimento.objects.filter(estado=True).values(
+                "id", "nombre", "categoria", "calorias_100g", "proteinas_100g", "carbohidratos_100g", "grasas_100g", "fibra_100g"
+            )
+        )
+        for a in alimentos_list:
+            a["calorias_100g"] = float(a["calorias_100g"])
+            a["proteinas_100g"] = float(a["proteinas_100g"])
+            a["carbohidratos_100g"] = float(a["carbohidratos_100g"])
+            a["grasas_100g"] = float(a["grasas_100g"])
+            a["fibra_100g"] = float(a["fibra_100g"])
+
+        data["alimentos_json"] = json.dumps(alimentos_list, cls=DjangoJSONEncoder)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context["ingredientes_formset"]
+        
+        if formset.is_valid():
+            with transaction.atomic():
+                # Obtener las instrucciones dinámicas del POST
+                pasos = self.request.POST.getlist("pasos_instrucciones")
+                pasos_limpios = [p.strip() for p in pasos if p.strip()]
+                form.instance.instrucciones = pasos_limpios
+
+                self.object = form.save()
+                formset.instance = self.object
+                formset.save()
+                
+            messages.success(self.request, f"Receta «{self.object.nombre}» actualizada correctamente.")
+            return redirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
+
+
+class RecetaDetailView(LoginRequiredMixin, DetailView):
+    """Muestra la receta, ingredientes con porciones y desglose de macros."""
+    model = Receta
+    template_name = "nutricion/receta_detalle.html"
+    context_object_name = "receta"
+
+    def get_queryset(self):
+        # Aislamiento: Puede ver recetas del sistema o las suyas propias (incluyendo las de sus pacientes)
+        return Receta.objects.filter(
+            Q(es_sistema=True) | Q(creado_por=self.request.user)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Prefetch de los alimentos asociados a los ingredientes para evitar queries N+1
+        context["ingredientes_list"] = self.object.ingredientes.select_related("alimento").all()
+        # Pasar paciente_id si viene en los query params para volver a su ficha
+        paciente_id = self.request.GET.get("paciente_id") or (self.object.paciente.pk if self.object.paciente else None)
+        if paciente_id:
+            context["paciente_id"] = paciente_id
+        return context
+
+
+class RecetaDeleteView(LoginRequiredMixin, DeleteView):
+    """Elimina una receta del catálogo del nutricionista."""
+    model = Receta
+
+    def get_queryset(self):
+        return Receta.objects.filter(creado_por=self.request.user, es_sistema=False)
+
+    def get_success_url(self):
+        paciente = self.object.paciente
+        if paciente:
+            return reverse("pacientes:detalle", kwargs={"pk": paciente.pk}) + "?tab=recetas"
+        return reverse("nutricion:recetas")
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        nombre = self.object.nombre
+        success_url = self.get_success_url()
+        self.object.delete()
+        messages.success(request, f"Receta «{nombre}» eliminada correctamente.")
+        return redirect(success_url)
+
+
+class RecetaImportarView(LoginRequiredMixin, View):
+    """Clona una receta global (plantilla) para convertirla en una receta específica de un paciente."""
+    def post(self, request, pk, *args, **kwargs):
+        from pacientes.models import Paciente
+        paciente_id = request.POST.get("paciente_id") or request.GET.get("paciente_id")
+        if not paciente_id:
+            messages.error(request, "Se requiere especificar un paciente para importar la receta.")
+            return redirect("nutricion:recetas")
+            
+        paciente = get_object_or_404(Paciente, pk=paciente_id, nutricionista=request.user)
+        # Buscar la receta global (ya sea del sistema o propia del nutricionista y que sea global)
+        receta_original = get_object_or_404(
+            Receta,
+            Q(pk=pk) & (Q(es_sistema=True) | Q(creado_por=request.user)) & Q(paciente__isnull=True)
+        )
+        
+        with transaction.atomic():
+            receta_clon = Receta.objects.create(
+                nombre=receta_original.nombre,
+                descripcion=receta_original.descripcion,
+                instrucciones=receta_original.instrucciones,
+                tiempo_preparacion=receta_original.tiempo_preparacion,
+                porciones=receta_original.porciones,
+                creado_por=request.user,
+                paciente=paciente,
+                es_sistema=False,
+                imagen_predeterminada=receta_original.imagen_predeterminada
+            )
+            # Copiar ingredientes
+            for ing in receta_original.ingredientes.all():
+                IngredienteReceta.objects.create(
+                    receta=receta_clon,
+                    alimento=ing.alimento,
+                    cantidad=ing.cantidad,
+                    nota=ing.nota
+                )
+                
+        messages.success(request, f"Plantilla «{receta_original.nombre}» importada correctamente para {paciente.nombre_completo}.")
+        return redirect(reverse("pacientes:detalle", kwargs={"pk": paciente.pk}) + "?tab=recetas")
+
+
+@login_required
+def api_buscar_alimentos(request):
+    """
+    Endpoint JSON para la búsqueda rápida de alimentos con autocompletado en el frontend.
+    """
+    q = request.GET.get("q", "").strip()
+    if len(q) < 2:
+        return JsonResponse({"success": True, "resultados": []})
+
+    alimentos = Alimento.objects.filter(
+        estado=True, nombre__icontains=q
+    )[:10]
+
+    resultados = []
+    for a in alimentos:
+        resultados.append({
+            "id": a.id,
+            "nombre": a.nombre,
+            "categoria": a.get_categoria_display(),
+            "calorias_100g": float(a.calorias_100g),
+            "proteinas_100g": float(a.proteinas_100g),
+            "carbohidratos_100g": float(a.carbohidratos_100g),
+            "grasas_100g": float(a.grasas_100g),
+            "fibra_100g": float(a.fibra_100g),
+        })
+
+    return JsonResponse({"success": True, "resultados": resultados})
+
