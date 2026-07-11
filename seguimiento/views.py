@@ -194,6 +194,40 @@ class NotaCreateView(NutricionistaSeguimientoMixin, CreateView):
         kwargs["paciente"] = self.paciente
         return kwargs
 
+    def get_initial(self):
+        initial = super().get_initial()
+        
+        # Generar resumen automático basado en datos del paciente
+        resumen = ""
+        info = self.paciente.informacion_clinica or {}
+        objetivo = info.get("objetivo_principal", "No especificado")
+        resumen += f"Objetivo principal: {objetivo}\n\n"
+        
+        # Últimas medidas
+        ultima_medida = self.paciente.medidas.order_by("-fecha", "-fecha_registro").first()
+        if ultima_medida:
+            resumen += f"Últimas medidas ({ultima_medida.fecha.strftime('%d/%m/%Y')}):\n"
+            resumen += f"- Peso: {ultima_medida.peso_kg} kg\n"
+            resumen += f"- IMC: {ultima_medida.imc}\n"
+            if ultima_medida.grasa_corporal_pct:
+                resumen += f"- Grasa corporal: {ultima_medida.grasa_corporal_pct}%\n"
+            resumen += "\n"
+            
+        # Plan activo
+        planes_activos = self.paciente.planes_alimentarios_sync.filter(estado="Activo").order_by("-fecha_inicio")
+        if planes_activos.exists():
+            plan = planes_activos.first()
+            resumen += f"Plan activo: {plan.nombre} ({plan.calorias} kcal)\n"
+            
+        initial["resumen_consulta"] = resumen.strip()
+        
+        # Cargar objetivos de la última nota si existen
+        ultima_nota = self.paciente.notas_clinicas.order_by("-fecha", "-fecha_creacion").first()
+        if ultima_nota and ultima_nota.objetivos_acordados:
+            initial["objetivos_acordados"] = ultima_nota.objetivos_acordados
+            
+        return initial
+
     def form_valid(self, form):
         form.instance.paciente = self.paciente
         messages.success(
