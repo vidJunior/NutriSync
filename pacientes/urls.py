@@ -39,5 +39,6 @@ urlpatterns = [
     path("<int:pk>/resumen/<int:cita_id>/imprimir/", views.paciente_resumen_imprimir, name="resumen_imprimir"),
     path("<int:pk>/consultas/iniciar/", views.paciente_consulta_iniciar, name="consulta_iniciar"),
     path("<int:pk>/consultas/<int:consulta_id>/finalizar/", views.paciente_consulta_finalizar, name="consulta_finalizar"),
+    path("<int:pk>/generar-vinculo/", views.paciente_generar_vinculo, name="generar_vinculo"),
 ]
 

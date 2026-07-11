@@ -6,9 +6,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from config.api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+
+    # Endpoints de la API móvil (Django Ninja)
+    path("api/", api.urls),
 
     # App core: login, logout, dashboard, perfil
     path("", include("core.urls")),
