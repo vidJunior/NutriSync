@@ -1,4 +1,4 @@
-# citas/forms.py
+# agendas/forms.py
 # Formulario de registro y edición de Citas.
 # Filtra dinámicamente los pacientes del nutricionista autenticado y aplica el sistema de diseño.
 

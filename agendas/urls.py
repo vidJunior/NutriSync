@@ -1,4 +1,4 @@
-# citas/urls.py
+# agendas/urls.py
 # Rutas locales para el módulo de agenda de citas.
 
 from django.urls import path

@@ -1,4 +1,4 @@
-# citas/validators.py
+# agendas/validators.py
 from django.core.exceptions import ValidationError
 
 

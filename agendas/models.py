@@ -1,4 +1,4 @@
-# citas/models.py
+# agendas/models.py
 # Modelo Cita — representa la agenda y las consultas de los pacientes.
 # Incluye validaciones atómicas de solapamiento y de estado del paciente.
 

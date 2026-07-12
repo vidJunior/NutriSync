@@ -1,4 +1,4 @@
-# citas/tests.py
+# agendas/tests.py
 # Pruebas unitarias de integridad de datos y lógica de solapamiento en NutriSync.
 
 from django.test import TestCase

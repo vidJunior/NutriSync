@@ -1,4 +1,4 @@
-# citas/views.py
+# agendas/views.py
 # Vistas para la gestión de citas en NutriSync — CRUD completo con aislamiento multi-nutricionista.
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -273,7 +273,7 @@ class CitaCreateView(LoginRequiredMixin, CreateView):
             self.request,
             f"Cita con {self.object.paciente.nombre_completo} programada con éxito."
         )
-        return reverse_lazy("citas:agenda")
+        return reverse_lazy("agendas:agenda")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -330,7 +330,7 @@ class CitaUpdateView(NutricionistaCitaMixin, UpdateView):
             self.request,
             f"Cita con {self.object.paciente.nombre_completo} actualizada correctamente."
         )
-        return reverse_lazy("citas:agenda")
+        return reverse_lazy("agendas:agenda")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -370,7 +370,7 @@ def cita_cambiar_estado(request, pk):
         # Validación de negocio: 'no_asistio' solo si ya pasó la fecha de inicio
         if nuevo_estado == EstadoCita.NO_ASISTIO and cita.fecha_hora > timezone.now():
             messages.error(request, "No se puede marcar como 'No asistió' una cita futura.")
-            return redirect("citas:detalle", pk=cita.pk)
+            return redirect("agendas:detalle", pk=cita.pk)
 
         cita.estado = nuevo_estado
         # Validamos y guardamos
@@ -385,7 +385,7 @@ def cita_cambiar_estado(request, pk):
     else:
         messages.error(request, "Estado de cita no válido.")
         
-    return redirect("citas:detalle", pk=cita.pk)
+    return redirect("agendas:detalle", pk=cita.pk)
 
 
 # ─── Bloquear Horario ────────────────────────────────────────────────────────
@@ -404,7 +404,7 @@ def cita_bloquear(request):
 
     if not fecha_str or not hora_str:
         messages.error(request, "Debe especificar la fecha y la hora de inicio del bloqueo.")
-        return redirect("citas:agenda")
+        return redirect("agendas:agenda")
 
     try:
         # Combinar fecha y hora
