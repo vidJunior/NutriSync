@@ -9,11 +9,14 @@ from django.contrib import messages
 from django.views.generic import ListView, CreateView, DetailView
 from django.urls import reverse_lazy
 from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
 from itertools import chain
 
-from .models import MedidaCorporal, NotaClinica
+from .models import MedidaCorporal, NotaClinica, Recomendacion
 from .forms import MedidaCorporalForm, NotaClinicaForm
-from pacientes.models import Paciente
+from pacientes.models import Paciente, PlanAlimentario
+from citas.models import Cita
 from config.choices import TipoNota
 
 
@@ -376,27 +379,94 @@ def historial_paciente(request, paciente_pk):
 @login_required
 def seguimiento_dashboard(request):
     """
-    Vista general de seguimiento: lista todos los pacientes del nutricionista
-    con su última medición registrada. Accesible desde el sidebar.
+    Vista general de seguimiento: panel de control global del nutricionista.
+    Reutiliza pacientes, medidas, citas y recomendaciones existentes para mostrar
+    un estado clínico sencillo y centrado en las prioridades del seguimiento.
     """
+    hoy = timezone.now().date()
+    limite_sin_medida = hoy - timedelta(days=30)
+
     pacientes = Paciente.objects.filter(
-        nutricionista=request.user, estado=True
+        nutricionista=request.user,
+        estado=True,
     ).order_by("nombre", "apellido")
 
-    # Para cada paciente, obtenemos la última medida
+    # Obtener la última medida por paciente en una pasada eficiente
+    medidas_ordenadas = (
+        MedidaCorporal.objects.select_related("paciente")
+        .filter(paciente__nutricionista=request.user)
+        .order_by("paciente_id", "-fecha", "-fecha_registro")
+    )
+    ultima_medida_por_paciente = {}
+    for medida in medidas_ordenadas:
+        if medida.paciente_id not in ultima_medida_por_paciente:
+            ultima_medida_por_paciente[medida.paciente_id] = medida
+
     pacientes_con_medidas = []
-    for p in pacientes:
-        ultima = MedidaCorporal.objects.filter(paciente=p).order_by("-fecha", "-fecha_registro").first()
+    pacientes_sin_medida_reciente = []
+    for paciente in pacientes:
+        ultima_medida = ultima_medida_por_paciente.get(paciente.pk)
         pacientes_con_medidas.append({
-            "paciente": p,
-            "ultima_medida": ultima,
+            "paciente": paciente,
+            "ultima_medida": ultima_medida,
         })
+        if not ultima_medida or ultima_medida.fecha < limite_sin_medida:
+            pacientes_sin_medida_reciente.append({
+                "paciente": paciente,
+                "ultima_medida": ultima_medida,
+            })
+
+    recomendaciones_pendientes = (
+        Recomendacion.objects.select_related("paciente")
+        .filter(paciente__nutricionista=request.user, estado_cumplimiento="pendiente")
+        .order_by("fecha")[:5]
+    )
+
+    proximas_citas = (
+        Cita.objects.select_related("paciente")
+        .filter(
+            paciente__nutricionista=request.user,
+            fecha_hora__gte=timezone.now(),
+            estado="programada",
+        )
+        .order_by("fecha_hora")[:5]
+    )
+
+    plan_activos = PlanAlimentario.objects.filter(
+        paciente__nutricionista=request.user,
+        estado="Activo",
+    ).count()
+
+    total_pacientes = pacientes.count()
+    total_medidas = MedidaCorporal.objects.filter(
+        paciente__nutricionista=request.user
+    ).count()
+    total_notas = NotaClinica.objects.filter(
+        paciente__nutricionista=request.user
+    ).count()
+    total_recomendaciones_pendientes = Recomendacion.objects.filter(
+        paciente__nutricionista=request.user,
+        estado_cumplimiento="pendiente",
+    ).count()
+    cobertura_planes = round((plan_activos / total_pacientes * 100), 0) if total_pacientes else 0
+    pacientes_sin_plan = (
+        pacientes.exclude(planes_alimentarios_sync__estado="Activo")
+        .distinct()
+        .count()
+    )
 
     context = {
         "pacientes_con_medidas": pacientes_con_medidas,
-        "total_medidas": MedidaCorporal.objects.filter(
-            paciente__nutricionista=request.user
-        ).count(),
+        "total_pacientes": total_pacientes,
+        "total_medidas": total_medidas,
+        "total_notas": total_notas,
+        "total_recomendaciones_pendientes": total_recomendaciones_pendientes,
+        "plan_activos": plan_activos,
+        "cobertura_planes": int(cobertura_planes),
+        "pacientes_sin_plan": pacientes_sin_plan,
+        "proximas_citas": proximas_citas,
+        "recomendaciones_pendientes": recomendaciones_pendientes,
+        "pacientes_sin_medida_reciente": pacientes_sin_medida_reciente[:5],
     }
     return render(request, "seguimiento/dashboard.html", context)
 
