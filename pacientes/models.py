@@ -348,7 +348,7 @@ class Consulta(models.Model):
         verbose_name="Nutricionista",
     )
     cita = models.ForeignKey(
-        "citas.Cita",
+        "agendas.Cita",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

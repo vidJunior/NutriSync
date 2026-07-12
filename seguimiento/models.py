@@ -242,7 +242,7 @@ class NotaClinica(models.Model):
         verbose_name="Consulta",
     )
     cita = models.ForeignKey(
-        "citas.Cita",
+        "agendas.Cita",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -301,7 +301,7 @@ class Recomendacion(models.Model):
         verbose_name="Consulta",
     )
     cita = models.ForeignKey(
-        "citas.Cita",
+        "agendas.Cita",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -392,7 +392,7 @@ class Entregable(models.Model):
         verbose_name="Consulta",
     )
     cita = models.ForeignKey(
-        "citas.Cita",
+        "agendas.Cita",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

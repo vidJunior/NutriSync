@@ -189,7 +189,7 @@ class Cobro(models.Model):
         verbose_name="Paciente",
     )
     cita = models.ForeignKey(
-        "citas.Cita",
+        "agendas.Cita",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
