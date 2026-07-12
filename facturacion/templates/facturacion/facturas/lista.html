@@ -102,6 +102,12 @@
                                    class="text-slate-400 hover:text-blue-600 transition-colors">
                                     <i data-lucide="download" class="w-4 h-4"></i>
                                 </a>
+                                {% elif factura.estado != 'borrador' %}
+                                <a href="{% url 'facturacion:factura_descargar_pdf' pk=factura.pk %}"
+                                   class="text-slate-400 hover:text-blue-600 transition-colors"
+                                   title="Generar PDF">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                </a>
                                 {% endif %}
                             </div>
                         </td>

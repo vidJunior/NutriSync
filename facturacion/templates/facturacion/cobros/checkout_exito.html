@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% load facturacion_tags %}
+
+{% block title %}Pago Exitoso{% endblock %}
+{% block page_title %}Pago Procesado{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto text-center py-12">
+    <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <i data-lucide="check-circle" class="w-10 h-10 text-emerald-600"></i>
+    </div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-2">Pago procesado exitosamente</h2>
+    <p class="text-slate-500 mb-8">Tu transacción ha sido completada. Recibirás un comprobante por correo electrónico.</p>
+
+    <div class="flex items-center justify-center gap-4">
+        <a href="{% url 'facturacion:facturacion_dashboard' %}"
+           class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
+            Volver al dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

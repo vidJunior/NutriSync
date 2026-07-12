@@ -8,6 +8,15 @@
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
 
+    <!-- Encabezado -->
+    <div class="mb-2">
+        <a href="{% url 'facturacion:dashboard' %}"
+           class="inline-flex items-center text-sm text-slate-500 hover:text-teal-600 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i>
+            Volver al dashboard
+        </a>
+    </div>
+
     {% if suscripcion %}
     <!-- Plan actual -->
     <div class="bg-white rounded-xl border border-slate-200 p-8">
@@ -69,14 +78,43 @@
             </div>
         </div>
 
+        <!-- Acciones según estado -->
         <div class="mt-6 flex items-center gap-3">
+            {% if suscripcion.estado == 'pendiente_pago' %}
+            <div class="w-full p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600"></i>
+                        <div>
+                            <p class="font-medium text-amber-800">Suscripción pendiente de pago</p>
+                            <p class="text-sm text-amber-600">Completa el pago para activar tu plan.</p>
+                        </div>
+                    </div>
+                    <form method="POST" action="{% url 'facturacion:crear_checkout_suscripcion' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="plan" value="{{ suscripcion.plan.pk }}">
+                        <input type="hidden" name="tipo_facturacion" value="{{ suscripcion.tipo_facturacion }}">
+                        <button type="submit"
+                                class="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 inline"></i>
+                            Activar plan
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if suscripcion.estado == 'activa' %}
+            <a href="{% url 'facturacion:suscripcion_boleta' %}"
+               class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium">
+                <i data-lucide="file-text" class="w-4 h-4 mr-2 inline"></i>
+                Generar boleta
+            </a>
+            {% endif %}
+
             <a href="{% url 'facturacion:suscripcion_cambiar' %}"
                class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
                 Cambiar plan
-            </a>
-            <a href="{% url 'facturacion:facturas_lista' %}"
-               class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
-                Ver facturas de suscripción
             </a>
         </div>
     </div>
@@ -95,39 +133,6 @@
                 <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
                 Elegir un plan
             </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Planes disponibles -->
-    {% if planes %}
-    <div class="bg-white rounded-xl border border-slate-200 p-6">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">Planes disponibles</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {% for plan in planes %}
-            <div class="border border-slate-200 rounded-xl p-6 hover:border-teal-300 transition-colors">
-                <h4 class="text-lg font-semibold text-slate-800">{{ plan.nombre }}</h4>
-                <div class="mt-3">
-                    <span class="text-3xl font-bold text-slate-800">{{ plan.precio_mensual|formatear_moneda }}</span>
-                    <span class="text-slate-500">/mes</span>
-                </div>
-                <p class="text-sm text-slate-500 mt-1">{{ plan.precio_anual|formatear_moneda }}/año (ahorra 2 meses)</p>
-                <ul class="mt-4 space-y-2 text-sm text-slate-600">
-                    <li class="flex items-center gap-2">
-                        <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-                        {% if plan.limite_pacientes == -1 %}Pacientes ilimitados{% else %}{{ plan.limite_pacientes }} pacientes{% endif %}
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-                        {% if plan.limite_citas_mes == -1 %}Citas ilimitadas{% else %}{{ plan.limite_citas_mes }} citas/mes{% endif %}
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-                        Comisión: {{ plan.comision_cobros }}%
-                    </li>
-                </ul>
-            </div>
-            {% endfor %}
         </div>
     </div>
     {% endif %}

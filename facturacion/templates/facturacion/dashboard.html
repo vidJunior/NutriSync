@@ -37,21 +37,23 @@
             </div>
         </div>
 
-        <!-- Facturas emitidas -->
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <!-- Boletas generadas -->
+        <a href="{% url 'facturacion:cobros_lista' %}?estado=pagado"
+           class="bg-white rounded-xl border border-slate-200 p-6 hover:border-purple-300 hover:bg-purple-50 transition-all">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Facturas emitidas</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1">{{ total_facturas_mes|formatear_moneda }}</p>
+                    <p class="text-sm font-medium text-slate-500">Boletas generadas</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1">{{ pagos_completados_mes }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
                     <i data-lucide="file-text" class="w-6 h-6 text-purple-600"></i>
                 </div>
             </div>
-        </div>
+        </a>
 
         <!-- Pagos pendientes -->
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <a href="#ultimos-cobros"
+           class="bg-white rounded-xl border border-slate-200 p-6 hover:border-amber-300 hover:bg-amber-50 transition-all">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">Pagos pendientes</p>
@@ -61,7 +63,7 @@
                     <i data-lucide="clock" class="w-6 h-6 text-amber-600"></i>
                 </div>
             </div>
-        </div>
+        </a>
 
     </div>
 
@@ -138,7 +140,7 @@
     </div>
 
     <!-- Últimos cobros -->
-    <div class="bg-white rounded-xl border border-slate-200 p-6">
+    <div id="ultimos-cobros" class="bg-white rounded-xl border border-slate-200 p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-slate-800">Últimos cobros</h3>
             <a href="{% url 'facturacion:cobros_lista' %}"
@@ -158,6 +160,7 @@
                         <th class="pb-3 font-medium">Total</th>
                         <th class="pb-3 font-medium">Estado</th>
                         <th class="pb-3 font-medium">Fecha</th>
+                        <th class="pb-3 font-medium">Boleta</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -178,22 +181,110 @@
                             </span>
                         </td>
                         <td class="py-3 text-sm text-slate-500">{{ cobro.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        <td class="py-3">
+                            {% if cobro.esta_pagado %}
+                            <a href="{% url 'facturacion:cobro_descargar_boleta' pk=cobro.pk %}"
+                               class="text-slate-400 hover:text-teal-600 transition-colors"
+                               title="Descargar boleta">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-slate-300">—</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <div class="text-center py-8">
-            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="receipt" class="w-8 h-8 text-slate-400"></i>
+        <div class="py-6">
+            <!-- Guía paso a paso -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="receipt" class="w-8 h-8 text-slate-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800 mb-2">¿Cómo cobrar por tus servicios?</h3>
+                <p class="text-slate-500 text-sm">Sigue estos pasos para registrar tu primer cobro</p>
             </div>
-            <p class="text-slate-500">No hay cobros registrados aún.</p>
-            <a href="{% url 'facturacion:cobro_crear' %}"
-               class="inline-flex items-center mt-3 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
-                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                Crear primer cobro
-            </a>
+
+            <!-- Pasos -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="flex flex-col items-center text-center p-4 bg-slate-50 rounded-xl">
+                    <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                        <span class="text-teal-700 font-bold text-sm">1</span>
+                    </div>
+                    <p class="font-medium text-slate-700 text-sm">Crea el cobro</p>
+                    <p class="text-xs text-slate-500 mt-1">Selecciona al paciente y el servicio</p>
+                </div>
+                <div class="flex flex-col items-center text-center p-4 bg-slate-50 rounded-xl">
+                    <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                        <span class="text-teal-700 font-bold text-sm">2</span>
+                    </div>
+                    <p class="font-medium text-slate-700 text-sm">Registra el pago</p>
+                    <p class="text-xs text-slate-500 mt-1">Marca cuando el paciente pague</p>
+                </div>
+                <div class="flex flex-col items-center text-center p-4 bg-slate-50 rounded-xl">
+                    <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                        <span class="text-teal-700 font-bold text-sm">3</span>
+                    </div>
+                    <p class="font-medium text-slate-700 text-sm">Cobra completado</p>
+                    <p class="text-xs text-slate-500 mt-1">El ingreso aparece en tu reporte</p>
+                </div>
+            </div>
+
+            <!-- Tipos de cobro comunes -->
+            <p class="text-sm font-medium text-slate-700 mb-3">Tipos de cobro más comunes:</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{% url 'facturacion:cobro_crear' %}?concepto=consulta"
+                   class="group border border-slate-200 rounded-xl p-5 hover:border-teal-400 hover:bg-teal-50 transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="stethoscope" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-800 group-hover:text-teal-700">Consulta</p>
+                            <p class="text-xs text-slate-500">S/ 80 – 150</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500">Consulta general, control o seguimiento del paciente.</p>
+                </a>
+                <a href="{% url 'facturacion:cobro_crear' %}?concepto=plan_alimentario"
+                   class="group border border-slate-200 rounded-xl p-5 hover:border-teal-400 hover:bg-teal-50 transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="salad" class="w-5 h-5 text-emerald-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-800 group-hover:text-teal-700">Plan alimentario</p>
+                            <p class="text-xs text-slate-500">S/ 150 – 300</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500">Diseño de plan nutricional personalizado.</p>
+                </a>
+                <a href="{% url 'facturacion:cobro_crear' %}?concepto=seguimiento"
+                   class="group border border-slate-200 rounded-xl p-5 hover:border-teal-400 hover:bg-teal-50 transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="calendar-check" class="w-5 h-5 text-purple-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-800 group-hover:text-teal-700">Seguimiento</p>
+                            <p class="text-xs text-slate-500">S/ 60 – 100</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500">Sesión de seguimiento mensual o quincenal.</p>
+                </a>
+            </div>
+
+            <!-- Botón crear libre -->
+            <div class="text-center mt-6">
+                <a href="{% url 'facturacion:cobro_crear' %}"
+                   class="inline-flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Crear cobro personalizado
+                </a>
+            </div>
         </div>
         {% endif %}
     </div>

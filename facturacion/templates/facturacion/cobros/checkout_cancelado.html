@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pago Cancelado{% endblock %}
+{% block page_title %}Pago Cancelado{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto text-center py-12">
+    <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <i data-lucide="x-circle" class="w-10 h-10 text-amber-600"></i>
+    </div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-2">Pago cancelado</h2>
+    <p class="text-slate-500 mb-8">El proceso de pago fue cancelado. No se realizó ningún cobro.</p>
+
+    <div class="flex items-center justify-center gap-4">
+        <a href="{% url 'facturacion:facturacion_dashboard' %}"
+           class="px-6 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
+            Volver al dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

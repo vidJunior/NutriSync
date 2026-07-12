@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #14b8a6; }
+        .header-left h1 { font-size: 22px; color: #14b8a6; margin-bottom: 4px; }
+        .header-left p { font-size: 11px; color: #666; }
+        .header-right { text-align: right; }
+        .header-right .doc-type { font-size: 14px; font-weight: bold; color: #14b8a6; text-transform: uppercase; }
+        .header-right .doc-number { font-size: 12px; color: #555; margin-top: 4px; }
+        .header-right .doc-date { font-size: 10px; color: #888; margin-top: 2px; }
+
+        .info-grid { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .info-box { width: 48%; }
+        .info-box h3 { font-size: 10px; text-transform: uppercase; color: #14b8a6; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+        .info-box p { font-size: 10px; margin-bottom: 3px; }
+        .info-box .label { color: #888; }
+        .info-box .value { color: #333; font-weight: bold; }
+
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table thead { background-color: #f0fdfa; }
+        .items-table th { padding: 8px 6px; font-size: 9px; text-transform: uppercase; color: #555; border-bottom: 2px solid #14b8a6; text-align: left; }
+        .items-table th.text-right { text-align: right; }
+        .items-table th.text-center { text-align: center; }
+        .items-table td { padding: 7px 6px; font-size: 10px; border-bottom: 1px solid #eee; }
+        .items-table td.text-right { text-align: right; }
+        .items-table td.text-center { text-align: center; }
+
+        .totals { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+        .totals-box { width: 250px; }
+        .totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 10px; }
+        .totals-row .label { color: #888; }
+        .totals-row .value { color: #333; }
+        .totals-row.total { border-top: 2px solid #14b8a6; padding-top: 8px; margin-top: 4px; }
+        .totals-row.total .label { font-size: 12px; font-weight: bold; color: #333; }
+        .totals-row.total .value { font-size: 14px; font-weight: bold; color: #14b8a6; }
+
+        .payment-info { background-color: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 6px; padding: 12px; margin-bottom: 20px; }
+        .payment-info h3 { font-size: 10px; text-transform: uppercase; color: #14b8a6; margin-bottom: 8px; }
+        .payment-info p { font-size: 10px; margin-bottom: 3px; }
+
+        .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb; }
+        .footer p { font-size: 9px; color: #888; text-align: center; margin-bottom: 3px; }
+        .footer .note { font-style: italic; color: #aaa; }
+
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+        .status-pagada { background-color: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body>
+
+    <!-- Encabezado -->
+    <div class="header">
+        <div class="header-left">
+            <h1>NutriSync</h1>
+            <p>Sistema de Gesti&oacute;n Nutricional</p>
+        </div>
+        <div class="header-right">
+            <div class="doc-type">Boleta de Suscripci&oacute;n</div>
+            <div class="doc-number">N&deg; BNS-{{ suscripcion.pk|default:"000001" }}</div>
+            <div class="doc-date">Fecha: {{ pago.fecha_pago|date:"d/m/Y" }}</div>
+            <div style="margin-top: 4px;"><span class="status-badge status-pagada">PAGADO</span></div>
+        </div>
+    </div>
+
+    <!-- Informaci&oacute;n del emisor y receptor -->
+    <div class="info-grid">
+        <div class="info-box">
+            <h3>Emisor (Plataforma)</h3>
+            <p><span class="label">Nombre:</span> <span class="value">NutriSync</span></p>
+            <p><span class="label">Tipo:</span> <span class="value">Plataforma de Gesti&oacute;n Nutricional</span></p>
+        </div>
+        <div class="info-box">
+            <h3>Receptor (Nutricionista)</h3>
+            <p><span class="label">Nombre:</span> <span class="value">{{ suscripcion.nutricionista.get_full_name|default:suscripcion.nutricionista.username }}</span></p>
+            <p><span class="label">Email:</span> <span class="value">{{ suscripcion.nutricionista.email }}</span></p>
+        </div>
+    </div>
+
+    <!-- Detalle de la suscripci&oacute;n -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 5%">#</th>
+                <th style="width: 45%">Descripci&oacute;n</th>
+                <th class="text-center" style="width: 10%">Cant.</th>
+                <th class="text-right" style="width: 20%">P. Unitario</th>
+                <th class="text-right" style="width: 20%">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>
+                    Suscripci&oacute;n Plan {{ suscripcion.plan.nombre }}
+                    <br><small style="color: #888;">{{ suscripcion.get_tipo_facturacion_display|title }} &mdash; {{ suscripcion.plan.descripcion|truncatechars:80 }}</small>
+                </td>
+                <td class="text-center">1</td>
+                <td class="text-right">S/ {{ suscripcion.precio_aplicado|floatformat:2 }}</td>
+                <td class="text-right">S/ {{ suscripcion.precio_aplicado|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Totales -->
+    <div class="totals">
+        <div class="totals-box">
+            <div class="totals-row">
+                <span class="label">Subtotal:</span>
+                <span class="value">S/ {{ suscripcion.precio_aplicado|floatformat:2 }}</span>
+            </div>
+            <div class="totals-row">
+                <span class="label">IGV (18%):</span>
+                <span class="value">S/ {{ pago.monto|floatformat:2 }}</span>
+            </div>
+            <div class="totals-row total">
+                <span class="label">TOTAL:</span>
+                <span class="value">S/ {{ suscripcion.precio_aplicado|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informaci&oacute;n de la suscripci&oacute;n -->
+    <div class="payment-info">
+        <h3>Informaci&oacute;n de la Suscripci&oacute;n</h3>
+        <p><span class="label">Plan:</span> <span class="value">{{ suscripcion.plan.nombre }}</span></p>
+        <p><span class="label">Tipo de facturaci&oacute;n:</span> <span class="value">{{ suscripcion.get_tipo_facturacion_display }}</span></p>
+        <p><span class="label">Fecha de inicio:</span> <span class="value">{{ suscripcion.fecha_inicio|date:"d/m/Y" }}</span></p>
+        <p><span class="label">Fecha de vencimiento:</span> <span class="value">{{ suscripcion.fecha_fin|date:"d/m/Y" }}</span></p>
+        <p><span class="label">Referencia de pago:</span> <span class="value">{{ pago.referencia }}</span></p>
+        <p><span class="label">Fecha de pago:</span> <span class="value">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</span></p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>NutriSync - Sistema de Gesti&oacute;n Nutricional</p>
+        <p>Documento generado electr&oacute;nicamente. Moneda: Sol Peruano (S/)</p>
+        <p class="note">Esta boleta incluye IGV (18%) conforme a la legislaci&oacute;n tributaria peruana.</p>
+    </div>
+
+</body>
+</html>

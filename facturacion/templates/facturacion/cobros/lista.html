@@ -8,6 +8,15 @@
 {% block content %}
 <div class="space-y-6">
 
+    <!-- Volver al dashboard -->
+    <div>
+        <a href="{% url 'facturacion:dashboard' %}"
+           class="inline-flex items-center text-sm text-slate-500 hover:text-teal-600 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i>
+            Volver al dashboard
+        </a>
+    </div>
+
     <!-- Encabezado -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <p class="text-slate-500">Gestiona los cobros a tus pacientes.</p>
@@ -103,10 +112,19 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-500">{{ cobro.fecha_creacion|date:"d/m/Y H:i" }}</td>
                         <td class="px-6 py-4">
-                            <a href="{% url 'facturacion:cobro_detalle' pk=cobro.pk %}"
-                               class="text-slate-400 hover:text-teal-600 transition-colors">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'facturacion:cobro_detalle' pk=cobro.pk %}"
+                                   class="text-slate-400 hover:text-teal-600 transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                {% if cobro.esta_pagado %}
+                                <a href="{% url 'facturacion:cobro_descargar_boleta' pk=cobro.pk %}"
+                                   class="text-slate-400 hover:text-teal-600 transition-colors"
+                                   title="Descargar boleta">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
