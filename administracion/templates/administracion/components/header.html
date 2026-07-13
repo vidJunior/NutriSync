@@ -1,0 +1,19 @@
+<!-- administracion/templates/administracion/components/header.html -->
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-slate-900/20 backdrop-blur-md sticky top-0 z-30">
+    <div class="flex items-center gap-4">
+        <!-- Breadcrumbs -->
+        <nav class="flex items-center gap-2 text-sm">
+            <span class="text-slate-400">Administración</span>
+            <span class="text-slate-600">/</span>
+            <span class="text-white font-medium">{% block page_title %}Vista general{% endblock %}</span>
+        </nav>
+    </div>
+
+    <!-- Menú derecho -->
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Plataforma Activa
+        </div>
+    </div>
+</header>

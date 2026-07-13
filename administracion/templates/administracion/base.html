@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NutriSync Admin{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS base del Design System -->
+    <link rel="stylesheet" href="{% static 'css/administracion.css' %}">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0a0a0f] text-slate-100 flex min-h-screen">
+
+    <!-- Sidebar Navegación -->
+    {% include 'administracion/components/sidebar.html' %}
+
+    <!-- Contenido Principal -->
+    <div class="flex-1 flex flex-col min-w-0">
+        
+        <!-- Header Superior -->
+        {% include 'administracion/components/header.html' %}
+
+        <!-- Espacio para mensajes transaccionales (Django Messages) -->
+        {% if messages %}
+        <div class="px-8 mt-6">
+            {% for message in messages %}
+            <div class="p-4 rounded-xl border text-sm font-medium transition-all duration-200
+                {% if message.tags == 'error' %}
+                    bg-red-500/10 border-red-500/20 text-red-400
+                {% elif message.tags == 'success' %}
+                    bg-green-500/10 border-green-500/20 text-green-400
+                {% else %}
+                    bg-indigo-500/10 border-indigo-500/20 text-indigo-400
+                {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Contenedor del Bloque de Contenido -->
+        <main class="flex-1 p-8 overflow-y-auto">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

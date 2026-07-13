@@ -7,9 +7,15 @@ from config.choices import EstadoNutricionista
 
 
 class Rol(models.TextChoices):
-    """Roles disponibles en la plataforma."""
-    NUTRICIONISTA    = 'nutricionista',    'Nutricionista'
-    ADMIN_PLATAFORMA = 'admin_plataforma', 'Administrador de Plataforma'
+    """
+    Roles de usuario dentro de la plataforma NutriSync.
+    - NUTRICIONISTA: profesional que usa el panel de gestión clínica.
+    - ADMIN_PLATAFORMA: operador que administra la plataforma desde /administracion/.
+    """
+
+    NUTRICIONISTA = "nutricionista", "Nutricionista"
+    ADMIN_PLATAFORMA = "admin_plataforma", "Administrador de Plataforma"
+
 
 class PerfilNutricionista(models.Model):
     """

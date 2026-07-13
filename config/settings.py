@@ -75,6 +75,8 @@ TEMPLATES = [
                 # Inyecta el PerfilNutricionista en todos los templates
                 # para que el sidebar y el header tengan acceso al nombre/especialidad
                 "core.context_processors.perfil_nutricionista",
+                # Inyecta el perfil del administrador en vistas de administracion
+                "administracion.context_processors.admin_context",
             ],
         },
     },
