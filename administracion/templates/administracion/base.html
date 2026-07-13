@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NutriSync Admin{% endblock %}</title>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts – mismas que el Landing -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- CSS base del Design System -->
-    <link rel="stylesheet" href="{% static 'css/administracion.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,13 +20,111 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                    },
                 }
             }
         }
     </script>
+
+    <style>
+        /* ─── Design tokens del panel admin ─── */
+        :root {
+            --sidebar-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            --accent-gradient: linear-gradient(135deg, #0d9488 0%, #4f46e5 100%);
+            --card-glass: rgba(255,255,255,0.72);
+            --card-border: rgba(226,232,240,0.65);
+        }
+        .admin-sidebar {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        }
+        .admin-body {
+            background: radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.04), transparent 45%),
+                        radial-gradient(circle at 90% 80%, rgba(79, 70, 229, 0.03), transparent 50%),
+                        #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #0d9488 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-badge {
+            background: linear-gradient(135deg, #0d9488 0%, #4f46e5 100%);
+        }
+        .nav-link-active {
+            background: linear-gradient(135deg, rgba(13,148,136,0.15), rgba(79,70,229,0.12));
+            border-left: 3px solid #0d9488;
+            color: #fff;
+        }
+        .kpi-card {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 999px 999px 0 0;
+        }
+        .kpi-teal::before { background: linear-gradient(90deg, #0d9488, #14b8a6); }
+        .kpi-indigo::before { background: linear-gradient(90deg, #4f46e5, #818cf8); }
+        .kpi-emerald::before { background: linear-gradient(90deg, #059669, #34d399); }
+        .kpi-rose::before { background: linear-gradient(90deg, #e11d48, #fb7185); }
+        .kpi-amber::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
+
+        /* Smooth table row hovers */
+        .admin-table tbody tr {
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .admin-table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(13,148,136,0.03), rgba(79,70,229,0.02));
+        }
+
+        /* Scrollbar sutil */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Animated pulse ring */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .pulse-ring::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2px solid #10b981;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Sidebar nav link transitions */
+        .sidebar-link {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link:hover {
+            border-left-color: rgba(13,148,136,0.4);
+            background: rgba(255,255,255,0.04);
+        }
+    </style>
 </head>
-<body class="bg-[#0a0a0f] text-slate-100 flex min-h-screen">
+<body class="admin-body text-slate-800 flex min-h-screen antialiased">
 
     <!-- Sidebar Navegación -->
     {% include 'administracion/components/sidebar.html' %}
@@ -37,18 +135,29 @@
         <!-- Header Superior -->
         {% include 'administracion/components/header.html' %}
 
-        <!-- Espacio para mensajes transaccionales (Django Messages) -->
+        <!-- Mensajes transaccionales (Django Messages) -->
         {% if messages %}
-        <div class="px-8 mt-6">
+        <div class="px-8 pt-5">
             {% for message in messages %}
-            <div class="p-4 rounded-xl border text-sm font-medium transition-all duration-200
+            <div class="flex items-center gap-3 p-4 rounded-2xl border text-sm font-medium transition-all duration-300 animate-[fadeIn_0.3s_ease-out]
                 {% if message.tags == 'error' %}
-                    bg-red-500/10 border-red-500/20 text-red-400
+                    bg-rose-500/8 border-rose-200/60 text-rose-700
                 {% elif message.tags == 'success' %}
-                    bg-green-500/10 border-green-500/20 text-green-400
+                    bg-emerald-500/8 border-emerald-200/60 text-emerald-700
+                {% elif message.tags == 'warning' %}
+                    bg-amber-500/8 border-amber-200/60 text-amber-700
                 {% else %}
-                    bg-indigo-500/10 border-indigo-500/20 text-indigo-400
+                    bg-teal-500/8 border-teal-200/60 text-teal-700
                 {% endif %}">
+                {% if message.tags == 'error' %}
+                    <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+                {% elif message.tags == 'success' %}
+                    <i data-lucide="check-circle-2" class="w-4 h-4 flex-shrink-0"></i>
+                {% elif message.tags == 'warning' %}
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
+                {% else %}
+                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>
+                {% endif %}
                 {{ message }}
             </div>
             {% endfor %}

@@ -1,0 +1,138 @@
+{% extends 'administracion/base.html' %}
+
+{% block title %}Planes de Suscripción — NutriSync Admin{% endblock %}
+
+{% block page_title %}Planes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1">Configuración Comercial</p>
+            <h1 class="font-heading text-3xl font-bold tracking-tight text-slate-900">Planes de Suscripción</h1>
+            <p class="text-sm text-slate-500 mt-1">Configura precios, comisiones y límites técnicos de cada plan.</p>
+        </div>
+        <div>
+            <a 
+                href="{% url 'administracion:plan_crear' %}" 
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-semibold text-white gradient-badge shadow-lg shadow-teal-600/15 hover:shadow-teal-600/25 hover:scale-[1.02] transition-all duration-200"
+            >
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Crear Nuevo Plan
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards de planes (diseño visual en vez de tabla) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for plan in planes %}
+        <div class="kpi-card glass-card border border-slate-200/60 rounded-2xl p-6 shadow-sm space-y-5 {% if plan.activo %}kpi-teal{% else %}kpi-rose{% endif %}">
+            
+            <!-- Header del plan -->
+            <div class="flex items-start justify-between">
+                <div>
+                    <h3 class="font-heading text-lg font-bold text-slate-900">{{ plan.nombre }}</h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{{ plan.descripcion|default:"Sin descripción" }}</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <a 
+                        href="{% url 'administracion:plan_editar' plan.pk %}"
+                        class="p-2 rounded-xl text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all duration-200"
+                        title="Editar Plan"
+                    >
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </a>
+                    
+                    <form method="POST" action="{% url 'administracion:plan_toggle' plan.pk %}" class="inline-block">
+                        {% csrf_token %}
+                        <button 
+                            type="submit" 
+                            class="p-2 rounded-xl transition-all duration-200 {% if plan.activo %}text-rose-500 hover:bg-rose-50 hover:text-rose-600{% else %}text-emerald-500 hover:bg-emerald-50 hover:text-emerald-600{% endif %} cursor-pointer"
+                            title="{% if plan.activo %}Desactivar Plan{% else %}Activar Plan{% endif %}"
+                        >
+                            {% if plan.activo %}
+                                <i data-lucide="eye-off" class="w-4 h-4"></i>
+                            {% else %}
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Precios -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50/70 rounded-xl p-3 space-y-1">
+                    <p class="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-bold">Mensual</p>
+                    <p class="font-heading text-lg font-bold text-slate-900">S/ {{ plan.precio_mensual }}</p>
+                </div>
+                <div class="bg-slate-50/70 rounded-xl p-3 space-y-1">
+                    <p class="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-bold">Anual</p>
+                    <p class="font-heading text-lg font-bold text-slate-900">S/ {{ plan.precio_anual }}</p>
+                </div>
+            </div>
+
+            <!-- Límites -->
+            <div class="border-t border-slate-100/70 pt-4 space-y-2.5">
+                <div class="flex items-center justify-between text-[12px]">
+                    <span class="text-slate-500 flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
+                        Pacientes
+                    </span>
+                    <span class="font-bold text-slate-800">
+                        {% if plan.limite_pacientes == -1 %}
+                            <span class="text-teal-600">Ilimitado</span>
+                        {% else %}
+                            {{ plan.limite_pacientes }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between text-[12px]">
+                    <span class="text-slate-500 flex items-center gap-1.5">
+                        <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                        Citas / mes
+                    </span>
+                    <span class="font-bold text-slate-800">
+                        {% if plan.limite_citas_mes == -1 %}
+                            <span class="text-teal-600">Ilimitado</span>
+                        {% else %}
+                            {{ plan.limite_citas_mes }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Comisiones -->
+            <div class="border-t border-slate-100/70 pt-4 flex items-center justify-between">
+                <div class="text-[11px] text-slate-500">
+                    <span class="font-mono">{{ plan.comision_cobros }}%</span> cobros · <span class="font-mono">{{ plan.comision_suscripcion }}%</span> suscrip.
+                </div>
+                {% if plan.activo %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Activo
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                        Inactivo
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full">
+            <div class="glass-card border border-slate-200/60 rounded-2xl p-14 text-center shadow-sm">
+                <div class="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 mx-auto mb-4 flex items-center justify-center text-slate-300">
+                    <i data-lucide="gem" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-heading text-base font-semibold text-slate-700">No se encontraron planes creados</h3>
+                <p class="text-[12px] text-slate-400 mt-1">Haz clic en "Crear Nuevo Plan" para comenzar.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

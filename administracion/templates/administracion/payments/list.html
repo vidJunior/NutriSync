@@ -1,0 +1,179 @@
+{% extends 'administracion/base.html' %}
+
+{% block title %}Pagos por Verificar — NutriSync Admin{% endblock %}
+
+{% block page_title %}Verificar Pagos{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Encabezado -->
+    <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1">Facturación</p>
+        <h1 class="font-heading text-3xl font-bold tracking-tight text-slate-900">Verificación de Pagos Manuales</h1>
+        <p class="text-sm text-slate-500 mt-1">Revisa y valida las transferencias bancarias o Yapes adjuntos por los nutricionistas.</p>
+    </div>
+
+    <!-- Tabla de pagos -->
+    <div class="glass-card border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse admin-table">
+                <thead>
+                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-[0.12em]">
+                        <th class="px-6 py-4">Nutricionista</th>
+                        <th class="px-6 py-4">Monto</th>
+                        <th class="px-6 py-4">Método / Referencia</th>
+                        <th class="px-6 py-4">Fecha Solicitud</th>
+                        <th class="px-6 py-4">Comprobante</th>
+                        <th class="px-6 py-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100/70 text-[13px] text-slate-700">
+                    {% for pago in pagos %}
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500/10 to-indigo-500/10 flex items-center justify-center text-[10px] font-bold text-teal-700 uppercase flex-shrink-0 border border-teal-200/40">
+                                    {{ pago.nutricionista.perfil.nombre_completo|slice:":2" }}
+                                </div>
+                                <div>
+                                    <span class="font-semibold text-slate-900 block text-[12px]">{{ pago.nutricionista.perfil.nombre_completo }}</span>
+                                    <span class="text-[10px] text-slate-400 block">@{{ pago.nutricionista.username }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-heading font-bold text-slate-900 text-[14px]">S/ {{ pago.monto|floatformat:2 }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-200/60 capitalize">
+                                {{ pago.get_metodo_pago_display }}
+                            </span>
+                            <span class="text-[10px] text-slate-400 block mt-1 font-mono">Ref: {{ pago.referencia|default:"Ninguna" }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-400 text-[12px]">
+                            {{ pago.fecha_pago|date:"d M Y, H:i" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if pago.comprobante %}
+                                <button 
+                                    type="button" 
+                                    onclick="abrirVisorComprobante('{{ pago.comprobante.url }}')"
+                                    class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-teal-600 hover:text-teal-700 cursor-pointer transition-colors"
+                                >
+                                    <i data-lucide="image" class="w-4 h-4"></i>
+                                    Ver Adjunto
+                                </button>
+                            {% else %}
+                                <span class="text-[11px] text-slate-400 italic">Sin adjunto</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="inline-flex items-center justify-end gap-2">
+                                
+                                <!-- Rechazar -->
+                                <form method="POST" action="{% url 'administracion:pago_rechazar' pago.pk %}" onsubmit="return confirm('¿Estás seguro de rechazar este pago?');">
+                                    {% csrf_token %}
+                                    <button 
+                                        type="submit" 
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold text-rose-600 bg-white hover:bg-rose-50 border border-rose-200/60 hover:border-rose-300 transition-all duration-200 cursor-pointer"
+                                        title="Rechazar Pago"
+                                    >
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                        Rechazar
+                                    </button>
+                                </form>
+
+                                <!-- Aprobar -->
+                                <form method="POST" action="{% url 'administracion:pago_aprobar' pago.pk %}" onsubmit="return confirm('¿Estás seguro de aprobar este pago y activar la suscripción?');">
+                                    {% csrf_token %}
+                                    <button 
+                                        type="submit" 
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold text-white gradient-badge shadow-md shadow-teal-600/10 hover:shadow-teal-600/20 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+                                        title="Aprobar Pago"
+                                    >
+                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                        Aprobar
+                                    </button>
+                                </form>
+
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-14 text-center">
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200/60 mx-auto mb-4 flex items-center justify-center text-emerald-400">
+                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="font-heading text-base font-semibold text-slate-700">No hay pagos pendientes</h3>
+                            <p class="text-[12px] text-slate-400 mt-1">¡Excelente! Todas las transacciones han sido procesadas.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Visor de Comprobante Premium -->
+<div id="visor-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 opacity-0">
+    <div id="visor-card" class="glass-card rounded-2xl shadow-2xl border border-slate-200/40 p-6 w-full max-w-2xl relative overflow-hidden transition-all duration-300 transform scale-95 opacity-0 flex flex-col max-h-[90vh]">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg gradient-badge flex items-center justify-center">
+                    <i data-lucide="image" class="w-3.5 h-3.5 text-white"></i>
+                </div>
+                <h3 class="font-heading font-bold text-[15px] text-slate-900">Comprobante de Pago</h3>
+            </div>
+            <button onclick="cerrarVisorComprobante()" type="button" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition-all duration-200">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Contenido / Imagen -->
+        <div class="flex-1 overflow-y-auto flex items-center justify-center bg-slate-50/70 rounded-xl p-2 min-h-[300px]">
+            <img id="visor-img" src="" alt="Comprobante Adjunto" class="max-w-full max-h-[60vh] object-contain rounded-lg shadow-sm">
+        </div>
+    </div>
+</div>
+
+<!-- Scripts del visor modal -->
+<script>
+    const visorModal = document.getElementById('visor-modal');
+    const visorCard = document.getElementById('visor-card');
+    const visorImg = document.getElementById('visor-img');
+
+    function abrirVisorComprobante(imgUrl) {
+        visorImg.src = imgUrl;
+        visorModal.classList.remove('hidden');
+        visorModal.classList.add('flex');
+        void visorModal.offsetWidth;
+        visorModal.classList.remove('opacity-0');
+        visorModal.classList.add('opacity-100');
+        visorCard.classList.remove('scale-95', 'opacity-0');
+        visorCard.classList.add('scale-100', 'opacity-100');
+    }
+
+    function cerrarVisorComprobante() {
+        visorModal.classList.remove('opacity-100');
+        visorModal.classList.add('opacity-0');
+        visorCard.classList.remove('scale-100', 'opacity-100');
+        visorCard.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            visorModal.classList.add('hidden');
+            visorModal.classList.remove('flex');
+            visorImg.src = "";
+        }, 300);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !visorModal.classList.contains('hidden')) {
+            cerrarVisorComprobante();
+        }
+    });
+</script>
+{% endblock %}

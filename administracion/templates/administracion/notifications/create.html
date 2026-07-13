@@ -1,0 +1,299 @@
+{% extends 'administracion/base.html' %}
+
+{% block title %}Enviar Alerta — NutriSync Admin{% endblock %}
+
+{% block page_title %}Alertas / Enviar{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Encabezado con ilustración -->
+    <div class="glass-card border border-slate-200/60 rounded-2xl p-6 shadow-sm overflow-hidden relative">
+        <!-- Decoración de fondo -->
+        <div class="absolute top-0 right-0 w-64 h-64 opacity-[0.04] pointer-events-none">
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="100" cy="100" r="80" stroke="currentColor" stroke-width="1.5" class="text-teal-600"/>
+                <circle cx="100" cy="100" r="55" stroke="currentColor" stroke-width="1" class="text-indigo-600"/>
+                <circle cx="100" cy="100" r="30" fill="currentColor" class="text-teal-600" opacity="0.3"/>
+                <path d="M100 20 L100 60 M100 140 L100 180 M20 100 L60 100 M140 100 L180 100" stroke="currentColor" stroke-width="1" class="text-slate-600"/>
+            </svg>
+        </div>
+        <div class="relative flex items-start gap-5">
+            <div class="w-14 h-14 rounded-2xl gradient-badge flex items-center justify-center shadow-lg shadow-teal-600/20 flex-shrink-0">
+                <i data-lucide="radio" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-teal-600 uppercase tracking-[0.15em] mb-1">Centro de Comunicaciones</p>
+                <h1 class="font-heading text-2xl font-bold tracking-tight text-slate-900">Enviar Alerta del Sistema</h1>
+                <p class="text-[13px] text-slate-500 mt-1 max-w-lg">Redacta y difunde comunicados oficiales a los nutricionistas. Las alertas se muestran como banners destacados dentro de su panel de control.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout en 2 columnas -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <!-- Columna Izquierda: Formulario (3/5) -->
+        <div class="lg:col-span-3">
+            <form method="POST" id="alertForm" class="glass-card border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden">
+                {% csrf_token %}
+                
+                <div class="p-6 md:p-7 space-y-5">
+                    <!-- Título -->
+                    <div>
+                        <label for="titulo" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-2">
+                            <i data-lucide="type" class="w-3 h-3 text-teal-500"></i>
+                            Título de la Alerta
+                        </label>
+                        <input 
+                            type="text" 
+                            name="titulo" 
+                            id="titulo"
+                            required
+                            class="w-full px-4 py-3 rounded-xl text-[13px] bg-white border border-slate-200/80 text-slate-800 outline-none focus:border-teal-500 focus:ring-3 focus:ring-teal-500/10 transition-all duration-200 placeholder:text-slate-350"
+                            placeholder="Ej: Mantenimiento programado del 15 de julio"
+                        >
+                    </div>
+
+                    <!-- Mensaje -->
+                    <div>
+                        <label for="mensaje" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-2">
+                            <i data-lucide="align-left" class="w-3 h-3 text-teal-500"></i>
+                            Cuerpo del Mensaje
+                        </label>
+                        <textarea 
+                            name="mensaje" 
+                            id="mensaje"
+                            required
+                            rows="5"
+                            class="w-full px-4 py-3 rounded-xl text-[13px] bg-white border border-slate-200/80 text-slate-800 outline-none focus:border-teal-500 focus:ring-3 focus:ring-teal-500/10 transition-all duration-200 resize-none placeholder:text-slate-350"
+                            placeholder="Detalla el comunicado, instrucciones o aviso para los nutricionistas..."
+                        ></textarea>
+                        <div class="flex justify-end mt-1.5">
+                            <span class="text-[10px] text-slate-400" id="charCount">0 caracteres</span>
+                        </div>
+                    </div>
+
+                    <!-- Separador visual -->
+                    <div class="border-t border-slate-100/80 pt-1">
+                        <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-[0.15em] flex items-center gap-1.5 mb-4">
+                            <i data-lucide="sliders-horizontal" class="w-3 h-3"></i>
+                            Configuración de Envío
+                        </p>
+                    </div>
+
+                    <!-- Grid Criticidad + Plan -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- Tipo / Criticidad como tarjetas de selección -->
+                        <div>
+                            <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-2">
+                                <i data-lucide="palette" class="w-3 h-3 text-teal-500"></i>
+                                Nivel de Criticidad
+                            </label>
+                            <div class="grid grid-cols-2 gap-2" id="tipoSelector">
+                                {% for valor, etiqueta in tipos %}
+                                <label class="tipo-option relative cursor-pointer">
+                                    <input type="radio" name="tipo" value="{{ valor }}" class="sr-only peer" {% if forloop.first %}checked{% endif %}>
+                                    <div class="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200/80 bg-white text-[12px] font-medium text-slate-600 transition-all duration-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 peer-checked:shadow-sm hover:border-slate-300">
+                                        {% if valor == 'info' %}
+                                            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 flex-shrink-0"></span>
+                                        {% elif valor == 'warning' %}
+                                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                                        {% elif valor == 'error' %}
+                                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 flex-shrink-0"></span>
+                                        {% elif valor == 'success' %}
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                                        {% else %}
+                                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400 flex-shrink-0"></span>
+                                        {% endif %}
+                                        {{ etiqueta }}
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Segmentar por Plan -->
+                        <div>
+                            <label for="plan_destino" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-2">
+                                <i data-lucide="target" class="w-3 h-3 text-teal-500"></i>
+                                Audiencia Destino
+                            </label>
+                            <select 
+                                name="plan_destino" 
+                                id="plan_destino"
+                                class="w-full px-4 py-3 rounded-xl text-[13px] bg-white border border-slate-200/80 text-slate-700 outline-none focus:border-teal-500 focus:ring-3 focus:ring-teal-500/10 transition-all duration-200 mb-2"
+                            >
+                                <option value="">🌐 Todos los planes (Global)</option>
+                                {% for plan in planes %}
+                                    <option value="{{ plan.nombre }}">📦 {{ plan.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-[10px] text-slate-400 italic">Selecciona el plan o envía a todos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer del form con acción -->
+                <div class="px-6 md:px-7 py-4 bg-slate-50/50 border-t border-slate-100/80 flex items-center justify-between">
+                    <a 
+                        href="{% url 'administracion:dashboard' %}" 
+                        class="px-4 py-2.5 rounded-xl text-[12px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-white border border-transparent hover:border-slate-200 transition-all duration-200 flex items-center gap-1.5"
+                    >
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                        Volver
+                    </a>
+                    <button 
+                        type="submit" 
+                        class="px-6 py-2.5 rounded-xl text-[12px] font-bold text-white gradient-badge shadow-lg shadow-teal-600/20 hover:shadow-teal-600/30 hover:scale-[1.03] transition-all duration-200 cursor-pointer flex items-center gap-2"
+                    >
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        Difundir Alerta
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Columna Derecha: Preview en vivo + Tips (2/5) -->
+        <div class="lg:col-span-2 space-y-5">
+            
+            <!-- Vista previa en vivo -->
+            <div class="glass-card border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-slate-100/80 bg-slate-50/30">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                        <i data-lucide="monitor" class="w-3 h-3 text-indigo-500"></i>
+                        Vista Previa en Vivo
+                    </p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Así lo verán los nutricionistas</p>
+                </div>
+                <div class="p-5">
+                    <!-- Simulación del panel del nutricionista -->
+                    <div class="bg-[#f8fafc] rounded-xl border border-slate-200/60 p-4 space-y-3">
+                        <!-- Mini header falso -->
+                        <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
+                            <div class="w-5 h-5 rounded-md gradient-badge flex items-center justify-center">
+                                <i data-lucide="apple" class="w-2.5 h-2.5 text-white"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-500">Panel del Nutricionista</span>
+                        </div>
+                        
+                        <!-- Banner de alerta preview -->
+                        <div id="preview-banner" class="rounded-xl p-3.5 border transition-all duration-300 bg-sky-50/80 border-sky-200/60">
+                            <div class="flex items-start gap-2.5">
+                                <div id="preview-icon-wrapper" class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-sky-100 text-sky-600">
+                                    <i data-lucide="info" class="w-3.5 h-3.5" id="preview-icon"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-semibold text-slate-800 text-[12px] leading-tight" id="preview-titulo">Título de la alerta</p>
+                                    <p class="text-slate-500 text-[11px] mt-1 leading-relaxed" id="preview-mensaje">El mensaje del comunicado aparecerá aquí conforme escribas...</p>
+                                    <p class="text-[9px] text-slate-400 mt-2 flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-2.5 h-2.5"></i>
+                                        Hace unos segundos · Administración NutriSync
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Placeholder de contenido -->
+                        <div class="space-y-2 pt-1">
+                            <div class="h-2 bg-slate-100 rounded-full w-full"></div>
+                            <div class="h-2 bg-slate-100 rounded-full w-4/5"></div>
+                            <div class="h-2 bg-slate-100 rounded-full w-3/5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips de redacción -->
+            <div class="glass-card border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-500">
+                        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>
+                    </div>
+                    <h4 class="font-heading text-[13px] font-bold text-slate-700">Consejos de Redacción</h4>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-teal-50 border border-teal-200/60 flex items-center justify-center text-teal-600 text-[10px] font-bold flex-shrink-0 mt-0.5">1</span>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Usa títulos <span class="font-semibold text-slate-700">claros y directos</span> que describan la acción requerida.</p>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-teal-50 border border-teal-200/60 flex items-center justify-center text-teal-600 text-[10px] font-bold flex-shrink-0 mt-0.5">2</span>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Indica <span class="font-semibold text-slate-700">fechas, horarios y duración</span> en caso de mantenimientos.</p>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-teal-50 border border-teal-200/60 flex items-center justify-center text-teal-600 text-[10px] font-bold flex-shrink-0 mt-0.5">3</span>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Selecciona la <span class="font-semibold text-slate-700">criticidad adecuada</span> para no saturar a los usuarios.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadística rápida -->
+            <div class="glass-card border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-500">
+                            <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <div>
+                            <p class="text-[12px] font-semibold text-slate-700">Alcance estimado</p>
+                            <p class="text-[10px] text-slate-400">Nutricionistas que recibirán la alerta</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-heading text-xl font-bold gradient-text" id="reach-count">Todos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live preview - título
+    const tituloInput = document.getElementById('titulo');
+    const mensajeInput = document.getElementById('mensaje');
+    const previewTitulo = document.getElementById('preview-titulo');
+    const previewMensaje = document.getElementById('preview-mensaje');
+    const previewBanner = document.getElementById('preview-banner');
+    const previewIconWrapper = document.getElementById('preview-icon-wrapper');
+    const charCount = document.getElementById('charCount');
+
+    tituloInput.addEventListener('input', function() {
+        previewTitulo.textContent = this.value || 'Título de la alerta';
+    });
+
+    mensajeInput.addEventListener('input', function() {
+        previewMensaje.textContent = this.value || 'El mensaje del comunicado aparecerá aquí conforme escribas...';
+        charCount.textContent = this.value.length + ' caracteres';
+    });
+
+    // Tipo / color del banner preview
+    const tipoStyles = {
+        'info':    { bg: 'bg-sky-50/80',     border: 'border-sky-200/60',     iconBg: 'bg-sky-100',     iconColor: 'text-sky-600' },
+        'warning': { bg: 'bg-amber-50/80',   border: 'border-amber-200/60',   iconBg: 'bg-amber-100',   iconColor: 'text-amber-600' },
+        'error':   { bg: 'bg-rose-50/80',    border: 'border-rose-200/60',    iconBg: 'bg-rose-100',    iconColor: 'text-rose-600' },
+        'success': { bg: 'bg-emerald-50/80', border: 'border-emerald-200/60', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' }
+    };
+
+    document.querySelectorAll('input[name="tipo"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const style = tipoStyles[this.value] || tipoStyles['info'];
+            // Reset classes
+            previewBanner.className = 'rounded-xl p-3.5 border transition-all duration-300 ' + style.bg + ' ' + style.border;
+            previewIconWrapper.className = 'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ' + style.iconBg + ' ' + style.iconColor;
+        });
+    });
+
+    // Audiencia
+    document.getElementById('plan_destino').addEventListener('change', function() {
+        const reachEl = document.getElementById('reach-count');
+        if (this.value) {
+            reachEl.textContent = 'Plan ' + this.value;
+        } else {
+            reachEl.textContent = 'Todos';
+        }
+    });
+</script>
+{% endblock %}

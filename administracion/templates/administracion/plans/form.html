@@ -1,0 +1,181 @@
+{% extends 'administracion/base.html' %}
+
+{% block title %}{{ action }} Plan — NutriSync Admin{% endblock %}
+
+{% block page_title %}Planes / {{ action }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-4xl">
+    
+    <!-- Volver -->
+    <div>
+        <a 
+            href="{% url 'administracion:planes_lista' %}" 
+            class="inline-flex items-center gap-2 text-[12px] text-slate-400 hover:text-teal-600 transition-colors font-medium"
+        >
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            Volver a la lista
+        </a>
+    </div>
+
+    <!-- Encabezado -->
+    <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1">Configuración Comercial</p>
+        <h1 class="font-heading text-3xl font-bold tracking-tight text-slate-900">{{ action }} Plan de Suscripción</h1>
+        <p class="text-sm text-slate-500 mt-1">Completa los límites técnicos y valores económicos del plan.</p>
+    </div>
+
+    <!-- Formulario -->
+    <form method="POST" class="glass-card border border-slate-200/60 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="flex items-start gap-3 p-4 rounded-xl bg-rose-50/80 border border-rose-200/60 text-rose-700 text-[12px]">
+            <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+            <div class="space-y-1">
+                <span class="font-bold block">Por favor corrige los siguientes errores:</span>
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    {% if field.errors %}
+                        <span class="block"><strong>{{ field.label }}:</strong> {{ field.errors|striptags }}</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            
+            <!-- Nombre -->
+            <div class="md:col-span-2">
+                <label for="{{ form.nombre.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Nombre del Plan
+                </label>
+                {{ form.nombre }}
+            </div>
+
+            <!-- Descripción -->
+            <div class="md:col-span-2">
+                <label for="{{ form.descripcion.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Descripción
+                </label>
+                {{ form.descripcion }}
+            </div>
+
+            <!-- Separador Visual -->
+            <div class="md:col-span-2 border-t border-slate-100/70 pt-2">
+                <p class="text-[9px] font-bold text-teal-600 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                    <i data-lucide="banknote" class="w-3 h-3"></i>
+                    Tarifas
+                </p>
+            </div>
+
+            <!-- Precio Mensual -->
+            <div>
+                <label for="{{ form.precio_mensual.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Precio Mensual (S/)
+                </label>
+                {{ form.precio_mensual }}
+            </div>
+
+            <!-- Precio Anual -->
+            <div>
+                <label for="{{ form.precio_anual.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Precio Anual (S/)
+                </label>
+                {{ form.precio_anual }}
+            </div>
+
+            <!-- Separador Visual -->
+            <div class="md:col-span-2 border-t border-slate-100/70 pt-2">
+                <p class="text-[9px] font-bold text-indigo-600 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                    <i data-lucide="gauge" class="w-3 h-3"></i>
+                    Límites Técnicos
+                </p>
+            </div>
+
+            <!-- Límite Pacientes -->
+            <div>
+                <label for="{{ form.limite_pacientes.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Límite de Pacientes
+                </label>
+                {{ form.limite_pacientes }}
+                <span class="text-[10px] text-slate-400 mt-1 block italic">Usa -1 para ilimitados</span>
+            </div>
+
+            <!-- Límite Citas al Mes -->
+            <div>
+                <label for="{{ form.limite_citas_mes.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Límite de Citas al Mes
+                </label>
+                {{ form.limite_citas_mes }}
+                <span class="text-[10px] text-slate-400 mt-1 block italic">Usa -1 para ilimitados</span>
+            </div>
+
+            <!-- Separador Visual -->
+            <div class="md:col-span-2 border-t border-slate-100/70 pt-2">
+                <p class="text-[9px] font-bold text-amber-600 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                    <i data-lucide="percent" class="w-3 h-3"></i>
+                    Comisiones de Plataforma
+                </p>
+            </div>
+
+            <!-- Comisión Cobros -->
+            <div>
+                <label for="{{ form.comision_cobros.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Comisión por Cobros a Pacientes (%)
+                </label>
+                {{ form.comision_cobros }}
+            </div>
+
+            <!-- Comisión Suscripción -->
+            <div>
+                <label for="{{ form.comision_suscripcion.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Comisión sobre Suscripción (%)
+                </label>
+                {{ form.comision_suscripcion }}
+            </div>
+
+            <!-- Stripe -->
+            <div>
+                <label for="{{ form.stripe_price_id_mensual.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Stripe Price ID (Mensual)
+                </label>
+                {{ form.stripe_price_id_mensual }}
+            </div>
+
+            <div>
+                <label for="{{ form.stripe_price_id_anual.id_for_label }}" class="block text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-1.5">
+                    Stripe Price ID (Anual)
+                </label>
+                {{ form.stripe_price_id_anual }}
+            </div>
+
+            <!-- Activo -->
+            <div class="md:col-span-2 flex items-center gap-2.5 pt-4 border-t border-slate-100/70">
+                {{ form.activo }}
+                <label for="{{ form.activo.id_for_label }}" class="text-[12px] font-semibold text-slate-700">
+                    Plan disponible para contratación (Activo)
+                </label>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100/70">
+            <a 
+                href="{% url 'administracion:planes_lista' %}" 
+                class="px-5 py-2.5 rounded-xl text-[12px] font-semibold text-slate-600 hover:bg-slate-50 border border-slate-200 transition-all duration-200"
+            >
+                Cancelar
+            </a>
+            <button 
+                type="submit" 
+                class="px-5 py-2.5 rounded-xl text-[12px] font-semibold text-white gradient-badge shadow-lg shadow-teal-600/15 hover:shadow-teal-600/25 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+            >
+                Guardar Plan
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -85,21 +85,8 @@
         </nav>
     </header>
 
-    <!-- Mensajes del sistema -->
-    {% if messages %}
-    <div class="max-w-7xl mx-auto px-6 pt-24 pb-0 relative z-40">
-        <div class="space-y-2">
-            {% for message in messages %}
-            <div class="px-4 py-3 rounded-xl text-sm font-medium border shadow-sm
-                {% if message.tags == 'success' %}bg-emerald-50 border-emerald-250/20 text-emerald-800
-                {% elif message.tags == 'error' %}bg-red-50 border-red-250/20 text-red-800
-                {% else %}bg-blue-50 border-blue-250/20 text-blue-800{% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+    <!-- Mensajes del sistema (Información y éxito flotantes) -->
+    {% include "components/messages.html" %}
 
     <!-- Hero Section -->
     <section class="hero-gradient pt-36 pb-24 md:pt-44 md:pb-32 px-6">
@@ -626,11 +613,21 @@
                 <p class="text-slate-500 text-xs mt-1">Ingresa a tu cuenta profesional NutriSync</p>
             </div>
 
-            <!-- Formulario -->
             <form method="POST" action="{% url 'core:login' %}" class="space-y-4">
                 {% csrf_token %}
                 {% if request.GET.next %}
                 <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                        <div class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-red-50 border border-red-200 text-red-700 flex items-start gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
 
                 <!-- Usuario -->

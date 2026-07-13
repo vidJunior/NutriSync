@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 
 class AdminRequeridoMixin(LoginRequiredMixin):
     """Verifica autenticación y rol admin_plataforma."""
-    login_url = "/administracion/login/"
+    login_url = "/?login=true"
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -30,7 +30,7 @@ def admin_requerido(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect("/administracion/login/")
+            return redirect("/?login=true")
 
         perfil = getattr(request.user, "perfil", None)
         es_admin = perfil and perfil.rol == "admin_plataforma"
