@@ -55,11 +55,9 @@ def admin_login_view(request):
 
 
 def admin_register_view(request):
-    """Registro de administradores validando clave de registro."""
-    if request.user.is_authenticated:
-        perfil = getattr(request.user, "perfil", None)
-        if perfil and perfil.rol == Rol.ADMIN_PLATAFORMA:
-            return redirect("administracion:dashboard")
+    """Registro deshabilitado por seguridad."""
+    messages.error(request, "El registro público de administradores está deshabilitado por seguridad.")
+    return redirect("administracion:login")
 
     if request.method == "POST":
         username = request.POST.get("username", "").strip()

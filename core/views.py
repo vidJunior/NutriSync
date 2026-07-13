@@ -22,9 +22,17 @@ def login_view(request):
     Vista de login con redirecciones al modal de la página principal.
     Cualquier petición GET redirige a la página principal con el modal abierto.
     """
-    # Si ya está autenticado, redirige al dashboard directamente
+    # Si ya está autenticado, redirige al panel correspondiente directamente
     if request.user.is_authenticated:
-        return redirect("core:dashboard")
+        perfil = getattr(request.user, "perfil", None)
+        if perfil and perfil.rol == "admin_plataforma":
+            return redirect("administracion:dashboard")
+        elif perfil and perfil.rol == "nutricionista":
+            return redirect("core:dashboard")
+        else:
+            if request.user.is_superuser:
+                return redirect("administracion:dashboard")
+            return redirect("core:dashboard")
 
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
@@ -43,15 +51,36 @@ def login_view(request):
                     )
                     return redirect("/?login=true")
             except Exception:
-                # Si no tiene perfil (edge case), se crea implícitamente por el signal
+                # Si es superusuario y no tiene perfil, se lo creamos con rol de administrador
+                if user.is_superuser:
+                    from core.models import PerfilNutricionista, Rol
+                    nombre = f"{user.first_name} {user.last_name}".strip() or user.username
+                    PerfilNutricionista.objects.get_or_create(
+                        usuario=user,
+                        defaults={
+                            "nombre_completo": nombre,
+                            "rol": Rol.ADMIN_PLATAFORMA
+                        }
+                    )
                 pass
 
             login(request, user)
             messages.success(
                 request, f"Bienvenido, {user.first_name or user.username}."
             )
-            # Respeta el parámetro 'next' redirigiendo al dashboard por defecto
-            next_url = request.POST.get("next", "") or request.GET.get("next", "") or "/dashboard/"
+            
+            # Redirección inteligente de rol
+            perfil = getattr(user, "perfil", None)
+            if perfil and perfil.rol == "admin_plataforma":
+                next_url = request.POST.get("next", "") or request.GET.get("next", "") or "/administracion/"
+            elif perfil and perfil.rol == "nutricionista":
+                next_url = request.POST.get("next", "") or request.GET.get("next", "") or "/dashboard/"
+            else:
+                if user.is_superuser:
+                    next_url = request.POST.get("next", "") or request.GET.get("next", "") or "/administracion/"
+                else:
+                    next_url = request.POST.get("next", "") or request.GET.get("next", "") or "/dashboard/"
+                
             return redirect(next_url)
         else:
             messages.error(request, "Usuario o contraseña incorrectos.")
@@ -422,3 +451,30 @@ def error_404(request, exception):
 def error_500(request):
     """Página 500 personalizada con diseño consistente al sistema."""
     return render(request, "500.html", status=500)
+
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def soporte_view(request):
+    """Permite al nutricionista enviar solicitudes de soporte técnico e inspeccionar respuestas."""
+    from administracion.models import TicketSoporte
+    
+    if request.method == "POST":
+        asunto = request.POST.get("asunto", "").strip()
+        mensaje = request.POST.get("mensaje", "").strip()
+        
+        if not asunto or not mensaje:
+            messages.error(request, "Por favor completa el asunto y el mensaje de ayuda.")
+        else:
+            TicketSoporte.objects.create(
+                nutricionista=request.user,
+                asunto=asunto,
+                mensaje=mensaje,
+                estado="abierto"
+            )
+            messages.success(request, "Tu solicitud de soporte ha sido enviada con éxito. Un administrador la revisará pronto.")
+            return redirect("core:soporte")
+            
+    tickets = request.user.tickets.all().order_by("-fecha_creacion")
+    return render(request, "core/soporte/index.html", {"tickets": tickets})

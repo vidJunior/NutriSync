@@ -13,4 +13,5 @@ urlpatterns = [
     path("", views.landing_view, name="landing"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
     path("perfil/", views.perfil_view, name="perfil"),
+    path("soporte/", views.soporte_view, name="soporte"),
 ]
