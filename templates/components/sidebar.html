@@ -64,9 +64,19 @@
         <a href="{% url 'reportes:dashboard' %}"
             class="sidebar-link {% if request.resolver_match.namespace == 'reportes' %}active{% endif %}">
             <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Reportes
+        </a>
         <a href="{% url 'facturacion:dashboard' %}"
             class="sidebar-link {% if request.resolver_match.namespace == 'facturacion' %}active{% endif %}">
             <i data-lucide="credit-card" class="w-5 h-5"></i> Facturación
+        </a>
+        <a href="{% url 'core:notificaciones' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'notificaciones' %}active{% endif %}">
+            <i data-lucide="bell" class="w-5 h-5"></i> Alertas
+            {% if alertas_pendientes_count > 0 %}
+            <span class="ml-auto w-5 h-5 bg-teal-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-pulse" id="sidebar-alert-badge">
+                {{ alertas_pendientes_count }}
+            </span>
+            {% endif %}
         </a>
     </nav>
 

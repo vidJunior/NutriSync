@@ -1,0 +1,202 @@
+<!-- templates/components/system_alerts.html -->
+<div class="space-y-3 mb-6 {% if request.resolver_match.url_name == 'notificaciones' %}hidden{% endif %}" id="system-alerts-container" data-api-url="{% url 'core:api_alertas' %}">
+    {% for alerta in notificaciones_sistema %}
+    <div class="system-alert-banner flex items-start justify-between gap-4 p-4 rounded-2xl border transition-all duration-300 shadow-sm
+        {% if alerta.tipo == 'info' %}bg-sky-50/80 border-sky-200/60 text-sky-900
+        {% elif alerta.tipo == 'warning' %}bg-amber-50/80 border-amber-200/60 text-amber-900
+        {% elif alerta.tipo == 'critical' or alerta.tipo == 'error' %}bg-rose-50/80 border-rose-200/60 text-rose-900
+        {% else %}bg-slate-50/80 border-slate-200/60 text-slate-900{% endif %}"
+        id="alert-banner-{{ alerta.id }}"
+        data-alert-id="{{ alerta.id }}"
+        role="alert">
+        
+        <div class="flex gap-3">
+            <span class="flex-shrink-0 mt-0.5">
+                {% if alerta.tipo == 'info' %}
+                <div class="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                </div>
+                {% elif alerta.tipo == 'warning' %}
+                <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                    <i data-lucide="alert-triangle" class="w-4.5 h-4.5"></i>
+                </div>
+                {% elif alerta.tipo == 'critical' or alerta.tipo == 'error' %}
+                <div class="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+                    <i data-lucide="alert-circle" class="w-4.5 h-4.5"></i>
+                </div>
+                {% else %}
+                <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                    <i data-lucide="bell" class="w-4 h-4"></i>
+                </div>
+                {% endif %}
+            </span>
+            <div class="space-y-1">
+                <h4 class="text-sm font-bold tracking-tight">{{ alerta.titulo }}</h4>
+                <p class="text-xs opacity-90 leading-relaxed">{{ alerta.mensaje|linebreaksbr }}</p>
+                <p class="text-[10px] opacity-75 mt-2 flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3 h-3"></i>
+                    {{ alerta.fecha_creacion|date:"d/m/Y H:i" }} · Comunicación Oficial de la Plataforma
+                </p>
+            </div>
+        </div>
+
+        <button onclick="dismissSystemAlert({{ alerta.id }})" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-xl hover:bg-slate-200/50 flex-shrink-0">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Inicializar polling al cargar la página
+    document.addEventListener("DOMContentLoaded", function() {
+        initSystemAlertsPolling();
+    });
+
+    function updateSidebarBadge(count) {
+        let badge = document.getElementById('sidebar-alert-badge');
+        const link = document.querySelector('a[href="/notificaciones/"]');
+        if (count > 0) {
+            if (!badge && link) {
+                badge = document.createElement('span');
+                badge.id = 'sidebar-alert-badge';
+                badge.className = 'ml-auto w-5 h-5 bg-teal-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-pulse';
+                link.appendChild(badge);
+            }
+            if (badge) {
+                badge.textContent = count;
+            }
+        } else {
+            if (badge) {
+                badge.remove();
+            }
+        }
+    }
+
+    function dismissSystemAlert(id) {
+        const el = document.getElementById(`alert-banner-${id}`);
+        if (el) {
+            // Animación del banner
+            el.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                el.remove();
+            }, 300);
+            
+            // Registrar lectura en base de datos
+            const readUrl = `/api/alertas/${id}/leer/`;
+            fetch(readUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        updateSidebarBadge(data.alertas_pendientes_count);
+                    }
+                })
+                .catch(err => console.error("Error al marcar alerta como leída:", err));
+        }
+    }
+
+    function initSystemAlertsPolling() {
+        const container = document.getElementById('system-alerts-container');
+        if (!container) return;
+        const apiUrl = container.getAttribute('data-api-url');
+        if (!apiUrl) return;
+
+        // Consultar cada 10 segundos
+        setInterval(() => {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.alertas !== undefined) {
+                        // Actualizar el contador de la barra lateral
+                        updateSidebarBadge(data.alertas_pendientes_count);
+
+                        // Obtener IDs mostrados actualmente en el DOM
+                        const currentDomAlerts = container.querySelectorAll('[data-alert-id]');
+                        const currentDomIds = new Set(
+                            Array.from(currentDomAlerts).map(el => Number(el.getAttribute('data-alert-id')))
+                        );
+
+                        // IDs que vienen del servidor
+                        const serverIds = new Set(data.alertas.map(a => a.id));
+
+                        // Eliminar del DOM aquellas alertas que ya no vienen del servidor (ej. marcadas como leídas en otra pestaña)
+                        currentDomAlerts.forEach(el => {
+                            const alertId = Number(el.getAttribute('data-alert-id'));
+                            if (!serverIds.has(alertId)) {
+                                el.classList.add('opacity-0', 'scale-95');
+                                setTimeout(() => el.remove(), 300);
+                            }
+                        });
+
+                        // Procesar alertas recibidas
+                        data.alertas.forEach(alerta => {
+                            // Ignorar si ya se muestra en pantalla
+                            if (currentDomIds.has(alerta.id)) {
+                                return;
+                            }
+
+                            // Crear elemento dinámicamente
+                            const newAlert = document.createElement('div');
+                            newAlert.id = `alert-banner-${alerta.id}`;
+                            newAlert.setAttribute('data-alert-id', alerta.id);
+                            newAlert.setAttribute('role', 'alert');
+                            
+                            // Clases de estilo según tipo
+                            let alertClasses = "system-alert-banner flex items-start justify-between gap-4 p-4 rounded-2xl border shadow-sm transition-all duration-500 opacity-0 transform -translate-y-4 scale-95 ";
+                            let iconHtml = "";
+
+                            if (alerta.tipo === 'info') {
+                                alertClasses += "bg-sky-50/80 border-sky-200/60 text-sky-900";
+                                iconHtml = `<div class="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600"><i data-lucide="info" class="w-4 h-4"></i></div>`;
+                            } else if (alerta.tipo === 'warning') {
+                                alertClasses += "bg-amber-50/80 border-amber-200/60 text-amber-900";
+                                iconHtml = `<div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600"><i data-lucide="alert-triangle" class="w-4.5 h-4.5"></i></div>`;
+                            } else if (alerta.tipo === 'critical' || alerta.tipo === 'error') {
+                                alertClasses += "bg-rose-50/80 border-rose-200/60 text-rose-900";
+                                iconHtml = `<div class="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600"><i data-lucide="alert-circle" class="w-4.5 h-4.5"></i></div>`;
+                            } else {
+                                alertClasses += "bg-slate-50/80 border-slate-200/60 text-slate-900";
+                                iconHtml = `<div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-650"><i data-lucide="bell" class="w-4 h-4"></i></div>`;
+                            }
+
+                            newAlert.className = alertClasses;
+
+                            newAlert.innerHTML = `
+                                <div class="flex gap-3">
+                                    <span class="flex-shrink-0 mt-0.5">
+                                        ${iconHtml}
+                                    </span>
+                                    <div class="space-y-1">
+                                        <h4 class="text-sm font-bold tracking-tight">${alerta.titulo}</h4>
+                                        <p class="text-xs opacity-90 leading-relaxed">${alerta.mensaje.replace(/\n/g, '<br>')}</p>
+                                        <p class="text-[10px] opacity-75 mt-2 flex items-center gap-1">
+                                            <i data-lucide="clock" class="w-3 h-3"></i>
+                                            ${alerta.fecha_creacion} · Comunicación Oficial de la Plataforma
+                                        </p>
+                                    </div>
+                                </div>
+                                <button onclick="dismissSystemAlert(${alerta.id})" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-xl hover:bg-slate-200/50 flex-shrink-0">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            `;
+
+                            // Agregar al inicio del contenedor
+                            container.insertBefore(newAlert, container.firstChild);
+                            
+                            // Re-renderizar iconos de Lucide para el nuevo elemento
+                            if (window.lucide) {
+                                window.lucide.createIcons();
+                            }
+
+                            // Trigger de animación
+                            setTimeout(() => {
+                                newAlert.classList.remove('opacity-0', '-translate-y-4', 'scale-95');
+                                newAlert.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+                            }, 50);
+                        });
+                    }
+                })
+                .catch(err => console.error("Error polling system alerts:", err));
+        }, 10000);
+    }
+</script>

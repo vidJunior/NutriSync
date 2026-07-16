@@ -14,4 +14,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard_view, name="dashboard"),
     path("perfil/", views.perfil_view, name="perfil"),
     path("soporte/", views.soporte_view, name="soporte"),
+    path("notificaciones/", views.notificaciones_view, name="notificaciones"),
+    path("api/alertas/", views.api_alertas, name="api_alertas"),
+    path("api/alertas/<int:alert_id>/leer/", views.api_alertar_leer, name="api_alertar_leer"),
 ]

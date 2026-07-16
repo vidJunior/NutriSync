@@ -76,6 +76,9 @@
 
         <!-- Contenido principal -->
         <main class="flex-1 p-8">
+            <!-- Alertas globales del sistema -->
+            {% include "components/system_alerts.html" %}
+
             {% block content %}{% endblock %}
         </main>
 

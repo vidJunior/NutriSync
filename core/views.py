@@ -478,3 +478,98 @@ def soporte_view(request):
             
     tickets = request.user.tickets.all().order_by("-fecha_creacion")
     return render(request, "core/soporte/index.html", {"tickets": tickets})
+
+
+@login_required
+def api_alertas(request):
+    """Retorna las alertas activas no leídas dirigidas al usuario en formato JSON."""
+    from django.http import JsonResponse
+    from administracion.models import NotificacionSistema, NotificacionLeida
+    try:
+        alertas_validas = NotificacionSistema.para_usuario(request.user)
+        leidas_ids = NotificacionLeida.objects.filter(usuario=request.user).values_list("notificacion_id", flat=True)
+        alertas_no_leidas = alertas_validas.exclude(id__in=leidas_ids)
+        
+        data = [
+            {
+                "id": a.id,
+                "titulo": a.titulo,
+                "mensaje": a.mensaje,
+                "tipo": a.tipo,
+                "fecha_creacion": a.fecha_creacion.strftime('%d/%m/%Y %H:%M')
+            }
+            for a in alertas_no_leidas
+        ]
+        return JsonResponse({
+            "status": "success", 
+            "alertas": data,
+            "alertas_pendientes_count": alertas_no_leidas.count()
+        })
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@login_required
+def api_alertar_leer(request, alert_id):
+    """Registra que el usuario ha leído o descartado una alerta."""
+    from django.http import JsonResponse
+    from administracion.models import NotificacionSistema, NotificacionLeida
+    try:
+        notif = NotificacionSistema.objects.get(id=alert_id)
+        NotificacionLeida.objects.get_or_create(usuario=request.user, notificacion=notif)
+        
+        # Calcular nuevo contador
+        alertas_validas = NotificacionSistema.para_usuario(request.user)
+        leidas_ids = NotificacionLeida.objects.filter(usuario=request.user).values_list("notificacion_id", flat=True)
+        alertas_pendientes_count = alertas_validas.exclude(id__in=leidas_ids).count()
+        
+        return JsonResponse({"status": "success", "alertas_pendientes_count": alertas_pendientes_count})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@login_required
+def notificaciones_view(request):
+    """Muestra la bandeja de entrada e historial de alertas del sistema."""
+    from administracion.models import NotificacionSistema, NotificacionLeida
+    from django.contrib import messages
+    
+    alertas_validas = NotificacionSistema.para_usuario(request.user).order_by("-fecha_creacion")
+        
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "marcar_todo":
+            for a in alertas_validas:
+                NotificacionLeida.objects.get_or_create(usuario=request.user, notificacion=a)
+            messages.success(request, "Todas las alertas se marcaron como leídas.")
+            return redirect("core:notificaciones")
+        elif action == "marcar_una":
+            alert_id = request.POST.get("alert_id")
+            if alert_id:
+                try:
+                    a = NotificacionSistema.objects.get(id=alert_id)
+                    NotificacionLeida.objects.get_or_create(usuario=request.user, notificacion=a)
+                    messages.success(request, f"Alerta '{a.titulo}' marcada como leída.")
+                except Exception:
+                    pass
+            return redirect("core:notificaciones")
+            
+    leidas_ids = set(NotificacionLeida.objects.filter(usuario=request.user).values_list("notificacion_id", flat=True))
+    
+    alertas_con_estado = [
+        {
+            "id": a.id,
+            "titulo": a.titulo,
+            "mensaje": a.mensaje,
+            "tipo": a.tipo,
+            "fecha_creacion": a.fecha_creacion,
+            "leida": a.id in leidas_ids
+        }
+        for a in alertas_validas
+    ]
+        
+    context = {
+        "alertas": alertas_con_estado,
+        "pendientes_count": len([x for x in alertas_con_estado if not x["leida"]])
+    }
+    return render(request, "core/notificaciones.html", context)

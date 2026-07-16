@@ -47,6 +47,25 @@ class NotificacionSistema(models.Model):
     def __str__(self):
         return f"{self.titulo} ({self.tipo})"
 
+    @classmethod
+    def para_usuario(cls, usuario):
+        """Retorna las notificaciones activas para el usuario (nutricionista) según su plan."""
+        from django.db.models import Q
+        plan_nombre = None
+        try:
+            if hasattr(usuario, 'suscripcion') and usuario.suscripcion:
+                plan_nombre = usuario.suscripcion.plan.nombre
+        except Exception:
+            pass
+            
+        if plan_nombre:
+            return cls.objects.filter(
+                Q(activo=True) & (Q(plan_destino__isnull=True) | Q(plan_destino="") | Q(plan_destino=plan_nombre))
+            )
+        return cls.objects.filter(
+            Q(activo=True) & (Q(plan_destino__isnull=True) | Q(plan_destino=""))
+        )
+
 
 class LimiteOverride(models.Model):
     """Establece límites de recursos adicionales para un nutricionista específico."""
@@ -94,3 +113,18 @@ class TicketSoporte(models.Model):
 
     def __str__(self):
         return f"Ticket #{self.pk}: {self.asunto} (@{self.nutricionista.username}) - {self.get_estado_display()}"
+
+
+class NotificacionLeida(models.Model):
+    """Registra cuándo un usuario específico lee o descarta una alerta del sistema."""
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notificaciones_leidas")
+    notificacion = models.ForeignKey(NotificacionSistema, on_delete=models.CASCADE, related_name="lecturas")
+    fecha_lectura = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("usuario", "notificacion")
+        verbose_name = "Notificación Leída"
+        verbose_name_plural = "Notificaciones Leídas"
+
+    def __str__(self):
+        return f"@{self.usuario.username} leyó {self.notificacion.titulo}"
