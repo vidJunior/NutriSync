@@ -9,7 +9,7 @@ def forwards(apps, schema_editor):
     PlanSuscripcion.objects.get_or_create(
         nombre="Enterprise",
         defaults={
-            "descripcion": "Sin límites. Para nutricionistas y clínicas que necesitan todo el poder de NutriSync.",
+            "descripcion": "Sin límites. Para nutricionistas que necesitan todo el poder de NutriSync.",
             "precio_mensual": "399.00",
             "precio_anual": "3990.00",
             "limite_pacientes": -1,
