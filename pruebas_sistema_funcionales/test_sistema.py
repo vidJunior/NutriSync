@@ -440,3 +440,56 @@ class PruebasSistemaFuncionales(TestCase):
         # Intento de lectura cruzada: nutricionista 2 intenta leer logs de tenant 1 (Bloqueado)
         with self.assertRaises(PermissionDenied):
             consultar_logs_paciente(self.nutricionista_2, self.nutricionista_1.pk)
+
+    # --------------------------------------------------------------------------
+    # UT-11-05: Validación de Requisitos Obligatorios al Finalizar Consulta
+    # --------------------------------------------------------------------------
+    def test_ut_11_05_finalizar_consulta_requisitos_faltantes(self):
+        """Valida que falle la finalización si faltan datos requeridos (observaciones, peso) según el tipo de consulta."""
+        from django.urls import reverse
+        from seguimiento.models import MedidaCorporal
+        self.client.force_login(self.nutricionista_1)
+
+        # 1. Iniciar una consulta de Seguimiento
+        res_ini = self.client.post(
+            reverse("pacientes:consulta_iniciar", kwargs={"pk": self.paciente_1.pk}),
+            data={"tipo": "seguimiento"}
+        )
+        self.assertEqual(res_ini.status_code, 200)
+        consulta_id = res_ini.json()["consulta_id"]
+
+        # 2. Intentar finalizar con force_validation=true (Debe fallar)
+        res_fin_fail = self.client.post(
+            reverse("pacientes:consulta_finalizar", kwargs={"pk": self.paciente_1.pk, "consulta_id": consulta_id}),
+            data={"force_validation": "true"}
+        )
+        self.assertEqual(res_fin_fail.status_code, 400)
+        data_fail = res_fin_fail.json()
+        self.assertFalse(data_fail["success"])
+        self.assertEqual(data_fail["error_type"], "missing_requirements")
+        self.assertIn("Debes escribir observaciones detalladas de la evolución del paciente (mínimo 10 caracteres).", data_fail["missing_fields"])
+        self.assertIn("Se requiere registrar el peso actual del paciente en esta consulta para evaluar el progreso.", data_fail["missing_fields"])
+
+        # 3. Completar las observaciones requeridas
+        from pacientes.models import Consulta
+        consulta_obj = Consulta.objects.get(id=consulta_id)
+        consulta_obj.observaciones = "El paciente muestra una excelente evolución y adherencia."
+        consulta_obj.save()
+
+        # 4. Registrar la medición de peso requerida en esta consulta
+        MedidaCorporal.objects.create(
+            paciente=self.paciente_1,
+            consulta=consulta_obj,
+            fecha=timezone.now().date(),
+            peso_kg=72.5,
+            talla_cm=175.0
+        )
+
+        # 5. Intentar finalizar de nuevo (Debe tener éxito)
+        res_fin_ok = self.client.post(
+            reverse("pacientes:consulta_finalizar", kwargs={"pk": self.paciente_1.pk, "consulta_id": consulta_id}),
+            data={"force_validation": "true"}
+        )
+        self.assertEqual(res_fin_ok.status_code, 200)
+        self.assertTrue(res_fin_ok.json()["success"])
+

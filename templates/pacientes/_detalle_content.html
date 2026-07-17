@@ -1913,6 +1913,14 @@
                         <p class="text-xs text-slate-500 leading-relaxed px-2">
                             Una vez finalizada, la consulta pasará al estado <strong class="text-slate-700">"finalizada"</strong> y no se podrá editar la información clínica registrada en ella.
                         </p>
+                        <div id="confirmar-finalizar-error" class="hidden text-left mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs">
+                            <p class="font-bold mb-1 flex items-center gap-1.5 text-rose-800">
+                                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600"></i>
+                                Requisitos pendientes:
+                            </p>
+                            <ul id="confirmar-finalizar-error-list" class="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
+                            </ul>
+                        </div>
                     </div>
                     <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
                         <button type="button" onclick="cerrarModalConfirmarFinalizar()"
@@ -10170,6 +10178,8 @@
         consultaIdAFinalizar = consultaId;
         const modal = document.getElementById('modal-confirmar-finalizar');
         const card = document.getElementById('modal-confirmar-finalizar-card');
+        const errDiv = document.getElementById('confirmar-finalizar-error');
+        if (errDiv) errDiv.classList.add('hidden');
         if (modal && card) {
             modal.classList.remove('hidden');
             if (typeof lucide !== 'undefined') {
@@ -10217,17 +10227,37 @@
                         "X-Requested-With": "XMLHttpRequest"
                     }
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            cerrarModalConfirmarFinalizar();
-                            window.location.reload();
-                        } else {
-                            alert("Error al finalizar la consulta: " + (data.error || "Ocurrió un problema."));
-                            btnConfirmar.disabled = false;
-                            btnConfirmar.innerHTML = originalHtml;
-                            if (typeof lucide !== 'undefined') lucide.createIcons();
-                        }
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (response.ok && data.success) {
+                                cerrarModalConfirmarFinalizar();
+                                window.location.reload();
+                            } else {
+                                btnConfirmar.disabled = false;
+                                btnConfirmar.innerHTML = originalHtml;
+                                if (typeof lucide !== 'undefined') lucide.createIcons();
+                                
+                                const errDiv = document.getElementById('confirmar-finalizar-error');
+                                const errList = document.getElementById('confirmar-finalizar-error-list');
+                                if (errDiv && errList) {
+                                    errList.innerHTML = '';
+                                    if (data.error_type === 'missing_requirements' && data.missing_fields) {
+                                        data.missing_fields.forEach(field => {
+                                            const li = document.createElement('li');
+                                            li.textContent = field;
+                                            errList.appendChild(li);
+                                        });
+                                    } else {
+                                        const li = document.createElement('li');
+                                        li.textContent = data.error || 'Ocurrió un problema inesperado al finalizar la consulta.';
+                                        errList.appendChild(li);
+                                    }
+                                    errDiv.classList.remove('hidden');
+                                } else {
+                                    alert("Error al finalizar la consulta: " + (data.error || "Ocurrió un problema."));
+                                }
+                            }
+                        });
                     })
                     .catch(err => {
                         console.error("Error:", err);
