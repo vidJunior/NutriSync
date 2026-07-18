@@ -296,7 +296,7 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="relative">
-                            <input type="text" id="numero_colegiatura" name="numero_colegiatura" value="{{ data.numero_colegiatura|default:'' }}" class="input-field peer w-full border border-slate-200 rounded-xl px-3.5 pt-5 pb-1.5 text-slate-800 text-sm focus:outline-none transition-all placeholder-transparent" placeholder=" ">
+                            <input type="text" id="numero_colegiatura" name="numero_colegiatura" value="{{ data.numero_colegiatura|default:'' }}" maxlength="6" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="input-field peer w-full border border-slate-200 rounded-xl px-3.5 pt-5 pb-1.5 text-slate-800 text-sm focus:outline-none transition-all placeholder-transparent" placeholder=" ">
                             <label for="numero_colegiatura" class="absolute left-3.5 text-slate-400 transition-all duration-200 pointer-events-none origin-left top-3 text-[11px] font-semibold uppercase tracking-wider peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:top-1.5 peer-focus:text-[9px] peer-focus:font-semibold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-teal-600 peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-[9px] peer-[:not(:placeholder-shown)]:font-semibold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wider">C.N.P. (Colegiatura)</label>
                             <p id="error-numero_colegiatura" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                         </div>
@@ -424,6 +424,7 @@
                                         <span class="text-[8px] bg-slate-100 border border-slate-200 text-slate-500 px-1 py-0.5 rounded font-bold">AMEX</span>
                                     </div>
                                 </div>
+                                <p id="error-card_number" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                             </div>
 
                             <!-- Fecha de caducidad y Código de seguridad side-by-side -->
@@ -433,6 +434,7 @@
                                     <input type="text" id="card_expiry" name="card_expiry" value="{{ data.card_expiry|default:'' }}" maxlength="7" 
                                            class="w-full border border-slate-200 bg-white rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder-slate-300" 
                                            placeholder="MM / AA">
+                                    <p id="error-card_expiry" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                                 </div>
                                 <div class="space-y-1.5">
                                     <label for="card_cvv" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Código de seguridad *</label>
@@ -444,6 +446,7 @@
                                             <i data-lucide="credit-card" class="w-4 h-4"></i>
                                         </span>
                                     </div>
+                                    <p id="error-card_cvv" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                                 </div>
                             </div>
 
@@ -466,6 +469,7 @@
                                         <span class="text-[9px] bg-[#742284] text-white px-2 py-0.5 rounded font-bold uppercase">Yape</span>
                                     </span>
                                 </div>
+                                <p id="error-yape_phone" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                             </div>
 
                             <!-- Código de Aprobación Yape (OTP) -->
@@ -482,6 +486,7 @@
                                         <i data-lucide="shield-check" class="w-4.5 h-4.5 text-slate-350"></i>
                                     </span>
                                 </div>
+                                <p id="error-yape_otp" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                                 <p class="text-[10px] text-slate-400 font-light mt-1">
                                     Obtenlo en tu app Yape > menú lateral izquierdo > <strong class="text-slate-600 font-semibold">Código de aprobación</strong>.
                                 </p>
@@ -506,6 +511,7 @@
                                         <span class="text-[9px] bg-[#003087] text-white px-2 py-0.5 rounded font-bold uppercase">PayPal</span>
                                     </span>
                                 </div>
+                                <p id="error-paypal_email" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                             </div>
 
                             <!-- Advertencia legal / PayPal -->
@@ -967,7 +973,8 @@
             const campos = [
                 'username', 'email', 'password', 'password_confirm', 
                 'nombre_completo', 'especialidad', 'telefono', 
-                'numero_colegiatura', 'direccion_consultorio', 'dni', 'ruc'
+                'numero_colegiatura', 'direccion_consultorio', 'dni', 'ruc',
+                'card_number', 'card_expiry', 'card_cvv', 'yape_phone', 'yape_otp', 'paypal_email'
             ];
             
             campos.forEach(idCampo => {
@@ -1229,63 +1236,57 @@
                     return;
                 }
 
+                // Limpiar errores previos del paso 2 antes de validar
+                limpiarErrores();
+
                 const method = paymentMethodType.value;
-                let errorsStep2 = [];
+                let hasErrorsStep2 = false;
 
                 if (method === 'tarjeta') {
                     const number = cardNumberInput.value.replace(/\s+/g, '');
                     const expiry = cardExpiryInput.value.replace(/\s+/g, '');
                     const cvv = cardCvvInput.value.trim();
 
-                    if (!number || number.length < 13) {
-                        errorsStep2.push("Ingresa un número de tarjeta de crédito válido.");
+                    if (!number || number.length < 13 || !/^\d+$/.test(number)) {
+                        mostrarErrorCampo('card_number', "Ingresa un número de tarjeta de crédito válido.");
+                        hasErrorsStep2 = true;
                     }
-                    if (!expiry || !expiry.includes('/')) {
-                        errorsStep2.push("Ingresa una fecha de vencimiento válida (MM/AA).");
+                    if (!expiry || !expiry.includes('/') || expiry.length < 5) {
+                        mostrarErrorCampo('card_expiry', "Ingresa una fecha de vencimiento válida (MM/AA).");
+                        hasErrorsStep2 = true;
                     }
-                    if (!cvv || cvv.length < 3) {
-                        errorsStep2.push("Ingresa el código de seguridad (CVC) de la tarjeta.");
+                    if (!cvv || cvv.length < 3 || !/^\d+$/.test(cvv)) {
+                        mostrarErrorCampo('card_cvv', "Ingresa el código de seguridad (CVC) de la tarjeta.");
+                        hasErrorsStep2 = true;
                     }
                 } else if (method === 'yape') {
                     const phone = yapePhoneInput.value.replace(/\s+/g, '');
                     const otp = yapeOtpInput.value.trim();
 
-                    if (!phone || phone.length !== 9 || !phone.startsWith('9')) {
-                        errorsStep2.push("Ingresa un número de celular de Yape válido (9 dígitos y empezar con 9).");
+                    if (!phone || phone.length !== 9 || !phone.startsWith('9') || !/^\d+$/.test(phone)) {
+                        mostrarErrorCampo('yape_phone', "Ingresa un número de celular de Yape válido (9 dígitos y empezar con 9).");
+                        hasErrorsStep2 = true;
                     }
-                    if (!otp || otp.length !== 6) {
-                        errorsStep2.push("Ingresa el código de aprobación de Yape de 6 dígitos.");
+                    if (!otp || otp.length !== 6 || !/^\d+$/.test(otp)) {
+                        mostrarErrorCampo('yape_otp', "Ingresa el código de aprobación de Yape de 6 dígitos.");
+                        hasErrorsStep2 = true;
                     }
                 } else if (method === 'paypal') {
                     const emailPaypal = paypalEmailInput.value.trim();
                     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
                     if (!emailPaypal || !emailRegex.test(emailPaypal)) {
-                        errorsStep2.push("Ingresa un correo electrónico de PayPal válido.");
+                        mostrarErrorCampo('paypal_email', "Ingresa un correo electrónico de PayPal válido.");
+                        hasErrorsStep2 = true;
                     }
                 }
 
-                if (errorsStep2.length > 0) {
+                if (hasErrorsStep2) {
                     e.preventDefault(); // Detener el envío
 
-                    // Mostrar los errores al inicio del formulario
-                    let errorDiv = document.getElementById('django-errors-container') || document.querySelector('.mb-4.bg-red-50');
-                    if (!errorDiv) {
-                        errorDiv = document.createElement('div');
-                        errorDiv.id = 'django-errors-container';
-                        errorDiv.className = "mb-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl p-4 text-sm font-medium space-y-1 shadow-sm";
-                        registerForm.parentNode.insertBefore(errorDiv, registerForm);
-                    } else {
-                        errorDiv.classList.remove('hidden');
-                    }
-                    
-                    errorDiv.innerHTML = `
-                        <p class="font-semibold">Por favor, corrige los siguientes errores de pago:</p>
-                        <ul class="list-disc pl-5 space-y-0.5">
-                            ${errorsStep2.map(err => `<li>${err}</li>`).join('')}
-                        </ul>
-                    `;
-                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Hacer scroll al primer campo con error en el paso 2
+                    const primerCampoError = method === 'tarjeta' ? 'card_number' : method === 'yape' ? 'yape_phone' : 'paypal_email';
+                    document.getElementById(primerCampoError).scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             });
         }

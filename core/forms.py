@@ -62,6 +62,9 @@ class PerfilNutricionistaForm(forms.ModelForm):
     def clean_numero_colegiatura(self):
         numero_colegiatura = self.cleaned_data.get("numero_colegiatura", "").strip()
         if numero_colegiatura:
+            import re
+            if not re.match(r"^\d{3,6}$", numero_colegiatura):
+                raise forms.ValidationError("El C.N.P. debe ser un número de 3 a 6 dígitos.")
             qs = PerfilNutricionista.objects.filter(numero_colegiatura=numero_colegiatura)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)

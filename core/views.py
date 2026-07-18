@@ -154,9 +154,13 @@ def register_view(request):
             errors.append("El correo electrónico ya está registrado.")
 
         if numero_colegiatura:
-            from core.models import PerfilNutricionista
-            if PerfilNutricionista.objects.filter(numero_colegiatura=numero_colegiatura).exists():
-                errors.append("El número de colegiatura C.N.P. ya está registrado.")
+            import re
+            if not re.match(r"^\d{3,6}$", numero_colegiatura):
+                errors.append("El C.N.P. debe ser un número de 3 a 6 dígitos.")
+            else:
+                from core.models import PerfilNutricionista
+                if PerfilNutricionista.objects.filter(numero_colegiatura=numero_colegiatura).exists():
+                    errors.append("El número de colegiatura C.N.P. ya está registrado.")
 
         if not plan_id:
             errors.append("Debes elegir un plan de suscripción.")
@@ -398,9 +402,8 @@ def validate_register_fields_view(request):
             errors["telefono"] = "El teléfono debe tener exactamente 9 dígitos."
 
     if numero_colegiatura:
-        # Validar colegiatura (sólo dígitos o prefijo CNP seguido de números)
-        colegiatura_clean = re.sub(r"\s+", "", numero_colegiatura).upper()
-        if not re.match(r"^(CNP)?\d{3,6}$", colegiatura_clean):
+        # Validar colegiatura (sólo dígitos)
+        if not re.match(r"^\d{3,6}$", numero_colegiatura):
             errors["numero_colegiatura"] = "El C.N.P. debe ser un número de 3 a 6 dígitos."
         else:
             from core.models import PerfilNutricionista
@@ -675,3 +678,4 @@ def notificaciones_view(request):
         "pendientes_count": len([x for x in alertas_con_estado if not x["leida"]])
     }
     return render(request, "core/notificaciones.html", context)
+
