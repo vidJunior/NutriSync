@@ -65,6 +65,72 @@
             </div>
             {% endif %}
 
+            <!-- ================= NUEVO: ESTADO GENERAL ================= -->
+            {% if nota.nivel_energia or nota.calidad_sueno or nota.adherencia_plan %}
+            <div>
+                <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-1.5"><i data-lucide="activity" class="w-4 h-4 text-teal-600"></i> Estado General y Bienestar</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {% if nota.nivel_energia %}
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+                        <span class="text-xs font-medium text-slate-500 uppercase">Nivel de Energía</span>
+                        <span class="text-sm font-bold text-slate-700">{{ nota.nivel_energia }} / 5</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if nota.calidad_sueno %}
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+                        <span class="text-xs font-medium text-slate-500 uppercase">Calidad de Sueño</span>
+                        <span class="text-sm font-bold text-slate-700">{{ nota.calidad_sueno }} / 5</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if nota.adherencia_plan %}
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+                        <span class="text-xs font-medium text-slate-500 uppercase">Adherencia al Plan</span>
+                        <span class="text-sm font-bold text-slate-700">{{ nota.adherencia_plan }} / 10</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ================= NUEVO: ANÁLISIS CLÍNICO ================= -->
+            {% if nota.sintomas_gastrointestinales or nota.suplementacion_actual or nota.recordatorio_24h or nota.marcadores_bioquimicos %}
+            <div>
+                <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-1.5"><i data-lucide="stethoscope" class="w-4 h-4 text-teal-600"></i> Análisis Clínico y Nutricional</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if nota.sintomas_gastrointestinales %}
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Síntomas Gastrointestinales</span>
+                        <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line">{{ nota.sintomas_gastrointestinales }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if nota.suplementacion_actual %}
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Suplementación Actual</span>
+                        <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line">{{ nota.suplementacion_actual }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if nota.recordatorio_24h %}
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 md:col-span-2">
+                        <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Recordatorio de 24 horas</span>
+                        <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line">{{ nota.recordatorio_24h }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if nota.marcadores_bioquimicos %}
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 md:col-span-2">
+                        <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Marcadores Bioquímicos y Laboratorios</span>
+                        <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line">{{ nota.marcadores_bioquimicos }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ================= ORIGINALES: PLAN Y OBJETIVOS ================= -->
             {% if nota.objetivos_acordados %}
             <div>
                 <h4 class="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i> Objetivos acordados</h4>
@@ -124,4 +190,4 @@
     </div>
 
 </div>
-{% endblock %}
+{% endblock %}  
