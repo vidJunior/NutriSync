@@ -120,6 +120,18 @@ class NotaClinicaForm(forms.ModelForm):
             "objetivos_acordados",
             "plan_accion",
             "observaciones_clinicas",
+            # --- NUEVOS CAMPOS AÑADIDOS AQUI ---
+            "sintomas_gastrointestinales",
+            "nivel_energia",
+            "calidad_sueno",
+            "adherencia_plan",
+            "recordatorio_24h",
+            "suplementacion_actual",
+            "marcadores_bioquimicos",
+            # -----------------------------------
+            "objetivos_acordados",
+            "plan_accion",
+            "observaciones_clinicas",
         ]
         widgets = {
             "fecha": forms.DateInput(
@@ -169,6 +181,59 @@ class NotaClinicaForm(forms.ModelForm):
                     "class": TEXTAREA_CLASSES,
                     "rows": 3,
                     "placeholder": "Notas exclusivas para el profesional...",
+                }
+            ),
+            # --- WIDGETS DE LOS NUEVOS CAMPOS ---
+            "sintomas_gastrointestinales": forms.Textarea(
+                attrs={
+                    "class": TEXTAREA_CLASSES,
+                    "rows": 2,
+                    "placeholder": "Ej: Inflamación, acidez, tránsito intestinal...",
+                }
+            ),
+            "nivel_energia": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASSES,
+                    "min": 1,
+                    "max": 5,
+                    "placeholder": "1-5",
+                }
+            ),
+            "calidad_sueno": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASSES,
+                    "min": 1,
+                    "max": 5,
+                    "placeholder": "1-5",
+                }
+            ),
+            "adherencia_plan": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASSES,
+                    "min": 1,
+                    "max": 10,
+                    "placeholder": "1-10",
+                }
+            ),
+            "recordatorio_24h": forms.Textarea(
+                attrs={
+                    "class": TEXTAREA_CLASSES,
+                    "rows": 3,
+                    "placeholder": "Desayuno, almuerzo, cena y snacks de un día típico...",
+                }
+            ),
+            "suplementacion_actual": forms.Textarea(
+                attrs={
+                    "class": TEXTAREA_CLASSES,
+                    "rows": 2,
+                    "placeholder": "Vitaminas, minerales, medicamentos, proteína...",
+                }
+            ),
+            "marcadores_bioquimicos": forms.Textarea(
+                attrs={
+                    "class": TEXTAREA_CLASSES,
+                    "rows": 2,
+                    "placeholder": "Resultados relevantes de laboratorio...",
                 }
             ),
         }

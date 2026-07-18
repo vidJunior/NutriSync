@@ -249,6 +249,43 @@ class NotaClinica(models.Model):
         related_name="notas",
         verbose_name="Cita relacionada",
     )
+    # 1. Evaluación Metabólica y Digestiva
+    sintomas_gastrointestinales = models.TextField(
+        blank=True, 
+        verbose_name="Síntomas gastrointestinales (Ej. inflamación, tránsito)"
+    )
+    nivel_energia = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name="Nivel de energía (1-5)",
+        help_text="1: Muy bajo, 5: Excelente"
+    )
+    calidad_sueno = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name="Calidad del sueño (1-5)"
+    )
+
+    # 2. Adherencia y Hábitos
+    adherencia_plan = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name="Nivel de adherencia al plan (1-10)"
+    )
+    recordatorio_24h = models.TextField(
+        blank=True, 
+        verbose_name="Recordatorio de 24 horas / Ingesta típica"
+    )
+
+    # 3. Bioquímica y Suplementación
+    suplementacion_actual = models.TextField(
+        blank=True, 
+        verbose_name="Suplementación y medicación actual"
+    )
+    marcadores_bioquimicos = models.TextField(
+        blank=True, 
+        verbose_name="Apuntes de laboratorio / Exámenes"
+    )
     fecha = models.DateField(verbose_name="Fecha")
     titulo = models.CharField(max_length=200, verbose_name="Título")
     motivo_consulta = models.TextField(blank=True, verbose_name="Motivo de la consulta")
