@@ -57,8 +57,7 @@
                             <div>
                                 <span
                                     class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sexo</span>
-                                <span class="font-semibold text-slate-700">{{ paciente.get_sexo_display|default:"—"
-                                    }}</span>
+                                <span class="font-semibold text-slate-700">{{ paciente.get_sexo_display|default:"—" }}</span>
                             </div>
                         </div>
 
@@ -88,8 +87,7 @@
                             <div>
                                 <span
                                     class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</span>
-                                <span class="font-semibold text-slate-700" title="{{ paciente.email }}">{{
-                                    paciente.email|default:"—" }}</span>
+                                <span class="font-semibold text-slate-700" title="{{ paciente.email }}">{{ paciente.email|default:"—" }}</span>
                             </div>
                         </div>
 
@@ -99,8 +97,7 @@
                             <div>
                                 <span
                                     class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dirección</span>
-                                <span class="font-semibold text-slate-700" title="{{ paciente.direccion }}">{{
-                                    paciente.direccion|default:"—" }}</span>
+                                <span class="font-semibold text-slate-700" title="{{ paciente.direccion }}">{{ paciente.direccion|default:"—" }}</span>
                             </div>
                         </div>
 
@@ -134,10 +131,10 @@
                     class="flex items-center justify-center gap-2 border border-slate-300 text-slate-650 hover:bg-slate-50 font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200">
                     <i data-lucide="pencil" class="w-4 h-4"></i> Editar paciente
                 </button>
-                <a href="{% url 'agendas:nueva' %}?paciente={{ paciente.pk }}"
-                   class="flex items-center justify-center gap-2 border border-slate-300 text-slate-650 hover:bg-slate-50 font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200">
+                <button type="button" onclick="openModalAgendarCita('{{ paciente.pk }}')"
+                    class="flex items-center justify-center gap-2 border border-slate-300 text-slate-650 hover:bg-slate-50 font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200">
                     <i data-lucide="calendar" class="w-4 h-4"></i> Agendar cita
-                </a>
+                </button>
                 <button onclick="alert('La generación de reportes PDF estará disponible próximamente en este módulo.')"
                     class="flex items-center justify-center gap-2 border border-slate-300 text-slate-650 hover:bg-slate-50 font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Generar PDF
@@ -190,13 +187,11 @@
                     {% endif %}
                 </div>
                 <p class="text-xs text-slate-500 mt-1">
-                    Iniciada: {{ active_consulta.fecha|date:"d/m/Y" }} a las {{ active_consulta.hora_inicio|time:"H:i"
-                    }}
+                    Iniciada: {{ active_consulta.fecha|date:"d/m/Y" }} a las {{ active_consulta.hora_inicio|time:"H:i" }}
                     {% if active_consulta.hora_fin %}
                     | Finalizada: {{ active_consulta.hora_fin|time:"H:i" }}
                     {% endif %}
-                    | Profesional: {{
-                    active_consulta.profesional.get_full_name|default:active_consulta.profesional.username }}
+                    | Profesional: {{ active_consulta.profesional.get_full_name|default:active_consulta.profesional.username }}
                 </p>
                 {% else %}
                 <span class="text-sm font-bold text-slate-700">Sin consultas registradas</span>
@@ -216,8 +211,7 @@
                     class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700 outline-none focus:border-teal-500 min-w-[200px]">
                     {% for c in consultas %}
                     <option value="{{ c.id }}" {% if c.id == active_consulta.id %}selected{% endif %}>
-                        Consulta #{{ c.numero_consulta }} ({{ c.fecha|date:"d/m/Y" }}) - {{ c.get_tipo_display }} [{{
-                        c.get_estado_display }}]
+                        Consulta #{{ c.numero_consulta }} ({{ c.fecha|date:"d/m/Y" }}) - {{ c.get_tipo_display }} [{{ c.get_estado_display }}]
                     </option>
                     {% endfor %}
                 </select>
@@ -282,8 +276,7 @@
             </div>
             <div>
                 <h3 id="header-objetivo-principal" class="text-sm font-bold text-slate-700 line-clamp-2 leading-tight">
-                    {{ paciente.informacion_clinica.objetivo_principal|default:motivo_consulta|default:"Pérdida de peso"
-                    }}
+                    {{ paciente.informacion_clinica.objetivo_principal|default:motivo_consulta|default:"Pérdida de peso" }}
                 </h3>
                 <span class="text-[10px] text-slate-400 mt-1 block">Meta del tratamiento</span>
             </div>
@@ -418,14 +411,12 @@
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Sexo
                                         Biológico</span>
-                                    <span class="font-semibold text-slate-800">{{ paciente.get_sexo_display|default:"—"
-                                        }}</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.get_sexo_display|default:"—" }}</span>
                                 </div>
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Ocupación</span>
-                                    <span class="font-semibold text-slate-800">{{ paciente.ocupacion|default:"—"
-                                        }}</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.ocupacion|default:"—" }}</span>
                                 </div>
                             </div>
                         </div>
@@ -465,15 +456,13 @@
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Teléfono</span>
-                                    <span class="font-semibold text-slate-800">{{ paciente.telefono|default:"—"
-                                        }}</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.telefono|default:"—" }}</span>
                                 </div>
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Correo
                                         Electrónico</span>
-                                    <span class="font-semibold text-slate-800 truncate block max-w-[160px]">{{
-                                        paciente.email|default:"—" }}</span>
+                                    <span class="font-semibold text-slate-800 truncate block max-w-[160px]">{{ paciente.email|default:"—" }}</span>
                                 </div>
                                 <div class="col-span-2">
                                     <span
@@ -481,10 +470,7 @@
                                         de Emergencia</span>
                                     <span class="font-semibold text-slate-800">
                                         {% if paciente.informacion_clinica.contacto_emergencia %}
-                                        {{ paciente.informacion_clinica.contacto_emergencia }} ({{
-                                        paciente.informacion_clinica.relacion_contacto|default:"Relación no
-                                        especificada" }}) · {{
-                                        paciente.informacion_clinica.telefono_emergencia|default:"—" }}
+                                        {{ paciente.informacion_clinica.contacto_emergencia }} ({{ paciente.informacion_clinica.relacion_contacto|default:"Relación no especificada" }}) · {{ paciente.informacion_clinica.telefono_emergencia|default:"—" }}
                                         {% else %}
                                         —
                                         {% endif %}
@@ -532,24 +518,26 @@
                                         Médicas</span>
                                     <div class="flex flex-wrap gap-1">
                                         {% if paciente.informacion_clinica.enfermedades.all or paciente.informacion_clinica.enfermedad_personalizada %}
-                                            
-                                            <!-- 1. Renderizar enfermedades de la lista (si existen) -->
-                                            {% for cond in paciente.informacion_clinica.enfermedades.all %}
-                                                <span class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">
-                                                    {{ cond }}
-                                                </span>
-                                            {% endfor %}
 
-                                            <!-- 2. Renderizar enfermedad personalizada (si existe) -->
-                                            {% if paciente.informacion_clinica.enfermedad_personalizada %}
-                                                <span class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">
-                                                    {{ paciente.informacion_clinica.enfermedad_personalizada }}
-                                                </span>
-                                            {% endif %}
+                                        <!-- 1. Renderizar enfermedades de la lista (si existen) -->
+                                        {% for cond in paciente.informacion_clinica.enfermedades.all %}
+                                        <span
+                                            class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">
+                                            {{ cond }}
+                                        </span>
+                                        {% endfor %}
+
+                                        <!-- 2. Renderizar enfermedad personalizada (si existe) -->
+                                        {% if paciente.informacion_clinica.enfermedad_personalizada %}
+                                        <span
+                                            class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">
+                                            {{ paciente.informacion_clinica.enfermedad_personalizada }}
+                                        </span>
+                                        {% endif %}
 
                                         {% else %}
-                                            <!-- 3. Si no hay absolutamente nada -->
-                                            <span class="text-slate-400 font-medium italic">Ninguna registrada</span>
+                                        <!-- 3. Si no hay absolutamente nada -->
+                                        <span class="text-slate-400 font-medium italic">Ninguna registrada</span>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -566,16 +554,17 @@
                                         <span
                                             class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Medicación/Suplementos</span>
                                         <span class="font-semibold text-slate-800">
-                                            {{ paciente.informacion_clinica.medicacion_suplementacion|length|default:"0"
-                                            }} activos
+                                            {{ paciente.informacion_clinica.medicacion_suplementacion|length|default:"0" }} activos
                                         </span>
                                     </div>
                                 </div>
 
                                 <!-- Alerta visual si tiene Alergias -->
                                 {% if paciente.informacion_clinica.alergias_intolerancias or paciente.informacion_clinica.alergias_personalizadas %}
-                                <div class="mt-2.5 p-2 bg-red-50 border border-red-150 rounded-xl flex items-center gap-2 text-[10px] text-red-700 font-bold">
-                                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-500 flex-shrink-0 animate-bounce"></i>
+                                <div
+                                    class="mt-2.5 p-2 bg-red-50 border border-red-150 rounded-xl flex items-center gap-2 text-[10px] text-red-700 font-bold">
+                                    <i data-lucide="alert-triangle"
+                                        class="w-3.5 h-3.5 text-red-500 flex-shrink-0 animate-bounce"></i>
                                     <span>Presenta Alergias o Intolerancias.</span>
                                 </div>
                                 {% endif %}
@@ -618,29 +607,25 @@
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Sueño</span>
                                     <span class="font-semibold text-slate-800">
-                                        {{ paciente.informacion_clinica.habitos.sueno_horas|default:"—" }} h/noche ({{
-                                        paciente.informacion_clinica.habitos.sueno_calidad|default:"—" }})
+                                        {{ paciente.informacion_clinica.habitos.sueno_horas|default:"—" }} h/noche ({{ paciente.informacion_clinica.habitos.sueno_calidad|default:"—" }})
                                     </span>
                                 </div>
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Actividad
                                         Física</span>
-                                    <span class="font-semibold text-slate-800">{{
-                                        paciente.informacion_clinica.habitos.actividad_fisica|default:"—" }}</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.informacion_clinica.habitos.actividad_fisica|default:"—" }}</span>
                                 </div>
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Estrés
                                         (1-10)</span>
-                                    <span class="font-semibold text-slate-800">{{
-                                        paciente.informacion_clinica.habitos.estres|default:"—" }}/10</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.informacion_clinica.habitos.estres|default:"—" }}/10</span>
                                 </div>
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Hidratación</span>
-                                    <span class="font-semibold text-slate-800">{{
-                                        paciente.informacion_clinica.habitos.hidratacion|default:"—" }} L/día</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.informacion_clinica.habitos.hidratacion|default:"—" }} L/día</span>
                                 </div>
                             </div>
                         </div>
@@ -681,16 +666,13 @@
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">N°
                                         Comidas</span>
-                                    <span class="font-semibold text-slate-800">{{
-                                        paciente.informacion_clinica.historia_alimentaria.num_comidas|default:"—"
-                                        }}</span>
+                                    <span class="font-semibold text-slate-800">{{ paciente.informacion_clinica.historia_alimentaria.num_comidas|default:"—" }}</span>
                                 </div>
                                 <div>
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Consumo
                                         de Agua</span>
-                                    <span class="font-semibold text-slate-800">{{
-                                        paciente.informacion_clinica.historia_alimentaria.agua|default:"—" }}
+                                    <span class="font-semibold text-slate-800">{{ paciente.informacion_clinica.historia_alimentaria.agua|default:"—" }}
                                         L/día</span>
                                 </div>
                                 <div>
@@ -699,9 +681,9 @@
                                         Principal</span>
                                     <span class="font-semibold text-slate-800">
                                         {% for rest in paciente.informacion_clinica.historia_alimentaria.restricciones %}
-                                            {{ rest }}{% if not forloop.last %}, {% endif %}
+                                        {{ rest }}{% if not forloop.last %}, {% endif %}
                                         {% empty %}
-                                            Ninguna
+                                        Ninguna
                                         {% endfor %}
                                     </span>
                                 </div>
@@ -709,9 +691,7 @@
                                     <span
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Preferencias</span>
                                     <span class="font-semibold text-slate-800 truncate block max-w-[150px]"
-                                        title="{{ paciente.informacion_clinica.historia_alimentaria.preferencias }}">{{
-                                        paciente.informacion_clinica.historia_alimentaria.preferencias|default:"—"
-                                        }}</span>
+                                        title="{{ paciente.informacion_clinica.historia_alimentaria.preferencias }}">{{ paciente.informacion_clinica.historia_alimentaria.preferencias|default:"—" }}</span>
                                 </div>
                             </div>
                         </div>
@@ -735,9 +715,7 @@
                         {% for c in consultas %}
                         <div class="relative pl-6">
                             <!-- Marker icon -->
-                            <div class="absolute -left-[15px] top-0.5 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-xs transition-colors {% if c.id == active_consulta.id %}bg-teal-500 border-teal-200 text-white{% elif c.estado == "
-                                finalizada" %}bg-white border-emerald-500 text-emerald-600{% else %}bg-white
-                                border-amber-500 text-amber-600{% endif %}">
+                            <div class="absolute -left-[15px] top-0.5 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-xs transition-colors {% if c.id == active_consulta.id %}bg-teal-500 border-teal-200 text-white{% elif c.estado == 'finalizada' %}bg-white border-emerald-500 text-emerald-600{% else %}bg-white border-amber-500 text-amber-600{% endif %}">
                                 {% if c.estado == "finalizada" %}
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                 {% else %}
@@ -749,15 +727,11 @@
                                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl p-4 transition-colors">
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-xs font-black text-slate-700">Consulta #{{ c.numero_consulta
-                                            }}</span>
-                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold {% if c.estado == "
-                                            finalizada" %}bg-emerald-50 text-emerald-700 border border-emerald-100{%
-                                            else %}bg-amber-50 text-amber-700 border border-amber-100{% endif %}">
+                                        <span class="text-xs font-black text-slate-700">Consulta #{{ c.numero_consulta }}</span>
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold {% if c.estado == 'finalizada' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-amber-50 text-amber-700 border border-amber-100{% endif %}">
                                             {{ c.get_estado_display }}
                                         </span>
-                                        <span class="text-[10px] text-slate-400 font-semibold">{{ c.get_tipo_display
-                                            }}</span>
+                                        <span class="text-[10px] text-slate-400 font-semibold">{{ c.get_tipo_display }}</span>
                                     </div>
                                     <p class="text-[11px] text-slate-500 mt-1">
                                         Fecha: {{ c.fecha|date:"d/m/Y" }} · Hora inicio: {{ c.hora_inicio|time:"H:i" }}
@@ -1926,6 +1900,41 @@
 
             </div>
 
+            <!-- Modal: Confirmar Finalización de Consulta -->
+            <div id="modal-confirmar-finalizar"
+                class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div id="modal-confirmar-finalizar-card"
+                    class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-sm w-full overflow-hidden transform transition-all scale-95 opacity-0 duration-200">
+                    <div class="p-6 text-center">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-50 text-amber-600 mb-4 border border-amber-100">
+                            <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                        </div>
+                        <h3 class="text-sm font-extrabold text-slate-800 mb-2">¿Finalizar Consulta Actual?</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed px-2">
+                            Una vez finalizada, la consulta pasará al estado <strong class="text-slate-700">"finalizada"</strong> y no se podrá editar la información clínica registrada en ella.
+                        </p>
+                        <div id="confirmar-finalizar-error" class="hidden text-left mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs">
+                            <p class="font-bold mb-1 flex items-center gap-1.5 text-rose-800">
+                                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600"></i>
+                                Requisitos pendientes:
+                            </p>
+                            <ul id="confirmar-finalizar-error-list" class="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                        <button type="button" onclick="cerrarModalConfirmarFinalizar()"
+                            class="text-slate-650 hover:text-slate-800 text-xs font-bold px-4 py-2 bg-slate-100 rounded-xl transition-colors w-1/2">
+                            Cancelar
+                        </button>
+                        <button type="button" id="btn-confirmar-finalizar-submit"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 w-1/2">
+                            <i data-lucide="check" class="w-4 h-4"></i> Sí, finalizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Modal: Iniciar Nueva Consulta -->
             <div id="modal-nueva-consulta"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -1944,6 +1953,12 @@
                             </button>
                         </div>
                         <div class="p-6 space-y-4">
+                            <!-- Alerta de error -->
+                            <div id="nueva-consulta-error" class="hidden bg-red-50 border border-red-150 text-red-700 rounded-xl p-3 text-xs flex items-start gap-2">
+                                <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5"></i>
+                                <span id="nueva-consulta-error-msg" class="font-semibold"></span>
+                            </div>
+
                             {% if proxima_cita %}
                             <div
                                 class="bg-teal-50 border border-teal-100 rounded-xl p-4 text-xs text-teal-850 space-y-2">
@@ -1951,9 +1966,7 @@
                                     <i data-lucide="info" class="w-4 h-4 text-teal-650"></i>
                                     Cita programada encontrada
                                 </p>
-                                <p>Existe una cita programada para este paciente el día <strong>{{
-                                        proxima_cita.fecha_hora|date:"d/m/Y a las H:i" }}</strong> (Motivo: {{
-                                    proxima_cita.motivo|default:"General" }}).</p>
+                                <p>Existe una cita programada para este paciente el día <strong>{{ proxima_cita.fecha_hora|date:"d/m/Y" }} a las {{ proxima_cita.fecha_hora|date:"H:i" }}</strong> (Motivo: {{ proxima_cita.motivo|default:"General" }}).</p>
 
                                 <div class="flex items-center gap-2 mt-2">
                                     <input type="checkbox" id="vincular-cita-check" name="vincular_cita" value="true"
@@ -1973,9 +1986,13 @@
                                     Consulta</label>
                                 <select id="nueva-consulta-tipo" name="tipo"
                                     class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
-                                    <option value="seguimiento">Control / Seguimiento</option>
-                                    <option value="primera_consulta">Primera Consulta</option>
-                                    <option value="evaluacion">Evaluación de Resultados</option>
+                                    <option value="primera_consulta">Primera consulta</option>
+                                    <option value="seguimiento" selected>Seguimiento</option>
+                                    <option value="reevaluacion">Reevaluación</option>
+                                    <option value="control">Control</option>
+                                    <option value="deportiva">Consulta deportiva</option>
+                                    <option value="clinica">Consulta clínica</option>
+                                    <option value="otro">Otro</option>
                                 </select>
                             </div>
 
@@ -3799,8 +3816,8 @@
                         <div class="relative">
                             <select name="sexo"
                                 class="w-full text-sm border border-slate-200 rounded-xl pl-2.5 pr-10 py-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors appearance-none">
-                                <option value="F" {% if paciente.sexo=='F' %}selected{% endif %}>Femenino</option>
-                                <option value="M" {% if paciente.sexo=='M' %}selected{% endif %}>Masculino</option>
+                                <option value="F" {% if paciente.sexo == 'F' %}selected{% endif %}>Femenino</option>
+                                <option value="M" {% if paciente.sexo == 'M' %}selected{% endif %}>Masculino</option>
                             </select>
                             <div
                                 class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
@@ -3823,20 +3840,14 @@
                             <select name="estado_civil"
                                 class="w-full text-sm border border-slate-200 rounded-xl pl-2.5 pr-10 py-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors appearance-none">
                                 <option value="">Seleccionar</option>
-                                <option value="Soltero/a" {% if paciente.informacion_clinica.estado_civil=='Soltero/a'
-                                    %}selected{% endif %}>Soltero/a</option>
-                                <option value="Casado/a" {% if paciente.informacion_clinica.estado_civil=='Casado/a'
-                                    %}selected{% endif %}>Casado/a</option>
-                                <option value="Divorciado/a" {% if
-                                    paciente.informacion_clinica.estado_civil=='Divorciado/a' %}selected{% endif %}>
+                                <option value="Soltero/a" {% if paciente.informacion_clinica.estado_civil == 'Soltero/a' %}selected{% endif %}>Soltero/a</option>
+                                <option value="Casado/a" {% if paciente.informacion_clinica.estado_civil == 'Casado/a' %}selected{% endif %}>Casado/a</option>
+                                <option value="Divorciado/a" {% if paciente.informacion_clinica.estado_civil == 'Divorciado/a' %}selected{% endif %}>
                                     Divorciado/a</option>
-                                <option value="Viudo/a" {% if paciente.informacion_clinica.estado_civil=='Viudo/a'
-                                    %}selected{% endif %}>Viudo/a</option>
-                                <option value="Unión libre" {% if
-                                    paciente.informacion_clinica.estado_civil=='Unión libre' %}selected{% endif %}>Unión
+                                <option value="Viudo/a" {% if paciente.informacion_clinica.estado_civil == 'Viudo/a' %}selected{% endif %}>Viudo/a</option>
+                                <option value="Unión libre" {% if paciente.informacion_clinica.estado_civil == 'Unión libre' %}selected{% endif %}>Unión
                                     libre</option>
-                                <option value="Otro" {% if paciente.informacion_clinica.estado_civil=='Otro'
-                                    %}selected{% endif %}>Otro</option>
+                                <option value="Otro" {% if paciente.informacion_clinica.estado_civil == 'Otro' %}selected{% endif %}>Otro</option>
                             </select>
                             <div
                                 class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
@@ -3979,27 +3990,14 @@
                         <select name="objetivo_principal"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
                             <option value="">Seleccionar...</option>
-                            <option value="Pérdida de peso" {% if
-                                paciente.informacion_clinica.objetivo_principal=='Pérdida de peso' %}selected{% endif
-                                %}>Pérdida de peso</option>
-                            <option value="Aumento de masa muscular" {% if
-                                paciente.informacion_clinica.objetivo_principal=='Aumento de masa muscular' %}selected{%
-                                endif %}>Aumento de masa muscular</option>
-                            <option value="Nutrición deportiva" {% if
-                                paciente.informacion_clinica.objetivo_principal=='Nutrición deportiva' %}selected{%
-                                endif %}>Nutrición deportiva</option>
-                            <option value="Control clínico" {% if
-                                paciente.informacion_clinica.objetivo_principal=='Control clínico' %}selected{% endif
-                                %}>Control clínico</option>
-                            <option value="Diabetes" {% if paciente.informacion_clinica.objetivo_principal=='Diabetes'
-                                %}selected{% endif %}>Diabetes</option>
-                            <option value="Embarazo" {% if paciente.informacion_clinica.objetivo_principal=='Embarazo'
-                                %}selected{% endif %}>Embarazo</option>
-                            <option value="Mejora de hábitos" {% if
-                                paciente.informacion_clinica.objetivo_principal=='Mejora de hábitos' %}selected{% endif
-                                %}>Mejora de hábitos</option>
-                            <option value="Otro" {% if paciente.informacion_clinica.objetivo_principal=='Otro'
-                                %}selected{% endif %}>Otro</option>
+                            <option value="Pérdida de peso" {% if paciente.informacion_clinica.objetivo_principal == 'Pérdida de peso' %}selected{% endif %}>Pérdida de peso</option>
+                            <option value="Aumento de masa muscular" {% if paciente.informacion_clinica.objetivo_principal == 'Aumento de masa muscular' %}selected{% endif %}>Aumento de masa muscular</option>
+                            <option value="Nutrición deportiva" {% if paciente.informacion_clinica.objetivo_principal == 'Nutrición deportiva' %}selected{% endif %}>Nutrición deportiva</option>
+                            <option value="Control clínico" {% if paciente.informacion_clinica.objetivo_principal == 'Control clínico' %}selected{% endif %}>Control clínico</option>
+                            <option value="Diabetes" {% if paciente.informacion_clinica.objetivo_principal == 'Diabetes' %}selected{% endif %}>Diabetes</option>
+                            <option value="Embarazo" {% if paciente.informacion_clinica.objetivo_principal == 'Embarazo' %}selected{% endif %}>Embarazo</option>
+                            <option value="Mejora de hábitos" {% if paciente.informacion_clinica.objetivo_principal == 'Mejora de hábitos' %}selected{% endif %}>Mejora de hábitos</option>
+                            <option value="Otro" {% if paciente.informacion_clinica.objetivo_principal == 'Otro' %}selected{% endif %}>Otro</option>
                         </select>
                     </div>
                     <div>
@@ -4016,70 +4014,59 @@
                         Actuales</label>
                     <div class="flex flex-wrap gap-2 mb-2">
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Diabetes tipo 1" class="hidden" {%
-                                if "Diabetes tipo 1" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Diabetes tipo 1" class="hidden" {% if "Diabetes tipo 1" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Diabetes
                                 tipo 1</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Diabetes tipo 2" class="hidden" {%
-                                if "Diabetes tipo 2" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Diabetes tipo 2" class="hidden" {% if "Diabetes tipo 2" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Diabetes
                                 tipo 2</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Hipertensión" class="hidden" {%
-                                if "Hipertensión" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Hipertensión" class="hidden" {% if "Hipertensión" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Hipertensión</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Gastritis" class="hidden" {%
-                                if "Gastritis" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Gastritis" class="hidden" {% if "Gastritis" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Gastritis</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Reflujo" class="hidden" {% if "Reflujo" in
-                                paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Reflujo" class="hidden" {% if "Reflujo" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Reflujo</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Hipotiroidismo" class="hidden" {%
-                                if "Hipotiroidismo" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Hipotiroidismo" class="hidden" {% if "Hipotiroidismo" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Hipotiroidismo</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Hipertiroidismo" class="hidden" {%
-                                if "Hipertiroidismo" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Hipertiroidismo" class="hidden" {% if "Hipertiroidismo" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Hipertiroidismo</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="SOP" class="hidden" {% if "SOP" in
-                                paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="SOP" class="hidden" {% if "SOP" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">SOP</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Obesidad" class="hidden" {% if "Obesidad"
-                                in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Obesidad" class="hidden" {% if "Obesidad" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Obesidad</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Sobrepeso" class="hidden" {%
-                                if "Sobrepeso" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Sobrepeso" class="hidden" {% if "Sobrepeso" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Sobrepeso</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="enfermedades" value="Dislipidemia" class="hidden" {%
-                                if "Dislipidemia" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
+                            <input type="checkbox" name="enfermedades" value="Dislipidemia" class="hidden" {% if "Dislipidemia" in paciente.informacion_clinica.enfermedades %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Dislipidemia</span>
                         </label>
@@ -4097,37 +4084,30 @@
                             Personales</label>
                         <div class="flex flex-wrap gap-1.5 mb-2">
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_medicos" value="Cirugías" class="hidden" {%
-                                    if "Cirugías" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif
-                                    %}>
+                                <input type="checkbox" name="antecedentes_medicos" value="Cirugías" class="hidden" {% if "Cirugías" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Cirugías</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
                                 <input type="checkbox" name="antecedentes_medicos" value="Hospitalizaciones"
-                                    class="hidden" {% if "Hospitalizaciones" in
-                                    paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
+                                    class="hidden" {% if "Hospitalizaciones" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Hospitalizaciones</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
                                 <input type="checkbox" name="antecedentes_medicos" value="Enfermedades relevantes"
-                                    class="hidden" {% if "Enfermedades relevantes" in
-                                    paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
+                                    class="hidden" {% if "Enfermedades relevantes" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Enfermedades
                                     relevantes</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_medicos" value="Ninguno" class="hidden" {%
-                                    if "Ninguno" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif
-                                    %}>
+                                <input type="checkbox" name="antecedentes_medicos" value="Ninguno" class="hidden" {% if "Ninguno" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Ninguno</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_medicos" value="Otro" class="hidden" {%
-                                    if "Otro" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
+                                <input type="checkbox" name="antecedentes_medicos" value="Otro" class="hidden" {% if "Otro" in paciente.informacion_clinica.antecedentes_medicos %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Otro</span>
                             </label>
@@ -4143,52 +4123,40 @@
                             Familiares</label>
                         <div class="flex flex-wrap gap-1.5 mb-2">
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_familiares" value="Diabetes" class="hidden" {%
-                                    if "Diabetes" in paciente.informacion_clinica.antecedentes_familiares %}checked{%
-                                    endif %}>
+                                <input type="checkbox" name="antecedentes_familiares" value="Diabetes" class="hidden" {% if "Diabetes" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Diabetes</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
                                 <input type="checkbox" name="antecedentes_familiares" value="Hipertensión"
-                                    class="hidden" {% if "Hipertensión" in
-                                    paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
+                                    class="hidden" {% if "Hipertensión" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Hipertensión</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_familiares" value="Obesidad" class="hidden" {%
-                                    if "Obesidad" in paciente.informacion_clinica.antecedentes_familiares %}checked{%
-                                    endif %}>
+                                <input type="checkbox" name="antecedentes_familiares" value="Obesidad" class="hidden" {% if "Obesidad" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Obesidad</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
                                 <input type="checkbox" name="antecedentes_familiares" value="Enfermedad cardiovascular"
-                                    class="hidden" {% if "Enfermedad cardiovascular" in
-                                    paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
+                                    class="hidden" {% if "Enfermedad cardiovascular" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Enfermedad
                                     cardiovascular</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_familiares" value="Cáncer" class="hidden" {%
-                                    if "Cáncer" in paciente.informacion_clinica.antecedentes_familiares %}checked{%
-                                    endif %}>
+                                <input type="checkbox" name="antecedentes_familiares" value="Cáncer" class="hidden" {% if "Cáncer" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Cáncer</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_familiares" value="Ninguno" class="hidden" {%
-                                    if "Ninguno" in paciente.informacion_clinica.antecedentes_familiares %}checked{%
-                                    endif %}>
+                                <input type="checkbox" name="antecedentes_familiares" value="Ninguno" class="hidden" {% if "Ninguno" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Ninguno</span>
                             </label>
                             <label class="chip-checkbox cursor-pointer">
-                                <input type="checkbox" name="antecedentes_familiares" value="Otro" class="hidden" {%
-                                    if "Otro" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif
-                                    %}>
+                                <input type="checkbox" name="antecedentes_familiares" value="Otro" class="hidden" {% if "Otro" in paciente.informacion_clinica.antecedentes_familiares %}checked{% endif %}>
                                 <span
                                     class="px-2 py-1 rounded-full text-[11px] font-semibold border transition-all select-none inline-block">Otro</span>
                             </label>
@@ -4206,55 +4174,43 @@
                         Alimentarias</label>
                     <div class="flex flex-wrap gap-2 mb-2">
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Lactosa" class="hidden" {%
-                                if "Lactosa" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif
-                                %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Lactosa" class="hidden" {% if "Lactosa" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Lactosa</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Gluten" class="hidden" {%
-                                if "Gluten" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Gluten" class="hidden" {% if "Gluten" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Gluten</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Mariscos" class="hidden" {%
-                                if "Mariscos" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif
-                                %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Mariscos" class="hidden" {% if "Mariscos" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Mariscos</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Frutos secos" class="hidden" {%
-                                if "Frutos secos" in paciente.informacion_clinica.alergias_intolerancias %}checked{%
-                                endif %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Frutos secos" class="hidden" {% if "Frutos secos" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Frutos
                                 secos</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Huevo" class="hidden" {%
-                                if "Huevo" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Huevo" class="hidden" {% if "Huevo" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Huevo</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Soya" class="hidden" {%
-                                if "Soya" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Soya" class="hidden" {% if "Soya" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Soya</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Ninguna" class="hidden" {%
-                                if "Ninguna" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif
-                                %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Ninguna" class="hidden" {% if "Ninguna" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Ninguna</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="alergias_intolerancias" value="Otra" class="hidden" {%
-                                if "Otra" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
+                            <input type="checkbox" name="alergias_intolerancias" value="Otra" class="hidden" {% if "Otra" in paciente.informacion_clinica.alergias_intolerancias %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Otra</span>
                         </label>
@@ -4353,14 +4309,10 @@
                         <select name="sueno_calidad"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
                             <option value="">Seleccionar...</option>
-                            <option value="Mala" {% if paciente.informacion_clinica.habitos.sueno_calidad=='Mala'
-                                %}selected{% endif %}>Mala</option>
-                            <option value="Regular" {% if paciente.informacion_clinica.habitos.sueno_calidad=='Regular'
-                                %}selected{% endif %}>Regular</option>
-                            <option value="Buena" {% if paciente.informacion_clinica.habitos.sueno_calidad=='Buena'
-                                %}selected{% endif %}>Buena</option>
-                            <option value="Excelente" {% if
-                                paciente.informacion_clinica.habitos.sueno_calidad=='Excelente' %}selected{% endif %}>
+                            <option value="Mala" {% if paciente.informacion_clinica.habitos.sueno_calidad == 'Mala' %}selected{% endif %}>Mala</option>
+                            <option value="Regular" {% if paciente.informacion_clinica.habitos.sueno_calidad == 'Regular' %}selected{% endif %}>Regular</option>
+                            <option value="Buena" {% if paciente.informacion_clinica.habitos.sueno_calidad == 'Buena' %}selected{% endif %}>Buena</option>
+                            <option value="Excelente" {% if paciente.informacion_clinica.habitos.sueno_calidad == 'Excelente' %}selected{% endif %}>
                                 Excelente</option>
                         </select>
                     </div>
@@ -4374,18 +4326,12 @@
                         <select name="actividad_fisica"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
                             <option value="">Seleccionar...</option>
-                            <option value="Sedentario" {% if
-                                paciente.informacion_clinica.habitos.actividad_fisica=='Sedentario' %}selected{% endif
-                                %}>Sedentario (Poco o ningún ejercicio)</option>
-                            <option value="Ligera" {% if paciente.informacion_clinica.habitos.actividad_fisica=='Ligera'
-                                %}selected{% endif %}>Ligera (Ejercicio 1-3 días/semana)</option>
-                            <option value="Moderada" {% if
-                                paciente.informacion_clinica.habitos.actividad_fisica=='Moderada' %}selected{% endif %}>
+                            <option value="Sedentario" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Sedentario' %}selected{% endif %}>Sedentario (Poco o ningún ejercicio)</option>
+                            <option value="Ligera" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Ligera' %}selected{% endif %}>Ligera (Ejercicio 1-3 días/semana)</option>
+                            <option value="Moderada" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Moderada' %}selected{% endif %}>
                                 Moderada (Ejercicio 3-5 días/semana)</option>
-                            <option value="Alta" {% if paciente.informacion_clinica.habitos.actividad_fisica=='Alta'
-                                %}selected{% endif %}>Alta (Ejercicio fuerte 6-7 días/semana)</option>
-                            <option value="Muy alta" {% if
-                                paciente.informacion_clinica.habitos.actividad_fisica=='Muy alta' %}selected{% endif %}>
+                            <option value="Alta" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Alta' %}selected{% endif %}>Alta (Ejercicio fuerte 6-7 días/semana)</option>
+                            <option value="Muy alta" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Muy alta' %}selected{% endif %}>
                                 Muy alta (Entrenamiento profesional o atletismo)</option>
                         </select>
                     </div>
@@ -4412,8 +4358,7 @@
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1 flex justify-between">
                             <span>Nivel de Estrés Percibido</span>
-                            <span id="estres-val" class="font-bold text-teal-600">{{
-                                paciente.informacion_clinica.habitos.estres|default:5 }}/10</span>
+                            <span id="estres-val" class="font-bold text-teal-600">{{ paciente.informacion_clinica.habitos.estres|default:5 }}/10</span>
                         </label>
                         <input type="range" name="estres" min="1" max="10"
                             value="{{ paciente.informacion_clinica.habitos.estres|default:5 }}"
@@ -4425,24 +4370,18 @@
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Consumo de Alcohol</label>
                         <select name="alcohol"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="Nunca" {% if paciente.informacion_clinica.habitos.alcohol=='Nunca'
-                                %}selected{% endif %}>Nunca</option>
-                            <option value="Ocasional" {% if paciente.informacion_clinica.habitos.alcohol=='Ocasional'
-                                %}selected{% endif %}>Ocasional</option>
-                            <option value="Frecuente" {% if paciente.informacion_clinica.habitos.alcohol=='Frecuente'
-                                %}selected{% endif %}>Frecuente</option>
+                            <option value="Nunca" {% if paciente.informacion_clinica.habitos.alcohol == 'Nunca' %}selected{% endif %}>Nunca</option>
+                            <option value="Ocasional" {% if paciente.informacion_clinica.habitos.alcohol == 'Ocasional' %}selected{% endif %}>Ocasional</option>
+                            <option value="Frecuente" {% if paciente.informacion_clinica.habitos.alcohol == 'Frecuente' %}selected{% endif %}>Frecuente</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Consumo de Tabaco</label>
                         <select name="tabaco"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="No" {% if paciente.informacion_clinica.habitos.tabaco=='No' %}selected{%
-                                endif %}>No</option>
-                            <option value="Ocasional" {% if paciente.informacion_clinica.habitos.tabaco=='Ocasional'
-                                %}selected{% endif %}>Ocasional</option>
-                            <option value="Diario" {% if paciente.informacion_clinica.habitos.tabaco=='Diario'
-                                %}selected{% endif %}>Diario</option>
+                            <option value="No" {% if paciente.informacion_clinica.habitos.tabaco == 'No' %}selected{% endif %}>No</option>
+                            <option value="Ocasional" {% if paciente.informacion_clinica.habitos.tabaco == 'Ocasional' %}selected{% endif %}>Ocasional</option>
+                            <option value="Diario" {% if paciente.informacion_clinica.habitos.tabaco == 'Diario' %}selected{% endif %}>Diario</option>
                         </select>
                     </div>
                 </div>
@@ -4541,33 +4480,27 @@
                         Alimentarias</label>
                     <div class="flex flex-wrap gap-2">
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="restricciones" value="Vegetariano" class="hidden" {%
-                                if "Vegetariano" in paciente.informacion_clinica.historia_alimentaria.restricciones
-                                %}checked{% endif %}>
+                            <input type="checkbox" name="restricciones" value="Vegetariano" class="hidden" {% if "Vegetariano" in paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Vegetariano</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="restricciones" value="Vegano" class="hidden" {% if "Vegano" in
-                                paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
+                            <input type="checkbox" name="restricciones" value="Vegano" class="hidden" {% if "Vegano" in paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Vegano</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="restricciones" value="Halal" class="hidden" {% if "Halal" in
-                                paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
+                            <input type="checkbox" name="restricciones" value="Halal" class="hidden" {% if "Halal" in paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Halal</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="restricciones" value="Kosher" class="hidden" {% if "Kosher" in
-                                paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
+                            <input type="checkbox" name="restricciones" value="Kosher" class="hidden" {% if "Kosher" in paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Kosher</span>
                         </label>
                         <label class="chip-checkbox cursor-pointer">
-                            <input type="checkbox" name="restricciones" value="Otro" class="hidden" {% if "Otro" in
-                                paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
+                            <input type="checkbox" name="restricciones" value="Otro" class="hidden" {% if "Otro" in paciente.informacion_clinica.historia_alimentaria.restricciones %}checked{% endif %}>
                             <span
                                 class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all select-none inline-block">Otro</span>
                         </label>
@@ -4580,46 +4513,28 @@
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Apetito</label>
                         <select name="apetito"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="Normal" {% if
-                                paciente.informacion_clinica.historia_alimentaria.apetito=='Normal' %}selected{% endif
-                                %}>Normal</option>
-                            <option value="Bajo" {% if paciente.informacion_clinica.historia_alimentaria.apetito=='Bajo'
-                                %}selected{% endif %}>Bajo</option>
-                            <option value="Alto" {% if paciente.informacion_clinica.historia_alimentaria.apetito=='Alto'
-                                %}selected{% endif %}>Alto</option>
+                            <option value="Normal" {% if paciente.informacion_clinica.historia_alimentaria.apetito == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Bajo" {% if paciente.informacion_clinica.historia_alimentaria.apetito == 'Bajo' %}selected{% endif %}>Bajo</option>
+                            <option value="Alto" {% if paciente.informacion_clinica.historia_alimentaria.apetito == 'Alto' %}selected{% endif %}>Alto</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Comer por Ansiedad</label>
                         <select name="ansiedad"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="Nunca" {% if
-                                paciente.informacion_clinica.historia_alimentaria.ansiedad=='Nunca' %}selected{% endif
-                                %}>Nunca</option>
-                            <option value="Ocasional" {% if
-                                paciente.informacion_clinica.historia_alimentaria.ansiedad=='Ocasional' %}selected{%
-                                endif %}>Ocasional</option>
-                            <option value="Frecuente" {% if
-                                paciente.informacion_clinica.historia_alimentaria.ansiedad=='Frecuente' %}selected{%
-                                endif %}>Frecuente</option>
+                            <option value="Nunca" {% if paciente.informacion_clinica.historia_alimentaria.ansiedad == 'Nunca' %}selected{% endif %}>Nunca</option>
+                            <option value="Ocasional" {% if paciente.informacion_clinica.historia_alimentaria.ansiedad == 'Ocasional' %}selected{% endif %}>Ocasional</option>
+                            <option value="Frecuente" {% if paciente.informacion_clinica.historia_alimentaria.ansiedad == 'Frecuente' %}selected{% endif %}>Frecuente</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Comer fuera de casa</label>
                         <select name="fuera_casa"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="Nunca" {% if
-                                paciente.informacion_clinica.historia_alimentaria.fuera_casa=='Nunca' %}selected{% endif
-                                %}>Nunca</option>
-                            <option value="1-2 veces por semana" {% if
-                                paciente.informacion_clinica.historia_alimentaria.fuera_casa=='1-2 veces por semana'
-                                %}selected{% endif %}>1-2 veces/sem</option>
-                            <option value="3-5 veces por semana" {% if
-                                paciente.informacion_clinica.historia_alimentaria.fuera_casa=='3-5 veces por semana'
-                                %}selected{% endif %}>3-5 veces/sem</option>
-                            <option value="Diario" {% if
-                                paciente.informacion_clinica.historia_alimentaria.fuera_casa=='Diario' %}selected{%
-                                endif %}>Diario</option>
+                            <option value="Nunca" {% if paciente.informacion_clinica.historia_alimentaria.fuera_casa == 'Nunca' %}selected{% endif %}>Nunca</option>
+                            <option value="1-2 veces por semana" {% if paciente.informacion_clinica.historia_alimentaria.fuera_casa == '1-2 veces por semana' %}selected{% endif %}>1-2 veces/sem</option>
+                            <option value="3-5 veces por semana" {% if paciente.informacion_clinica.historia_alimentaria.fuera_casa == '3-5 veces por semana' %}selected{% endif %}>3-5 veces/sem</option>
+                            <option value="Diario" {% if paciente.informacion_clinica.historia_alimentaria.fuera_casa == 'Diario' %}selected{% endif %}>Diario</option>
                         </select>
                     </div>
                 </div>
@@ -4637,33 +4552,19 @@
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Bebidas Azucaradas</label>
                         <select name="bebidas_azucaradas"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="Nunca" {% if
-                                paciente.informacion_clinica.historia_alimentaria.bebidas_azucaradas=='Nunca'
-                                %}selected{% endif %}>Nunca</option>
-                            <option value="Ocasional" {% if
-                                paciente.informacion_clinica.historia_alimentaria.bebidas_azucaradas=='Ocasional'
-                                %}selected{% endif %}>Ocasional</option>
-                            <option value="Frecuente" {% if
-                                paciente.informacion_clinica.historia_alimentaria.bebidas_azucaradas=='Frecuente'
-                                %}selected{% endif %}>Frecuente</option>
+                            <option value="Nunca" {% if paciente.informacion_clinica.historia_alimentaria.bebidas_azucaradas == 'Nunca' %}selected{% endif %}>Nunca</option>
+                            <option value="Ocasional" {% if paciente.informacion_clinica.historia_alimentaria.bebidas_azucaradas == 'Ocasional' %}selected{% endif %}>Ocasional</option>
+                            <option value="Frecuente" {% if paciente.informacion_clinica.historia_alimentaria.bebidas_azucaradas == 'Frecuente' %}selected{% endif %}>Frecuente</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Comida Rápida</label>
                         <select name="comida_rapida"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <option value="Nunca" {% if
-                                paciente.informacion_clinica.historia_alimentaria.comida_rapida=='Nunca' %}selected{%
-                                endif %}>Nunca</option>
-                            <option value="1 vez por semana" {% if
-                                paciente.informacion_clinica.historia_alimentaria.comida_rapida=='1 vez por semana'
-                                %}selected{% endif %}>1 vez/sem</option>
-                            <option value="2-3 veces por semana" {% if
-                                paciente.informacion_clinica.historia_alimentaria.comida_rapida=='2-3 veces por semana'
-                                %}selected{% endif %}>2-3 veces/sem</option>
-                            <option value="Más de 3 veces por semana" {% if
-                                paciente.informacion_clinica.historia_alimentaria.comida_rapida=='Más de 3 veces por semana'
-                                %}selected{% endif %}>Más de 3/sem</option>
+                            <option value="Nunca" {% if paciente.informacion_clinica.historia_alimentaria.comida_rapida == 'Nunca' %}selected{% endif %}>Nunca</option>
+                            <option value="1 vez por semana" {% if paciente.informacion_clinica.historia_alimentaria.comida_rapida == '1 vez por semana' %}selected{% endif %}>1 vez/sem</option>
+                            <option value="2-3 veces por semana" {% if paciente.informacion_clinica.historia_alimentaria.comida_rapida == '2-3 veces por semana' %}selected{% endif %}>2-3 veces/sem</option>
+                            <option value="Más de 3 veces por semana" {% if paciente.informacion_clinica.historia_alimentaria.comida_rapida == 'Más de 3 veces por semana' %}selected{% endif %}>Más de 3/sem</option>
                         </select>
                     </div>
                 </div>
@@ -9302,11 +9203,21 @@
         return base + "bg-slate-100 text-slate-600";
     }
 
+    function getRecomendacionModalElement(categoria) {
+        let targetId = `modal-rec-${categoria.replace('_', '-')}`;
+        if (categoria === "actividad_fisica") {
+            targetId = "modal-rec-actividad";
+        } else if (categoria === "alimentos_recomendados") {
+            targetId = "modal-rec-alimentos-recom";
+        }
+        return document.getElementById(targetId);
+    }
+
     function openRecomendacionModal(categoria) {
         if (!recomendacionesData) return;
 
         const r = recomendacionesData[categoria];
-        const modal = document.getElementById(`modal-rec-${categoria.replace('_', '-')}`);
+        const modal = getRecomendacionModalElement(categoria);
         if (!modal) return;
 
         // 1. Establecer cita_id y fecha actuales en los formularios
@@ -9351,7 +9262,7 @@
     }
 
     function closeRecomendacionModal(categoria) {
-        const modal = document.getElementById(`modal-rec-${categoria.replace('_', '-')}`);
+        const modal = getRecomendacionModalElement(categoria);
         if (modal) modal.classList.add("hidden");
     }
 
@@ -10225,11 +10136,96 @@
 
     // ─── CONSULTAS NUTRICIONALES JS ───
     function abrirModalNuevaConsulta() {
+        const errDiv = document.getElementById('nueva-consulta-error');
+        if (errDiv) errDiv.classList.add('hidden');
         document.getElementById('modal-nueva-consulta').classList.remove('hidden');
     }
 
     function cerrarModalNuevaConsulta() {
         document.getElementById('modal-nueva-consulta').classList.add('hidden');
+    }
+
+    async function openModalAgendarCita(pacienteId) {
+        openModal('Agendar Cita');
+        try {
+            const url = `{% url 'agendas:nueva' %}?paciente=${pacienteId}&fragment=1`;
+            const resp = await fetch(url);
+            const html = await resp.text();
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const formContent = doc.getElementById('cita-form-content');
+
+            if (formContent) {
+                setModalContent(formContent);
+                bindCitaFormSubmit(pacienteId);
+            } else {
+                _showError('Error al cargar el formulario de cita.');
+            }
+        } catch (err) {
+            console.error(err);
+            _showError('Error de conexión al cargar la cita.');
+        }
+    }
+
+    function bindCitaFormSubmit(pacienteId) {
+        const form = document.getElementById('cita-form');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (form.dataset.submitting === 'true') return;
+            form.dataset.submitting = 'true';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            let originalHtml = '';
+            if (submitBtn) {
+                originalHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></span> Guardando...`;
+            }
+
+            const formData = new FormData(form);
+            const actionUrl = form.getAttribute('action') || `{% url 'agendas:nueva' %}?paciente=${pacienteId}&fragment=1`;
+
+            try {
+                const resp = await fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const text = await resp.text();
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const successMarker = doc.getElementById('cita-form-success');
+
+                if (successMarker) {
+                    closeModal();
+                    // Refrescar página para ver la nueva cita en el listado
+                    window.location.reload();
+                } else {
+                    const formContent = doc.getElementById('cita-form-content');
+                    if (formContent) {
+                        setModalContent(formContent);
+                        bindCitaFormSubmit(pacienteId);
+                    } else {
+                        _showError('Error al procesar el formulario.');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                _showError('Error de conexión al guardar la cita.');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+                form.removeAttribute('data-submitting');
+            }
+        });
     }
 
     function iniciarNuevaConsultaSubmit(event) {
@@ -10253,7 +10249,14 @@
                     cerrarModalNuevaConsulta();
                     window.location.href = `?consulta_id=${data.consulta_id}`;
                 } else {
-                    alert("Error al iniciar la consulta: " + (data.error || "Ocurrió un problema."));
+                    const errDiv = document.getElementById('nueva-consulta-error');
+                    const errMsg = document.getElementById('nueva-consulta-error-msg');
+                    if (errDiv && errMsg) {
+                        errMsg.textContent = data.error || "Ocurrió un problema.";
+                        errDiv.classList.remove('hidden');
+                    } else {
+                        alert("Error al iniciar la consulta: " + (data.error || "Ocurrió un problema."));
+                    }
                 }
             })
             .catch(err => {
@@ -10262,35 +10265,103 @@
             });
     }
 
+    let consultaIdAFinalizar = null;
+
     function finalizarConsulta(consultaId) {
-        if (!confirm("¿Está seguro que desea finalizar la consulta actual? Una vez finalizada, no se podrá editar la información clínica registrada en ella.")) {
-            return;
-        }
-
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const formData = new FormData();
-        formData.append("csrfmiddlewaretoken", csrfToken);
-
-        fetch(`/pacientes/{{ paciente.pk }}/consultas/${consultaId}/finalizar/`, {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"
+        consultaIdAFinalizar = consultaId;
+        const modal = document.getElementById('modal-confirmar-finalizar');
+        const card = document.getElementById('modal-confirmar-finalizar-card');
+        const errDiv = document.getElementById('confirmar-finalizar-error');
+        if (errDiv) errDiv.classList.add('hidden');
+        if (modal && card) {
+            modal.classList.remove('hidden');
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
             }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert("Error al finalizar la consulta: " + (data.error || "Ocurrió un problema."));
-                }
-            })
-            .catch(err => {
-                console.error("Error:", err);
-                alert("Error de conexión al finalizar la consulta.");
-            });
+            setTimeout(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
     }
+
+    function cerrarModalConfirmarFinalizar() {
+        const modal = document.getElementById('modal-confirmar-finalizar');
+        const card = document.getElementById('modal-confirmar-finalizar-card');
+        if (modal && card) {
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                consultaIdAFinalizar = null;
+            }, 150);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnConfirmar = document.getElementById('btn-confirmar-finalizar-submit');
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener('click', function() {
+                if (!consultaIdAFinalizar) return;
+                
+                btnConfirmar.disabled = true;
+                const originalHtml = btnConfirmar.innerHTML;
+                btnConfirmar.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin mr-1"></i> Procesando...`;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const formData = new FormData();
+                formData.append("csrfmiddlewaretoken", csrfToken);
+
+                fetch(`/pacientes/{{ paciente.pk }}/consultas/${consultaIdAFinalizar}/finalizar/`, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                })
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (response.ok && data.success) {
+                                cerrarModalConfirmarFinalizar();
+                                window.location.reload();
+                            } else {
+                                btnConfirmar.disabled = false;
+                                btnConfirmar.innerHTML = originalHtml;
+                                if (typeof lucide !== 'undefined') lucide.createIcons();
+                                
+                                const errDiv = document.getElementById('confirmar-finalizar-error');
+                                const errList = document.getElementById('confirmar-finalizar-error-list');
+                                if (errDiv && errList) {
+                                    errList.innerHTML = '';
+                                    if (data.error_type === 'missing_requirements' && data.missing_fields) {
+                                        data.missing_fields.forEach(field => {
+                                            const li = document.createElement('li');
+                                            li.textContent = field;
+                                            errList.appendChild(li);
+                                        });
+                                    } else {
+                                        const li = document.createElement('li');
+                                        li.textContent = data.error || 'Ocurrió un problema inesperado al finalizar la consulta.';
+                                        errList.appendChild(li);
+                                    }
+                                    errDiv.classList.remove('hidden');
+                                } else {
+                                    alert("Error al finalizar la consulta: " + (data.error || "Ocurrió un problema."));
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error("Error:", err);
+                        alert("Error de conexión al finalizar la consulta.");
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.innerHTML = originalHtml;
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    });
+            });
+        }
+    });
 
     function lockFinalizedFields() {
         const isFinalized = {% if active_consulta and active_consulta.estado == "finalizada" %} true{% else %} false{% endif %};
@@ -10301,8 +10372,9 @@
     // List of all forms to disable
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
-        // Check if this is a save/action form (ignore navigation, search, print, toggle sidebar)
-        if (form.id && (form.id.includes('search') || form.id.includes('filter'))) {
+        const formId = form.getAttribute('id') || '';
+        // Check if this is a save/action form (ignore navigation, search, print, toggle sidebar, new consultation)
+        if (formId && (formId.includes('search') || formId.includes('filter') || formId === 'form-nueva-consulta')) {
             return;
         }
 

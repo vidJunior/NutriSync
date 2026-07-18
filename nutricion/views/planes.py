@@ -21,6 +21,39 @@ ORDEN_DIAS = [
     DiaSemana.DOMINGO,
 ]
 
+class PlanFormFragmentMixin:
+    """Mixin para CreateView y UpdateView de Plan: renderiza fragmento cuando ?fragment=1."""
+
+    def get_template_names(self):
+        if self.request.GET.get("fragment"):
+            return ["nutricion/_plan_form_content.html"]
+        return super().get_template_names()
+
+    def form_valid(self, form):
+        from django.http import HttpResponse
+        response = super().form_valid(form)
+        is_ajax = (
+            self.request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or self.request.GET.get("fragment")
+        )
+        if is_ajax:
+            return HttpResponse(
+                '<div id="plan-form-success" data-success="true" data-pk="{}"></div>'.format(
+                    self.object.pk
+                )
+            )
+        return response
+
+    def form_invalid(self, form):
+        is_ajax = (
+            self.request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or self.request.GET.get("fragment")
+        )
+        if is_ajax:
+            return self.render_to_response(self.get_context_data(form=form))
+        return super().form_invalid(form)
+
+
 class PlanListView(LoginRequiredMixin, ListView):
     """
     Lista de todos los modelos de planes nutricionales del nutricionista.
@@ -53,7 +86,7 @@ class PlanListView(LoginRequiredMixin, ListView):
         return context
 
 
-class PlanCreateView(LoginRequiredMixin, CreateView):
+class PlanCreateView(LoginRequiredMixin, PlanFormFragmentMixin, CreateView):
     """
     Crea un nuevo modelo de plan nutricional.
     """
@@ -102,7 +135,7 @@ class PlanDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class PlanUpdateView(LoginRequiredMixin, UpdateView):
+class PlanUpdateView(LoginRequiredMixin, PlanFormFragmentMixin, UpdateView):
     """Edición de los datos generales de un modelo de plan."""
     model = PlanNutricional
     form_class = PlanNutricionalForm

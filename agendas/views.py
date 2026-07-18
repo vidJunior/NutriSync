@@ -30,6 +30,40 @@ class NutricionistaCitaMixin(LoginRequiredMixin):
         return Cita.objects.filter(paciente__nutricionista=self.request.user).select_related("paciente")
 
 
+
+class CitaFormFragmentMixin:
+    """Mixin para CreateView y UpdateView de Cita: renderiza fragmento cuando ?fragment=1."""
+
+    def get_template_names(self):
+        if self.request.GET.get("fragment"):
+            return ["agendas/_form_content.html"]
+        return super().get_template_names()
+
+    def form_valid(self, form):
+        from django.http import HttpResponse
+        response = super().form_valid(form)
+        is_ajax = (
+            self.request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or self.request.GET.get("fragment")
+        )
+        if is_ajax:
+            return HttpResponse(
+                '<div id="cita-form-success" data-success="true" data-pk="{}"></div>'.format(
+                    self.object.pk
+                )
+            )
+        return response
+
+    def form_invalid(self, form):
+        is_ajax = (
+            self.request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or self.request.GET.get("fragment")
+        )
+        if is_ajax:
+            return self.render_to_response(self.get_context_data(form=form))
+        return super().form_invalid(form)
+
+
 # ─── Agenda / Listado de Citas ───────────────────────────────────────────────
 
 class AgendaView(NutricionistaCitaMixin, ListView):
@@ -256,7 +290,7 @@ class AgendaView(NutricionistaCitaMixin, ListView):
 
 # ─── Crear Cita ──────────────────────────────────────────────────────────────
 
-class CitaCreateView(LoginRequiredMixin, CreateView):
+class CitaCreateView(LoginRequiredMixin, CitaFormFragmentMixin, CreateView):
     """Permite agendar una nueva cita."""
 
     model = Cita
@@ -281,10 +315,14 @@ class CitaCreateView(LoginRequiredMixin, CreateView):
         return initial
 
     def get_success_url(self):
+        from django.urls import reverse
         messages.success(
             self.request,
             f"Cita con {self.object.paciente.nombre_completo} programada con éxito."
         )
+        paciente_id = self.request.GET.get("paciente") or self.request.POST.get("paciente")
+        if paciente_id:
+            return reverse("pacientes:detalle", kwargs={"pk": paciente_id})
         return reverse_lazy("agendas:agenda")
 
     def get_context_data(self, **kwargs):
@@ -292,6 +330,12 @@ class CitaCreateView(LoginRequiredMixin, CreateView):
         from config.choices import TipoCita
         import json
         
+        # Guardamos de qué paciente viene si está en GET
+        paciente_id = self.request.GET.get("paciente")
+        context["from_paciente_id"] = paciente_id
+        if paciente_id:
+            context["paciente_obj"] = Paciente.objects.filter(pk=paciente_id, nutricionista=self.request.user).first()
+
         # Filtramos citas de tipo Primera Consulta para los pacientes de este nutricionista
         qs_primera = Cita.objects.filter(
             paciente__nutricionista=self.request.user,
@@ -324,7 +368,7 @@ class CitaDetailView(NutricionistaCitaMixin, DetailView):
 
 # ─── Editar Cita ─────────────────────────────────────────────────────────────
 
-class CitaUpdateView(NutricionistaCitaMixin, UpdateView):
+class CitaUpdateView(NutricionistaCitaMixin, CitaFormFragmentMixin, UpdateView):
     """Permite modificar los datos de una cita existente."""
 
     model = Cita
@@ -338,10 +382,14 @@ class CitaUpdateView(NutricionistaCitaMixin, UpdateView):
         return kwargs
 
     def get_success_url(self):
+        from django.urls import reverse
         messages.success(
             self.request,
             f"Cita con {self.object.paciente.nombre_completo} actualizada correctamente."
         )
+        paciente_id = self.request.GET.get("paciente") or self.request.POST.get("paciente") or (self.object.paciente_id if self.object else None)
+        if paciente_id:
+            return reverse("pacientes:detalle", kwargs={"pk": paciente_id})
         return reverse_lazy("agendas:agenda")
 
     def get_context_data(self, **kwargs):
@@ -349,6 +397,12 @@ class CitaUpdateView(NutricionistaCitaMixin, UpdateView):
         from config.choices import TipoCita
         import json
         
+        # Guardamos de qué paciente viene
+        paciente_id = self.request.GET.get("paciente") or (self.object.paciente_id if self.object else None)
+        context["from_paciente_id"] = paciente_id
+        if paciente_id:
+            context["paciente_obj"] = Paciente.objects.filter(pk=paciente_id, nutricionista=self.request.user).first()
+
         # Filtramos citas de tipo Primera Consulta para los pacientes de este nutricionista,
         # excluyendo la cita actual que estamos editando.
         qs_primera = Cita.objects.filter(

@@ -137,6 +137,14 @@ class Cita(models.Model):
         super().clean()
         errors = {}
 
+        # Obtener instancia original en caso de edición
+        original = None
+        if self.pk:
+            try:
+                original = self.__class__.objects.get(pk=self.pk)
+            except self.__class__.DoesNotExist:
+                pass
+
         # 1. Validar que el paciente esté activo
         if self.paciente_id:
             # Recargamos de la BD para asegurar que no se use caché obsoleto
@@ -148,6 +156,13 @@ class Cita(models.Model):
                     "No se pueden programar citas para un paciente inactivo."
                 )
 
+        # 1.5 Validar inalterabilidad de cita completada/finalizada
+        if original and original.estado in [EstadoCita.COMPLETADA, EstadoCita.FINALIZADA]:
+            if self.estado != original.estado:
+                errors["estado"] = ValidationError(
+                    "El estado de una cita completada o finalizada es inalterable."
+                )
+
         # 2. Validar que la fecha no sea en el pasado (tanto para citas nuevas como para modificaciones de fecha)
         if self.fecha_hora:
             validar_fecha_pasada = False
@@ -156,11 +171,7 @@ class Cita(models.Model):
                 validar_fecha_pasada = True
             else:
                 # Edición: solo validamos si la fecha ha sido modificada
-                try:
-                    original = self.__class__.objects.get(pk=self.pk)
-                    if self.fecha_hora != original.fecha_hora:
-                        validar_fecha_pasada = True
-                except self.__class__.DoesNotExist:
+                if original and self.fecha_hora != original.fecha_hora:
                     validar_fecha_pasada = True
 
             if validar_fecha_pasada:
@@ -179,7 +190,7 @@ class Cita(models.Model):
             if nutricionista:
                 inicio_nuevo = self.fecha_hora
                 fin_nuevo = self.fecha_fin
-                fecha_dia = self.fecha_hora.date()
+                fecha_dia = timezone.localtime(self.fecha_hora).date()
 
                 # Obtenemos todas las citas activas/bloqueos de este nutricionista en el mismo día
                 # Filtramos por nutricionista del paciente o nutricionista directo en Cita

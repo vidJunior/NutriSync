@@ -9,11 +9,11 @@
   <!-- ─── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <p class="text-sm text-slate-500">Biblioteca de modelos de planes nutricionales reutilizables</p>
-    <a href="{% url 'nutricion:plan_nuevo' %}"
+    <button type="button" onclick="openModalPlanNuevo()"
        class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium
-              transition-all duration-200 flex items-center gap-2 shadow-sm">
+              transition-all duration-200 flex items-center gap-2 shadow-sm cursor-pointer">
       <i data-lucide="plus" class="w-4 h-4"></i> Crear modelo de plan
-    </a>
+    </button>
   </div>
 
   <!-- ─── Filtros ──────────────────────────────────────────────────────────── -->
@@ -143,13 +143,100 @@
     </div>
     <h3 class="font-bold text-slate-700 mb-2">No hay modelos de planes</h3>
     <p class="text-slate-400 text-sm mb-4">Comienza registrando tu primer modelo de plan nutricional reusable.</p>
-    <a href="{% url 'nutricion:plan_nuevo' %}"
+    <button type="button" onclick="openModalPlanNuevo()"
        class="bg-teal-650 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 text-sm font-medium
-              transition-all duration-200 inline-flex items-center gap-2">
+              transition-all duration-200 inline-flex items-center gap-2 cursor-pointer">
       <i data-lucide="plus" class="w-4 h-4"></i> Crear primer modelo
-    </a>
+    </button>
   </div>
   {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function openModalPlanNuevo() {
+        openModal('Nuevo Modelo de Plan');
+        try {
+            const url = `{% url 'nutricion:plan_nuevo' %}?fragment=1`;
+            const resp = await fetch(url);
+            const html = await resp.text();
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const formContent = doc.getElementById('plan-form-content');
+
+            if (formContent) {
+                setModalContent(formContent);
+                bindPlanFormSubmit();
+            } else {
+                _showError('Error al cargar el formulario de plan.');
+            }
+        } catch (err) {
+            console.error(err);
+            _showError('Error de conexión al cargar el plan.');
+        }
+    }
+
+    function bindPlanFormSubmit() {
+        const form = document.getElementById('plan-form');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (form.dataset.submitting === 'true') return;
+            form.dataset.submitting = 'true';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            let originalHtml = '';
+            if (submitBtn) {
+                originalHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></span> Guardando...`;
+            }
+
+            const formData = new FormData(form);
+            const actionUrl = form.getAttribute('action') || `{% url 'nutricion:plan_nuevo' %}?fragment=1`;
+
+            try {
+                const resp = await fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const text = await resp.text();
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const successMarker = doc.getElementById('plan-form-success');
+
+                if (successMarker) {
+                    closeModal();
+                    const targetPk = successMarker.getAttribute('data-pk');
+                    window.location.href = `/planes/${targetPk}/`;
+                } else {
+                    const formContent = doc.getElementById('plan-form-content');
+                    if (formContent) {
+                        setModalContent(formContent);
+                        bindPlanFormSubmit();
+                    } else {
+                        _showError('Error al procesar el formulario.');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                _showError('Error de conexión al guardar el plan.');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+                form.removeAttribute('data-submitting');
+            }
+        });
+    }
+</script>
 {% endblock %}
