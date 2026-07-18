@@ -4204,17 +4204,16 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Horas de sueño por
-                            noche</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Horas de sueño por noche</label>
                         <input type="number" name="sueno_horas"
                             value="{{ paciente.informacion_clinica.habitos.sueno_horas|default:'' }}"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none"
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200"
                             min="0" max="24" step="0.5">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Calidad del Sueño</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Calidad del Sueño</label>
                         <select name="sueno_calidad"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200">
                             <option value="">Seleccionar...</option>
                             <option value="Mala" {% if paciente.informacion_clinica.habitos.sueno_calidad == 'Mala' %}selected{% endif %}>Mala</option>
                             <option value="Regular" {% if paciente.informacion_clinica.habitos.sueno_calidad == 'Regular' %}selected{% endif %}>Regular</option>
@@ -4227,10 +4226,9 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Nivel de Actividad Física
-                            General</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nivel de Actividad Física General</label>
                         <select name="actividad_fisica"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200">
                             <option value="">Seleccionar...</option>
                             <option value="Sedentario" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Sedentario' %}selected{% endif %}>Sedentario (Poco o ningún ejercicio)</option>
                             <option value="Ligera" {% if paciente.informacion_clinica.habitos.actividad_fisica == 'Ligera' %}selected{% endif %}>Ligera (Ejercicio 1-3 días/semana)</option>
@@ -4242,48 +4240,46 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Días de Entrenamiento /
-                            sem</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Días de Entrenamiento / sem</label>
                         <input type="number" name="entrenamiento_dias"
                             value="{{ paciente.informacion_clinica.habitos.entrenamiento_dias|default:'' }}"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none"
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200"
                             min="0" max="7">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Tipo de
-                            Entrenamiento</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Entrenamiento</label>
                         <input type="text" name="entrenamiento_tipo"
                             value="{{ paciente.informacion_clinica.habitos.entrenamiento_tipo|default:'' }}"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none"
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200"
                             placeholder="Ej: Musculación, running">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1 flex justify-between">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1 flex justify-between">
                             <span>Nivel de Estrés Percibido</span>
                             <span id="estres-val" class="font-bold text-teal-600">{{ paciente.informacion_clinica.habitos.estres|default:5 }}/10</span>
                         </label>
                         <input type="range" name="estres" min="1" max="10"
                             value="{{ paciente.informacion_clinica.habitos.estres|default:5 }}"
-                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
+                            class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal-600 focus:outline-none"
                             oninput="document.getElementById('estres-val').textContent = this.value + '/10'">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Consumo de Alcohol</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consumo de Alcohol</label>
                         <select name="alcohol"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200">
                             <option value="Nunca" {% if paciente.informacion_clinica.habitos.alcohol == 'Nunca' %}selected{% endif %}>Nunca</option>
                             <option value="Ocasional" {% if paciente.informacion_clinica.habitos.alcohol == 'Ocasional' %}selected{% endif %}>Ocasional</option>
                             <option value="Frecuente" {% if paciente.informacion_clinica.habitos.alcohol == 'Frecuente' %}selected{% endif %}>Frecuente</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Consumo de Tabaco</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consumo de Tabaco</label>
                         <select name="tabaco"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200">
                             <option value="No" {% if paciente.informacion_clinica.habitos.tabaco == 'No' %}selected{% endif %}>No</option>
                             <option value="Ocasional" {% if paciente.informacion_clinica.habitos.tabaco == 'Ocasional' %}selected{% endif %}>Ocasional</option>
                             <option value="Diario" {% if paciente.informacion_clinica.habitos.tabaco == 'Diario' %}selected{% endif %}>Diario</option>
@@ -4292,28 +4288,26 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Consumo de Agua
-                            (L/día)</label>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consumo de Agua (L/día)</label>
                         <input type="number" name="hidratacion"
                             value="{{ paciente.informacion_clinica.habitos.hidratacion|default:'' }}"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none"
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200"
                             min="0" step="0.1">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Observaciones</label>
-                        <input type="text" name="observaciones"
-                            value="{{ paciente.informacion_clinica.habitos.observaciones|default:'' }}"
-                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Observaciones</label>
+                        <textarea name="observaciones" rows="3"
+                            class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all duration-200 resize-y min-h-[80px]"
+                            placeholder="Observaciones sobre estilo de vida y hábitos...">{{ paciente.informacion_clinica.habitos.observaciones|default:'' }}</textarea>
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
                     <button type="button" onclick="closeSectionModal('modal-habitos')"
-                        class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl transition-colors">Cancelar</button>
+                        class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all duration-200">Cancelar</button>
                     <button type="submit"
-                        class="bg-teal-650 hover:bg-teal-700 text-white font-bold px-5 py-2 text-xs rounded-xl transition-colors shadow-xs">Guardar
-                        cambios</button>
+                        class="bg-teal-650 hover:bg-teal-700 active:bg-teal-800 text-white font-bold px-5 py-2 text-xs rounded-xl transition-all duration-200 shadow-xs hover:shadow-md">Guardar cambios</button>
                 </div>
             </form>
         </div>
