@@ -14,8 +14,8 @@ class ApiService {
       : _defaultLocalUrl();
 
   static String _defaultLocalUrl() {
-  // URL de producción
-    return 'https://nutrisync-qr9a.onrender.com/api/paciente';
+    // Apunta al servidor Django corriendo localmente en la máquina anfitriona desde el emulador de Android
+    return 'http://10.0.2.2:8000/api/paciente';
   }
 
   static String? _token;
