@@ -34,6 +34,7 @@
     </div>
 
     <!-- Formulario -->
+    <!-- Formulario -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <form method="post" novalidate>
             {% csrf_token %}
@@ -108,6 +109,93 @@
                 <p class="text-[10px] text-slate-400 mt-1">Este resumen se ha generado tomando los datos actuales del paciente, pero puedes editarlo libremente.</p>
             </div>
 
+            <!-- ================= SECCIÓN NUEVA: ESTADO Y BIENESTAR ================= -->
+            <hr class="my-8 border-slate-100">
+            <h3 class="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-teal-600"></i> Estado General y Bienestar
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.nivel_energia.label }}
+                    </label>
+                    {{ form.nivel_energia }}
+                    {% if form.nivel_energia.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.nivel_energia.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.calidad_sueno.label }}
+                    </label>
+                    {{ form.calidad_sueno }}
+                    {% if form.calidad_sueno.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.calidad_sueno.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.adherencia_plan.label }}
+                    </label>
+                    {{ form.adherencia_plan }}
+                    {% if form.adherencia_plan.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.adherencia_plan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ================= SECCIÓN NUEVA: ANÁLISIS CLÍNICO ================= -->
+            <hr class="my-8 border-slate-100">
+            <h3 class="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="stethoscope" class="w-4 h-4 text-teal-600"></i> Análisis Nutricional y Clínico
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.sintomas_gastrointestinales.label }}
+                    </label>
+                    {{ form.sintomas_gastrointestinales }}
+                    {% if form.sintomas_gastrointestinales.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.sintomas_gastrointestinales.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.suplementacion_actual.label }}
+                    </label>
+                    {{ form.suplementacion_actual }}
+                    {% if form.suplementacion_actual.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.suplementacion_actual.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.recordatorio_24h.label }}
+                    </label>
+                    {{ form.recordatorio_24h }}
+                    {% if form.recordatorio_24h.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.recordatorio_24h.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                        {{ form.marcadores_bioquimicos.label }}
+                    </label>
+                    {{ form.marcadores_bioquimicos }}
+                    {% if form.marcadores_bioquimicos.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.marcadores_bioquimicos.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ================= SECCIÓN ORIGINAL: PLAN Y OBJETIVOS ================= -->
+            <hr class="my-8 border-slate-100">
+            <h3 class="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="target" class="w-4 h-4 text-teal-600"></i> Plan a Seguir
+            </h3>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                 <!-- Objetivos acordados -->
                 <div>
@@ -157,6 +245,5 @@
             </div>
         </form>
     </div>
-
 </div>
 {% endblock %}
