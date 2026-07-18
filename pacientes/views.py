@@ -498,16 +498,16 @@ def paciente_consulta_finalizar(request, pk, consulta_id):
 
         # 2. Seguimiento / Control / Reevaluación
         elif consulta.tipo in ["seguimiento", "control", "reevaluacion"]:
-            if not consulta.observaciones or len(consulta.observaciones.strip()) < 10:
-                errores.append("Debes escribir observaciones detalladas de la evolución del paciente (mínimo 10 caracteres).")
+            if not consulta.observaciones or len(consulta.observaciones.strip()) < 1:
+                errores.append("Debes escribir observaciones de la evolución del paciente (mínimo 1 carácter).")
 
             if not consulta.medidas_corporales.exists():
                 errores.append("Se requiere registrar el peso actual del paciente en esta consulta para evaluar el progreso.")
 
         # 3. Consulta Deportiva
         elif consulta.tipo == "deportiva":
-            if not consulta.observaciones or len(consulta.observaciones.strip()) < 10:
-                errores.append("Debes escribir observaciones detalladas de la evolución deportiva (mínimo 10 caracteres).")
+            if not consulta.observaciones or len(consulta.observaciones.strip()) < 1:
+                errores.append("Debes escribir observaciones de la evolución deportiva (mínimo 1 carácter).")
 
             medidas = consulta.medidas_corporales.all()
             if not medidas.exists():
@@ -519,8 +519,8 @@ def paciente_consulta_finalizar(request, pk, consulta_id):
 
         # 4. Consulta Clínica
         elif consulta.tipo == "clinica":
-            if not consulta.observaciones or len(consulta.observaciones.strip()) < 10:
-                errores.append("Debes escribir observaciones detalladas de la evolución clínica (mínimo 10 caracteres).")
+            if not consulta.observaciones or len(consulta.observaciones.strip()) < 1:
+                errores.append("Debes escribir observaciones de la evolución clínica (mínimo 1 carácter).")
 
             eval_data = consulta.evaluacion or {}
             if not eval_data or not eval_data.get("diagnostico_principal"):
@@ -1156,6 +1156,8 @@ def paciente_evaluacion_guardar(request, pk):
                 "observacion": obs_text
             })
             consulta.evaluacion["observaciones_profesionales"] = historial
+            # También actualizar el campo directo que valida la vista de finalizar
+            consulta.observaciones = obs_text
 
     consulta.evaluacion["last_updated"] = datetime.now().strftime("%d/%m/%Y %H:%M")
     consulta.save()
