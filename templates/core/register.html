@@ -620,7 +620,7 @@
 
         const planCards = document.querySelectorAll('.plan-card');
         
-        let isAnnual = true; // Annual by default
+        let isAnnual = false; // Mensual por defecto (¡arreglado!)
 
         // URL parsing to auto-select plan if passed in query params (?plan=ID)
         const urlParams = new URLSearchParams(window.location.search);
@@ -709,11 +709,28 @@
         });
 
         // Initialize Auto-selection
-        let defaultSelectionIndex = 1; // Select Profesional card (2nd) by default
+        let defaultSelectionIndex = 0; // Por defecto la primera tarjeta (Prueba Gratis)
+        
+        // Buscar si alguna tarjeta tiene el nombre de "Prueba Gratis" para seleccionarla por defecto
+        planCards.forEach((card, index) => {
+            const planName = card.querySelector('h4').textContent.toLowerCase();
+            if (planName.includes("prueba gratis") || planName.includes("gratis") || planName.includes("trial") || planName.includes("free")) {
+                defaultSelectionIndex = index;
+            }
+        });
+
+        // Si hay un preseleccionado en la URL, buscamos por ID o por coincidencia de texto (gratis/trial)
         if (preselectedPlanId) {
             planCards.forEach((card, index) => {
-                if (card.getAttribute('data-plan-id') === preselectedPlanId) {
+                const planId = card.getAttribute('data-plan-id');
+                const planName = card.querySelector('h4').textContent.toLowerCase();
+                
+                if (planId === preselectedPlanId) {
                     defaultSelectionIndex = index;
+                } else if (preselectedPlanId === 'gratis' || preselectedPlanId === 'trial' || preselectedPlanId === 'free') {
+                    if (planName.includes("prueba gratis") || planName.includes("gratis") || planName.includes("trial") || planName.includes("free")) {
+                        defaultSelectionIndex = index;
+                    }
                 }
             });
         }

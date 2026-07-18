@@ -1,105 +1,118 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="space-y-8 animate-fade-in">
+<div class="space-y-8 animate-fade-in pb-12">
 
-    <!-- BIENVENIDA Y ACCIONES RÁPIDAS -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-teal-800 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-md border border-slate-700/50">
-        <div>
-            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
-                ¡Hola, {{ perfil.nombre_completo|default:user.username }}!
-            </h1>
-            <p class="text-teal-100/80 mt-1 md:mt-2 text-sm md:text-base font-light">
-                Aquí tienes el resumen y el estado clínico de tus pacientes para el día de hoy.
-            </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-            <a href="{% url 'pacientes:nuevo' %}" class="flex items-center justify-center bg-white text-teal-900 hover:bg-teal-50 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:scale-[1.02]">
-                <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
-                Nuevo Paciente
-            </a>
-            <a href="{% url 'agendas:nueva' %}" class="flex items-center justify-center bg-teal-600 text-white hover:bg-teal-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 border border-teal-500/50 shadow-sm hover:scale-[1.02]">
-                <i data-lucide="calendar-plus" class="w-4 h-4 mr-2"></i>
-                Nueva Cita
-            </a>
-            <a href="{% url 'agendas:agenda' %}" class="flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 border border-slate-700 shadow-sm hover:scale-[1.02]">
-                <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
-                Ver Agenda
-            </a>
+    <!-- BIENVENIDA Y ACCIONES RÁPIDAS (BANNER PREMIUM) -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-teal-950 via-slate-900 to-indigo-950 rounded-3xl p-8 text-white shadow-[0_20px_50px_rgba(13,148,136,0.15)] border border-teal-500/20">
+        <!-- Elemento de decoración de fondo de luz difusa -->
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl"></div>
+
+        <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 z-10">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-400/10 text-teal-300 border border-teal-400/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+                    Panel Profesional Activo
+                </span>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-3 text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-teal-200">
+                    ¡Hola, {{ perfil.nombre_completo|default:user.username }}!
+                </h1>
+                <p class="text-slate-300/90 mt-2 text-sm md:text-base font-normal max-w-xl">
+                    Te damos la bienvenida a tu centro de control de NutriSync. Aquí puedes gestionar la evolución y consultas de tus pacientes hoy.
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{% url 'pacientes:nuevo' %}" class="flex items-center justify-center bg-teal-500 text-white hover:bg-teal-400 px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 hover:-translate-y-0.5 active:translate-y-0">
+                    <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                    Nuevo Paciente
+                </a>
+                <a href="{% url 'agendas:nueva' %}" class="flex items-center justify-center bg-white/10 backdrop-blur-md text-white hover:bg-white/15 px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 border border-white/10 hover:-translate-y-0.5 active:translate-y-0">
+                    <i data-lucide="calendar-plus" class="w-4 h-4 mr-2"></i>
+                    Nueva Cita
+                </a>
+                <a href="{% url 'agendas:agenda' %}" class="flex items-center justify-center bg-slate-900/60 hover:bg-slate-900/80 text-slate-300 hover:text-white px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 border border-slate-800 hover:-translate-y-0.5 active:translate-y-0">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                    Ver Agenda
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- TARJETAS DE MÉTRICAS (KPIs) -->
+    <!-- TARJETAS DE MÉTRICAS (KPIs MODERNOS CON HOVER DIVERGENTE) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
         <!-- Pacientes Activos -->
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-teal-200 transition-all duration-300 group">
+        <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col justify-between hover:shadow-[0_20px_40px_rgba(13,148,136,0.06)] hover:border-teal-500/20 hover:-translate-y-1 transition-all duration-300 group">
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Pacientes activos
                     </p>
-                    <h2 class="text-3xl font-extrabold text-slate-800 mt-2">
+                    <h2 class="text-4xl font-black text-slate-800 mt-2 tracking-tight">
                         {{ total_pacientes }}
                     </h2>
                 </div>
-                <div class="p-3 bg-teal-50 text-teal-600 rounded-xl group-hover:bg-teal-600 group-hover:text-white transition-all duration-300">
+                <div class="p-3 bg-teal-50 text-teal-600 rounded-2xl group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
                     <i data-lucide="users" class="w-6 h-6"></i>
                 </div>
             </div>
-            <p class="text-xs text-slate-400 mt-4 flex items-center gap-1">
-                <i data-lucide="check" class="w-3.5 h-3.5 text-teal-500"></i> Bajo tratamiento activo
+            <p class="text-xs text-slate-400 mt-5 flex items-center gap-1.5 font-medium">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-teal-50 text-teal-500"><i data-lucide="check" class="w-3 h-3"></i></span>
+                Bajo tratamiento activo
             </p>
         </div>
 
         <!-- Citas de Hoy -->
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-amber-200 transition-all duration-300 group">
+        <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col justify-between hover:shadow-[0_20px_40px_rgba(245,158,11,0.06)] hover:border-amber-500/20 hover:-translate-y-1 transition-all duration-300 group">
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Citas para hoy
                     </p>
-                    <h2 class="text-3xl font-extrabold text-slate-800 mt-2">
+                    <h2 class="text-4xl font-black text-slate-800 mt-2 tracking-tight">
                         {{ cantidad_citas_hoy }}
                     </h2>
                 </div>
-                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-all duration-300">
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
                     <i data-lucide="calendar" class="w-6 h-6"></i>
                 </div>
             </div>
-            <p class="text-xs text-slate-400 mt-4 flex items-center gap-1">
-                <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i> Agenda del día
+            <p class="text-xs text-slate-400 mt-5 flex items-center gap-1.5 font-medium">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-50 text-amber-600"><i data-lucide="clock" class="w-3 h-3"></i></span>
+                Agenda del día
             </p>
         </div>
 
         <!-- Planes Activos -->
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-emerald-200 transition-all duration-300 group">
+        <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col justify-between hover:shadow-[0_20px_40px_rgba(16,185,129,0.06)] hover:border-emerald-500/20 hover:-translate-y-1 transition-all duration-300 group">
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Planes Activos
                     </p>
-                    <h2 class="text-3xl font-extrabold text-slate-800 mt-2">
+                    <h2 class="text-4xl font-black text-slate-800 mt-2 tracking-tight">
                         {{ pacientes_con_plan }}
                     </h2>
                 </div>
-                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
                     <i data-lucide="clipboard-list" class="w-6 h-6"></i>
                 </div>
             </div>
-            <p class="text-xs text-slate-400 mt-4 flex items-center gap-1">
-                <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-500"></i> Dietas en curso
+            <p class="text-xs text-slate-400 mt-5 flex items-center gap-1.5 font-medium">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-50 text-emerald-600"><i data-lucide="activity" class="w-3 h-3"></i></span>
+                Dietas en curso
             </p>
         </div>
 
         <!-- Cobertura de Planes -->
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-indigo-200 transition-all duration-300 group">
+        <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col justify-between hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)] hover:border-indigo-500/20 hover:-translate-y-1 transition-all duration-300 group">
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Cobertura de Planes
                     </p>
-                    <h2 class="text-3xl font-extrabold text-slate-800 mt-2">
+                    <h2 class="text-4xl font-black text-slate-800 mt-2 tracking-tight">
                         {% if total_pacientes > 0 %}
                             {% widthratio pacientes_con_plan total_pacientes 100 %}%
                         {% else %}
@@ -107,16 +120,16 @@
                         {% endif %}
                     </h2>
                 </div>
-                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
                     <i data-lucide="pie-chart" class="w-6 h-6"></i>
                 </div>
             </div>
-            <div class="mt-4">
-                <div class="w-full bg-slate-100 rounded-full h-1.5">
-                    <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style="width: {% if total_pacientes > 0 %}{% widthratio pacientes_con_plan total_pacientes 100 %}{% else %}0{% endif %}%"></div>
+            <div class="mt-5">
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="bg-indigo-500 h-2 rounded-full transition-all duration-700 ease-out" style="width: {% if total_pacientes > 0 %}{% widthratio pacientes_con_plan total_pacientes 100 %}{% else %}0{% endif %}%"></div>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-1">
-                    Pacientes activos con guía nutricional
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">
+                    Pacientes con guía nutricional
                 </p>
             </div>
         </div>
@@ -130,60 +143,71 @@
         <div class="lg:col-span-2">
 
             <!-- PRÓXIMAS CITAS (AGENDA SEMANAL) -->
-            <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="calendar-check" class="w-5 h-5 text-teal-600"></i>
+            <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-5 mb-5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 bg-teal-50 text-teal-600 rounded-xl">
+                            <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                        </div>
                         <h3 class="text-lg font-bold text-slate-800">
                             Próximas Citas (Esta Semana)
                         </h3>
                     </div>
-                    <a href="{% url 'agendas:agenda' %}" class="text-xs font-semibold text-teal-600 hover:text-teal-800 transition-colors">
+                    <a href="{% url 'agendas:agenda' %}" class="text-xs font-bold text-teal-600 hover:text-teal-700 hover:underline transition-colors flex items-center gap-1">
                         Ver agenda completa
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                     </a>
                 </div>
 
                 {% if proximas_citas %}
-                    <div class="divide-y divide-slate-100">
+                    <div class="space-y-3">
                         {% for cita in proximas_citas %}
-                        <div class="py-4 first:pt-0 last:pb-0 flex items-center justify-between hover:bg-slate-50/50 rounded-xl px-2 transition-all">
+                        <div class="p-4 hover:bg-slate-50/70 rounded-2xl border border-transparent hover:border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-200 group">
                             <div class="flex items-center gap-4">
-                                <!-- Fecha/Hora en badge circular o rectangular moderno -->
-                                <div class="flex flex-col items-center justify-center bg-teal-50 text-teal-900 border border-teal-100/50 w-14 h-14 rounded-2xl shadow-sm">
-                                    <span class="text-xs font-semibold uppercase leading-none">{{ cita.fecha_hora|date:"d" }}</span>
-                                    <span class="text-[10px] font-bold text-teal-600 uppercase mt-0.5">{{ cita.fecha_hora|date:"M" }}</span>
+                                <!-- Fecha/Hora en badge moderno de calendario -->
+                                <div class="flex flex-col items-center justify-center bg-gradient-to-b from-teal-50 to-teal-100/30 text-teal-950 border border-teal-100/60 w-14 h-14 rounded-2xl shadow-sm">
+                                    <span class="text-base font-extrabold uppercase leading-none">{{ cita.fecha_hora|date:"d" }}</span>
+                                    <span class="text-[9px] font-black text-teal-600 uppercase mt-0.5 tracking-wider">{{ cita.fecha_hora|date:"M" }}</span>
                                 </div>
                                 <div>
-                                    <a href="{% url 'pacientes:detalle' cita.paciente.pk %}" class="font-semibold text-slate-800 hover:text-teal-600 transition-colors block">
+                                    <a href="{% url 'pacientes:detalle' cita.paciente.pk %}" class="font-bold text-slate-800 hover:text-teal-600 transition-colors block text-base group-hover:translate-x-0.5 transition-transform duration-200">
                                         {{ cita.paciente.nombre_completo }}
                                     </a>
-                                    <span class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        {{ cita.fecha_hora|date:"H:i" }} ({{ cita.duracion_minutos }} min)
-                                        <span class="inline-block w-1 h-1 rounded-full bg-slate-300"></span>
-                                        {{ cita.get_tipo_display }}
+                                    <span class="text-xs font-medium text-slate-400 flex items-center gap-2 mt-1">
+                                        <span class="flex items-center gap-1">
+                                            <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                                            {{ cita.fecha_hora|date:"H:i" }} ({{ cita.duracion_minutos }} min)
+                                        </span>
+                                        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                                        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-semibold text-[10px]">
+                                            {{ cita.get_tipo_display }}
+                                        </span>
                                     </span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
                                 {% if cita.estado == 'programada' %}
-                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                                    <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                         Programada
                                     </span>
                                 {% elif cita.estado == 'completada' %}
-                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         Completada
                                     </span>
                                 {% elif cita.estado == 'cancelada' %}
-                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-100">
+                                    <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-100 flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                                         Cancelada
                                     </span>
                                 {% else %}
-                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-100">
+                                    <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-100 flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
                                         {{ cita.estado|capfirst }}
                                     </span>
                                 {% endif %}
-                                <a href="{% url 'agendas:detalle' cita.pk %}" class="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all" title="Ver detalles">
+                                <a href="{% url 'agendas:detalle' cita.pk %}" class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-all" title="Ver detalles">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </a>
                             </div>
@@ -191,9 +215,11 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="text-center py-8">
-                        <i data-lucide="calendar-off" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
-                        <p class="text-slate-400 text-sm">
+                    <div class="text-center py-12">
+                        <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="calendar-off" class="w-6 h-6 text-slate-350"></i>
+                        </div>
+                        <p class="text-slate-400 text-sm font-medium">
                             No hay citas programadas para los próximos días.
                         </p>
                     </div>
@@ -206,53 +232,58 @@
         <div class="lg:col-span-1">
 
             <!-- ÚLTIMOS PACIENTES REGISTRADOS -->
-            <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="users" class="w-5 h-5 text-teal-600"></i>
+            <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-5 mb-5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                        </div>
                         <h3 class="text-lg font-bold text-slate-800">
                             Nuevos Pacientes
                         </h3>
                     </div>
-                    <a href="{% url 'pacientes:lista' %}" class="text-xs font-semibold text-teal-600 hover:text-teal-800 transition-colors">
+                    <a href="{% url 'pacientes:lista' %}" class="text-xs font-bold text-teal-600 hover:text-teal-700 hover:underline transition-colors flex items-center gap-1">
                         Ver todos
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                     </a>
                 </div>
 
                 {% if ultimos_pacientes %}
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         {% for paciente in ultimos_pacientes %}
-                        <div class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                        <div class="flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50/70 transition-all border border-transparent hover:border-slate-100 group">
                             <div class="flex items-center gap-3">
-                                <!-- Iniciales de avatar -->
+                                <!-- Iniciales de avatar o foto -->
                                 {% if paciente.informacion_clinica.foto_url %}
-                                    <img src="{{ paciente.informacion_clinica.foto_url }}" class="w-10 h-10 rounded-full object-cover shadow-sm">
+                                    <img src="{{ paciente.informacion_clinica.foto_url }}" class="w-11 h-11 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform duration-300">
                                 {% else %}
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white shadow-sm"
+                                    <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
                                          style="background-color: {{ paciente.informacion_clinica.avatar_color|default:'#10B981' }};">
                                         {{ paciente.nombre|slice:":1" }}{{ paciente.apellido|slice:":1" }}
                                     </div>
                                 {% endif %}
                                 <div class="min-w-0">
-                                    <a href="{% url 'pacientes:detalle' paciente.pk %}" class="font-semibold text-slate-800 hover:text-teal-600 transition-colors truncate block">
+                                    <a href="{% url 'pacientes:detalle' paciente.pk %}" class="font-bold text-slate-800 hover:text-teal-600 transition-colors truncate block text-sm tracking-tight">
                                         {{ paciente.nombre_completo }}
                                     </a>
-                                    <span class="text-xs text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                                        <i data-lucide="phone" class="w-3 h-3 text-slate-400"></i>
+                                    <span class="text-xs font-medium text-slate-400 flex items-center gap-1.5 mt-1 truncate">
+                                        <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-350"></i>
                                         {{ paciente.telefono }}
                                     </span>
                                 </div>
                             </div>
-                            <a href="{% url 'pacientes:detalle' paciente.pk %}" class="p-1.5 hover:bg-teal-50 text-teal-600 rounded-lg transition-all" title="Ver ficha">
-                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            <a href="{% url 'pacientes:detalle' paciente.pk %}" class="p-2 hover:bg-teal-50 text-teal-600 rounded-xl transition-all" title="Ver ficha">
+                                <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200"></i>
                             </a>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="text-center py-8">
-                        <i data-lucide="users" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
-                        <p class="text-slate-400 text-sm">
+                    <div class="text-center py-12">
+                        <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="users" class="w-6 h-6 text-slate-350"></i>
+                        </div>
+                        <p class="text-slate-400 text-sm font-medium">
                             No hay pacientes registrados.
                         </p>
                     </div>
@@ -265,3 +296,4 @@
 
 </div>
 {% endblock %}
+

@@ -19,42 +19,42 @@ class PerfilNutricionistaForm(forms.ModelForm):
             "direccion_consultorio",
         ]
         widgets = {
-            # Aplicamos clases Tailwind para mantener consistencia visual
+            # Aplicamos clases de diseño premium de alta gama para los inputs
             "nombre_completo": forms.TextInput(
                 attrs={
-                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
-                    "placeholder": "Nombre completo",
+                    "class": "w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 focus:bg-white text-slate-800 font-medium placeholder-slate-400/80 transition-all duration-300",
+                    "placeholder": "Nombre Completo",
                 }
             ),
             "especialidad": forms.TextInput(
                 attrs={
-                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
-                    "placeholder": "Ej: Nutrición clínica, deportiva...",
+                    "class": "w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 focus:bg-white text-slate-800 font-medium placeholder-slate-400/80 transition-all duration-300",
+                    "placeholder": "Especialidad",
                 }
             ),
             "telefono": forms.TextInput(
                 attrs={
-                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
-                    "placeholder": "+51 999 000 000",
+                    "class": "w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 focus:bg-white text-slate-800 font-medium placeholder-slate-400/80 transition-all duration-300",
+                    "placeholder": "Teléfono",
                 }
             ),
             "email_profesional": forms.EmailInput(
                 attrs={
-                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
-                    "placeholder": "correo@ejemplo.com",
+                    "class": "w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 focus:bg-white text-slate-800 font-medium placeholder-slate-400/80 transition-all duration-300",
+                    "placeholder": "Correo Electrónico Profesional",
                 }
             ),
             "numero_colegiatura": forms.TextInput(
                 attrs={
-                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
-                    "placeholder": "CNP-00000",
+                    "class": "w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 focus:bg-white text-slate-800 font-medium placeholder-slate-400/80 transition-all duration-300",
+                    "placeholder": "C.N.P. (Colegiatura)",
                 }
             ),
             "direccion_consultorio": forms.Textarea(
                 attrs={
-                    "class": "w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800",
+                    "class": "w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 focus:bg-white text-slate-800 font-medium placeholder-slate-400/80 transition-all duration-300",
                     "rows": 3,
-                    "placeholder": "Dirección del consultorio",
+                    "placeholder": "Dirección del Consultorio",
                 }
             ),
         }

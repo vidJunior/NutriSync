@@ -12,89 +12,84 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Columna Izquierda: Formulario Profesional -->
-        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-            <div class="mb-6 border-b border-slate-100 pb-4">
-                <h2 class="text-lg font-semibold text-slate-850 flex items-center gap-2">
-                    <i data-lucide="user" class="w-5 h-5 text-teal-600"></i>
-                    Información Profesional
-                </h2>
-                <p class="text-slate-500 text-sm mt-1">
-                    Estos datos aparecen en el sistema y en tus recetas/informes.
-                </p>
+        <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-8">
+            <div class="mb-8 flex items-center gap-4 border-b border-slate-100 pb-5">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shadow-sm">
+                    <i data-lucide="stethoscope" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">
+                        Perfil Profesional
+                    </h2>
+                    <p class="text-xs font-semibold text-slate-400 mt-0.5">
+                        Información de tu consultorio nutricional
+                    </p>
+                </div>
             </div>
 
             <form method="post" action="{% url 'core:perfil' %}" novalidate>
                 {% csrf_token %}
 
-                <div class="space-y-5">
-                    <!-- Nombre completo -->
+                <div class="space-y-4">
+                    <!-- Fila 1: Nombre Completo -->
                     <div>
-                        <label for="{{ form.nombre_completo.id_for_label }}"
-                               class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                            Nombre completo <span class="text-red-500">*</span>
-                        </label>
                         {{ form.nombre_completo }}
                         {% if form.nombre_completo.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.nombre_completo.errors|join:", " }}</p>
+                        <p class="text-red-500 text-xs mt-1.5 px-1 font-medium">{{ form.nombre_completo.errors|join:", " }}</p>
                         {% endif %}
                     </div>
 
-                    <!-- Especialidad -->
-                    <div>
-                        <label for="{{ form.especialidad.id_for_label }}"
-                               class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                            Especialidad
-                        </label>
-                        {{ form.especialidad }}
-                    </div>
-
-                    <!-- Fila: Teléfono + Colegiatura -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <!-- Fila 2: Especialidad + Teléfono -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="{{ form.telefono.id_for_label }}"
-                                   class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                                Teléfono
-                            </label>
+                            {{ form.especialidad }}
+                            {% if form.especialidad.errors %}
+                            <p class="text-red-500 text-xs mt-1.5 px-1 font-medium">{{ form.especialidad.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
                             {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                            <p class="text-red-500 text-xs mt-1.5 px-1 font-medium">{{ form.telefono.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Fila 3: Colegiatura + Email Profesional -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            {{ form.numero_colegiatura }}
+                            {% if form.numero_colegiatura.errors %}
+                            <p class="text-red-500 text-xs mt-1.5 px-1 font-medium">{{ form.numero_colegiatura.errors|join:", " }}</p>
+                            {% endif %}
                         </div>
                         <div>
-                            <label for="{{ form.numero_colegiatura.id_for_label }}"
-                                   class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                                N° de Colegiatura
-                            </label>
-                            {{ form.numero_colegiatura }}
+                            {{ form.email_profesional }}
+                            {% if form.email_profesional.errors %}
+                            <p class="text-red-500 text-xs mt-1.5 px-1 font-medium">{{ form.email_profesional.errors|join:", " }}</p>
+                            {% endif %}
                         </div>
                     </div>
 
-                    <!-- Email profesional -->
+                    <!-- Fila 4: Dirección del consultorio -->
                     <div>
-                        <label for="{{ form.email_profesional.id_for_label }}"
-                               class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                            Email profesional
-                        </label>
-                        {{ form.email_profesional }}
-                    </div>
-
-                    <!-- Dirección del consultorio -->
-                    <div>
-                        <label for="{{ form.direccion_consultorio.id_for_label }}"
-                               class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                            Dirección del consultorio
-                        </label>
                         {{ form.direccion_consultorio }}
+                        {% if form.direccion_consultorio.errors %}
+                        <p class="text-red-500 text-xs mt-1.5 px-1 font-medium">{{ form.direccion_consultorio.errors|join:", " }}</p>
+                        {% endif %}
                     </div>
                 </div>
 
                 <!-- Acciones -->
-                <div class="flex items-center gap-3 mt-6 pt-6 border-t border-slate-100">
+                <div class="flex items-center gap-3 mt-8 pt-6 border-t border-slate-100">
                     <button type="submit"
-                            class="bg-teal-650 hover:bg-teal-700 bg-teal-600 text-white font-semibold rounded-xl px-5 py-2.5 text-sm
-                                   transition-all duration-200 shadow-sm hover:shadow-md">
+                            class="bg-teal-500 hover:bg-teal-400 text-white font-semibold rounded-2xl px-6 py-3 text-sm
+                                   transition-all duration-300 shadow-md shadow-teal-500/10 hover:shadow-teal-500/20 hover:-translate-y-0.5 active:translate-y-0">
                         Guardar cambios
                     </button>
                     <a href="{% url 'core:dashboard' %}"
-                       class="border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-xl px-5 py-2.5 text-sm font-medium
-                              transition-all duration-200">
+                       class="border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-2xl px-6 py-3 text-sm font-medium
+                              transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
                         Cancelar
                     </a>
                 </div>
