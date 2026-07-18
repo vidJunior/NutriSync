@@ -70,6 +70,13 @@ class _DashboardTabState extends State<DashboardTab> {
       }
     } catch (e) {
       if (mounted) {
+        if (!ApiService.isAuthenticated) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+          return;
+        }
         setState(() {
           _errorMsg = 'Error al conectar al servidor de Django. Cargando datos locales.';
           _cargarDatosMock();

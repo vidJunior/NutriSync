@@ -149,6 +149,9 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
     } else {
+      if (response.statusCode == 401) {
+        await cerrarSesion();
+      }
       throw Exception('Error al cargar perfil.');
     }
   }
