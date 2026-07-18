@@ -209,6 +209,14 @@ class CobrosListView(NutricionistaFacturacionMixin, ListView):
         ]
         context["conceptos_cobro"] = ConceptoCobro.CHOICES
         context["metodos_pago"] = MetodoPago.CHOICES
+
+        # Estadísticas rápidas para la cabecera
+        cobros_total = self.model.objects.filter(nutricionista=self.request.user)
+        context["total_facturado"] = cobros_total.filter(estado="pagado").aggregate(total=Sum("total"))["total"] or Decimal("0.00")
+        context["total_pendiente"] = cobros_total.filter(estado="pendiente").aggregate(total=Sum("total"))["total"] or Decimal("0.00")
+        context["cantidad_pagados"] = cobros_total.filter(estado="pagado").count()
+        context["cantidad_pendientes"] = cobros_total.filter(estado="pendiente").count()
+        
         return context
 
 
@@ -584,8 +592,18 @@ def suscripcion_detalle(request):
     except SuscripcionNutricionista.DoesNotExist:
         suscripcion = None
 
-    # Obtener el método de pago guardado analizando las notas del último pago
-    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").order_by("-fecha_pago").first()
+    # Obtener el método de pago guardado analizando las notas del último pago de suscripción
+    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").filter(Q(notas__contains="Tarjeta terminada en") | Q(notas__contains="Celular Yape:") | Q(notas__contains="PayPal Email:") | Q(notas__contains="Suscripción plan")).order_by("-fecha_pago").first()
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "quitar_metodo":
+            if ultimo_pago:
+                ultimo_pago.notas += " - removido"
+                ultimo_pago.save()
+                messages.success(request, "Método de pago removido correctamente.")
+            return redirect("facturacion:suscripcion_detalle")
+
     metodo_guardado = None
     if ultimo_pago and "removido" not in ultimo_pago.notas:
         if "Tarjeta terminada en" in ultimo_pago.notas:
@@ -597,13 +615,9 @@ def suscripcion_detalle(request):
         elif "Celular Yape:" in ultimo_pago.notas:
             partes = ultimo_pago.notas.split("Celular Yape:")[-1].strip().split(" - Código:")
             celular = partes[0].strip()
-            codigo = partes[1].strip() if len(partes) > 1 else ""
-            detalle = f"Celular: {celular}"
-            if codigo:
-                detalle += f" (Código: {codigo})"
             metodo_guardado = {
                 "tipo": "yape",
-                "detalle": detalle
+                "detalle": f"Celular: {celular}"
             }
         elif "PayPal Email:" in ultimo_pago.notas:
             email_paypal = ultimo_pago.notas.split("PayPal Email:")[-1].strip()
@@ -613,13 +627,28 @@ def suscripcion_detalle(request):
             }
 
     planes = PlanSuscripcion.objects.filter(activo=True)
+    
+    # Obtener historial de pagos de suscripción del nutricionista
+    pagos_suscripcion = request.user.pagos_facturacion.filter(
+        estado="completado"
+    ).filter(
+        Q(notas__contains="Tarjeta terminada en") | 
+        Q(notas__contains="Celular Yape:") | 
+        Q(notas__contains="PayPal Email:") | 
+        Q(notas__contains="Suscripción plan")
+    ).order_by("-fecha_pago")
+    
+    total_gastado = pagos_suscripcion.aggregate(total=Sum("monto"))["total"] or Decimal("0.00")
+
     return render(
         request,
         "facturacion/suscripcion/plan_actual.html",
         {
             "suscripcion": suscripcion, 
             "planes": planes,
-            "metodo_guardado": metodo_guardado
+            "metodo_guardado": metodo_guardado,
+            "pagos_suscripcion": pagos_suscripcion,
+            "total_gastado": total_gastado,
         },
     )
 
@@ -663,7 +692,7 @@ def suscripcion_cambiar_plan(request):
         form = CambiarPlanForm(planes=planes)
 
     # Buscar el método de pago guardado del nutricionista
-    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").order_by("-fecha_pago").first()
+    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").filter(Q(notas__contains="Tarjeta terminada en") | Q(notas__contains="Celular Yape:") | Q(notas__contains="PayPal Email:") | Q(notas__contains="Suscripción plan")).order_by("-fecha_pago").first()
     metodo_guardado = None
     if ultimo_pago and "removido" not in ultimo_pago.notas:
         if "Tarjeta terminada en" in ultimo_pago.notas:
@@ -675,13 +704,9 @@ def suscripcion_cambiar_plan(request):
         elif "Celular Yape:" in ultimo_pago.notas:
             partes = ultimo_pago.notas.split("Celular Yape:")[-1].strip().split(" - Código:")
             celular = partes[0].strip()
-            codigo = partes[1].strip() if len(partes) > 1 else ""
-            detalle = f"Celular: {celular}"
-            if codigo:
-                detalle += f" (Código: {codigo})"
             metodo_guardado = {
                 "tipo": "yape",
-                "detalle": detalle
+                "detalle": f"Celular: {celular}"
             }
         elif "PayPal Email:" in ultimo_pago.notas:
             email_paypal = ultimo_pago.notas.split("PayPal Email:")[-1].strip()
@@ -902,6 +927,11 @@ def crear_checkout_cobro(request, pk):
         messages.warning(request, "Este cobro ya no está pendiente de pago.")
         return redirect("facturacion:cobro_detalle", pk=cobro.pk)
 
+    from django.conf import settings
+    if not getattr(settings, "PAYMENT_SANDBOX", True):
+        messages.error(request, "El checkout simulado no está disponible en producción.")
+        return redirect("facturacion:cobro_detalle", pk=cobro.pk)
+
     # Marcar cobro como pagado
     cobro.estado = EstadoCobro.PAGADO
     cobro.fecha_pago = timezone.now()
@@ -1120,12 +1150,22 @@ def crear_checkout_suscripcion(request):
 @login_required
 def checkout_exito(request):
     """Página de éxito post-pago en Stripe Checkout."""
+    from django.conf import settings
+    if not getattr(settings, "PAYMENT_SANDBOX", True):
+        messages.error(request, "El callback de simulación no está disponible en producción.")
+        return redirect("facturacion:cobros_lista")
+
     tipo = request.GET.get("type", "")
 
     if tipo == "cobro":
         cobro_id = request.GET.get("id")
+        session_id = request.GET.get("session_id")
         if cobro_id:
             try:
+                if not session_id:
+                    messages.warning(request, "Solicitud de pago incompleta o inválida.")
+                    return redirect("facturacion:cobro_detalle", pk=cobro_id)
+
                 cobro = Cobro.objects.get(pk=cobro_id, nutricionista=request.user)
                 if cobro.estado == EstadoCobro.PENDIENTE:
                     # Marcar como pagado (el webhook también lo hará)

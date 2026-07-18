@@ -1,19 +1,19 @@
 # facturacion/utils.py
-# Utilidades de cálculo y generación para el módulo de Facturación.
+# Utilidades de facturación.
 
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
 
 
-# ─── Constantes ───────────────────────────────────────────────────────────────
+# Constantes
 
 IGV_PORCENTAJE = Decimal("0.18")  # 18% IGV en Perú
 COMISION_STRIPE_PORCENTAJE = Decimal("0.0375")  # 3.75% comisión Stripe Perú
 COMISION_STRIPE_FIJA = Decimal("0.50")  # S/0.50 fija por transacción
 
 
-# ─── Cálculos de IGV ─────────────────────────────────────────────────────────
+# IGV
 
 def calcular_igv(monto):
     """Calcula el IGV (18%) sobre un monto base."""
@@ -39,7 +39,7 @@ def calcular_monto_neto(total, comision_plataforma=Decimal("0.00")):
     return round(Decimal(str(total)) - Decimal(str(comision_plataforma)), 2)
 
 
-# ─── Cálculos de Stripe ──────────────────────────────────────────────────────
+# Stripe
 
 def calcular_comision_stripe(monto):
     """Calcula la comisión de Stripe para Perú: 3.75% + S/0.50"""
@@ -55,7 +55,7 @@ def calcular_monto_net_stripe(monto):
     return round(Decimal(str(monto)) - comision, 2)
 
 
-# ─── Generación de Referencias ───────────────────────────────────────────────
+# Referencias
 
 def generar_numero_factura():
     """Genera el siguiente número de factura incremental: NX-YYYY-000001"""
@@ -89,7 +89,7 @@ def generar_referencia_pago(metodo_pago):
     return f"{prefijo}-{timestamp}"
 
 
-# ─── Fechas ───────────────────────────────────────────────────────────────────
+# Fechas
 
 def calcular_fecha_vencimiento(dias=30):
     """Calcula la fecha de vencimiento de una factura."""
@@ -105,7 +105,7 @@ def calcular_fecha_fin_suscripcion(tipo_facturacion, fecha_inicio=None):
     return fecha_inicio + timedelta(days=30)
 
 
-# ─── Formateo ─────────────────────────────────────────────────────────────────
+# Formato
 
 def formatear_moneda(monto):
     """Formatea un monto como moneda peruana."""
@@ -117,7 +117,7 @@ def formatear_numero_documento(numero):
     return numero.upper().replace(" ", "")
 
 
-# ─── Generación de PDF ────────────────────────────────────────────────────────
+# PDF
 
 def generar_pdf_factura(factura):
     """Genera un PDF de una factura usando xhtml2pdf. Retorna el PDF como bytes."""

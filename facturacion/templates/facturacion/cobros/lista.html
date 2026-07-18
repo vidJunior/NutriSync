@@ -2,125 +2,245 @@
 {% load static %}
 {% load facturacion_tags %}
 
-{% block title %}Cobros{% endblock %}
-{% block page_title %}Cobros a Pacientes{% endblock %}
+{% block title %}Cobros a Pacientes{% endblock %}
+{% block page_title %}Facturación e Ingresos{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-8 max-w-7xl mx-auto">
 
-    <!-- Volver al dashboard -->
-    <div>
+    <!-- Enlace Volver -->
+    <div class="animate-fade-in">
         <a href="{% url 'facturacion:dashboard' %}"
-           class="inline-flex items-center text-sm text-slate-500 hover:text-teal-600 transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i>
+           class="inline-flex items-center text-xs font-bold text-slate-450 hover:text-teal-600 transition-colors uppercase tracking-wider">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i>
             Volver al dashboard
         </a>
     </div>
 
-    <!-- Encabezado -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <p class="text-slate-500">Gestiona los cobros a tus pacientes.</p>
+    <!-- Encabezado con Botón de Creación -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
+        <div>
+            <h2 class="text-2xl font-black text-slate-900 tracking-tight">Cobros a Pacientes</h2>
+            <p class="text-sm text-slate-500 mt-1 font-light">Registra, supervisa y concilia las consultas o planes alimenticios emitidos.</p>
+        </div>
         <a href="{% url 'facturacion:cobro_crear' %}"
-           class="inline-flex items-center justify-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
+           class="inline-flex items-center justify-center px-5 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl transition-all duration-200 text-sm font-bold shadow-md shadow-teal-600/10 hover:shadow-teal-600/20 hover:-translate-y-0.5 active:translate-y-0">
             <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-            Nuevo cobro
+            Nuevo Cobro
         </a>
     </div>
 
-    <!-- Filtros -->
-    <div class="bg-white rounded-xl border border-slate-200 p-4">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <input type="text"
-                   name="paciente"
-                   placeholder="Nombre del paciente..."
-                   value="{{ filtro_form.paciente }}"
-                   class="form-input rounded-lg border-slate-300 text-sm">
+    <!-- Cartas de Estadísticas Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-delay-1">
+        <!-- Card 1: Recaudado -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-6 flex items-center justify-between hover:shadow-md transition-shadow duration-300">
+            <div class="space-y-2">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Ingresos Cobrados</span>
+                <h3 class="text-2xl font-black text-slate-800">{{ total_facturado|formatear_moneda }}</h3>
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    {{ cantidad_pagados }} transacciones
+                </span>
+            </div>
+            <div class="p-4 bg-emerald-50 text-emerald-600 rounded-2xl shadow-sm">
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
+            </div>
+        </div>
 
-            <select name="estado" class="form-select rounded-lg border-slate-300 text-sm">
-                <option value="">Todos los estados</option>
-                {% for valor, texto in estados_cobro %}
-                <option value="{{ valor }}" {% if filtro_form.estado == valor %}selected{% endif %}>{{ texto }}</option>
-                {% endfor %}
-            </select>
+        <!-- Card 2: Pendiente -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-6 flex items-center justify-between hover:shadow-md transition-shadow duration-300">
+            <div class="space-y-2">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Por Cobrar (Pendiente)</span>
+                <h3 class="text-2xl font-black text-slate-800">{{ total_pendiente|formatear_moneda }}</h3>
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-550 bg-amber-550 bg-amber-500"></span>
+                    {{ cantidad_pendientes }} pendientes
+                </span>
+            </div>
+            <div class="p-4 bg-amber-50 text-amber-600 rounded-2xl shadow-sm">
+                <i data-lucide="clock" class="w-6 h-6"></i>
+            </div>
+        </div>
 
-            <select name="concepto" class="form-select rounded-lg border-slate-300 text-sm">
-                <option value="">Todos los conceptos</option>
-                {% for valor, texto in conceptos_cobro %}
-                <option value="{{ valor }}" {% if filtro_form.concepto == valor %}selected{% endif %}>{{ texto }}</option>
-                {% endfor %}
-            </select>
+        <!-- Card 3: Total Operaciones -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-6 flex items-center justify-between hover:shadow-md transition-shadow duration-300">
+            <div class="space-y-2">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Operaciones</span>
+                <h3 class="text-2xl font-black text-slate-800">{{ cobros.count }}</h3>
+                <span class="text-[10px] text-slate-450 font-medium block">Mostrados en esta página</span>
+            </div>
+            <div class="p-4 bg-indigo-50 text-indigo-600 rounded-2xl shadow-sm">
+                <i data-lucide="receipt" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
 
-            <select name="metodo" class="form-select rounded-lg border-slate-300 text-sm">
-                <option value="">Todos los métodos</option>
-                {% for valor, texto in metodos_pago %}
-                <option value="{{ valor }}" {% if filtro_form.metodo == valor %}selected{% endif %}>{{ texto }}</option>
-                {% endfor %}
-            </select>
+    <!-- Filtros de Búsqueda -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] p-6 animate-fade-in-delay-1">
+        <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+            <!-- Buscar Paciente -->
+            <div class="space-y-1.5 md:col-span-1">
+                <label for="paciente" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Paciente</label>
+                <div class="relative">
+                    <input type="text"
+                           id="paciente"
+                           name="paciente"
+                           placeholder="Nombre o apellido..."
+                           value="{{ filtro_form.paciente }}"
+                           class="w-full border border-slate-200 bg-white rounded-xl pl-9 pr-3.5 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder-slate-350">
+                    <div class="absolute left-3.5 inset-y-0 flex items-center pointer-events-none text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
 
-            <button type="submit"
-                    class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
-                Filtrar
-            </button>
+            <!-- Seleccionar Estado -->
+            <div class="space-y-1.5">
+                <label for="estado" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estado</label>
+                <select id="estado" name="estado" class="w-full border border-slate-200 bg-white rounded-xl px-3.5 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all">
+                    <option value="">Todos los estados</option>
+                    {% for valor, texto in estados_cobro %}
+                    <option value="{{ valor }}" {% if filtro_form.estado == valor %}selected{% endif %}>{{ texto }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Seleccionar Concepto -->
+            <div class="space-y-1.5">
+                <label for="concepto" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Concepto</label>
+                <select id="concepto" name="concepto" class="w-full border border-slate-200 bg-white rounded-xl px-3.5 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all">
+                    <option value="">Todos los conceptos</option>
+                    {% for valor, texto in conceptos_cobro %}
+                    <option value="{{ valor }}" {% if filtro_form.concepto == valor %}selected{% endif %}>{{ texto }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Seleccionar Método -->
+            <div class="space-y-1.5">
+                <label for="metodo" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Método</label>
+                <select id="metodo" name="metodo" class="w-full border border-slate-200 bg-white rounded-xl px-3.5 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all">
+                    <option value="">Todos los métodos</option>
+                    {% for valor, texto in metodos_pago %}
+                    <option value="{{ valor }}" {% if filtro_form.metodo == valor %}selected{% endif %}>{{ texto }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="flex-1 px-4 py-2.5 bg-teal-650 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-all duration-200 text-sm font-bold shadow-sm flex items-center justify-center gap-1.5 focus:outline-none">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'facturacion:cobros_lista' %}"
+                   class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all duration-200 text-sm font-bold flex items-center justify-center focus:outline-none"
+                   title="Limpiar filtros">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </a>
+            </div>
         </form>
     </div>
 
-    <!-- Tabla de cobros -->
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <!-- Tabla de Cobros -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] overflow-hidden animate-fade-in-delay-2">
         {% if cobros %}
         <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full border-collapse">
                 <thead>
-                    <tr class="text-left text-sm text-slate-500 bg-slate-50 border-b border-slate-100">
-                        <th class="px-6 py-3 font-medium">ID</th>
-                        <th class="px-6 py-3 font-medium">Paciente</th>
-                        <th class="px-6 py-3 font-medium">Concepto</th>
-                        <th class="px-6 py-3 font-medium">Monto</th>
-                        <th class="px-6 py-3 font-medium">IGV</th>
-                        <th class="px-6 py-3 font-medium">Total</th>
-                        <th class="px-6 py-3 font-medium">Estado</th>
-                        <th class="px-6 py-3 font-medium">Método</th>
-                        <th class="px-6 py-3 font-medium">Fecha</th>
-                        <th class="px-6 py-3 font-medium">Acciones</th>
+                    <tr class="text-left text-xs font-bold text-slate-400 bg-slate-50/50 border-b border-slate-100 uppercase tracking-wider">
+                        <th class="px-6 py-4 font-semibold">ID</th>
+                        <th class="px-6 py-4 font-semibold">Paciente</th>
+                        <th class="px-6 py-4 font-semibold">Concepto</th>
+                        <th class="px-6 py-4 font-semibold text-right">Monto</th>
+                        <th class="px-6 py-4 font-semibold text-right">IGV (18%)</th>
+                        <th class="px-6 py-4 font-semibold text-right">Total</th>
+                        <th class="px-6 py-4 font-semibold text-center">Estado</th>
+                        <th class="px-6 py-4 font-semibold">Método</th>
+                        <th class="px-6 py-4 font-semibold">Fecha</th>
+                        <th class="px-6 py-4 font-semibold text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-slate-100">
                     {% for cobro in cobros %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50/70 transition-colors group">
+                        <!-- ID -->
                         <td class="px-6 py-4">
                             <a href="{% url 'facturacion:cobro_detalle' pk=cobro.pk %}"
-                               class="text-teal-600 hover:text-teal-700 font-medium">
+                               class="text-teal-600 hover:text-teal-700 font-bold transition-colors">
                                 #{{ cobro.pk }}
                             </a>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-700">{{ cobro.paciente }}</td>
-                        <td class="px-6 py-4 text-sm text-slate-700">{{ cobro.get_concepto_display }}</td>
-                        <td class="px-6 py-4 text-sm text-slate-700">{{ cobro.monto|formatear_moneda }}</td>
-                        <td class="px-6 py-4 text-sm text-slate-500">{{ cobro.igv|formatear_moneda }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-slate-800">{{ cobro.total|formatear_moneda }}</td>
+                        <!-- Paciente -->
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-{{ cobro.estado|color_estado_cobro }}-100 text-{{ cobro.estado|color_estado_cobro }}-700">
+                            <div class="text-sm font-bold text-slate-800">{{ cobro.paciente }}</div>
+                            <div class="text-[10px] text-slate-400 font-light">{{ cobro.paciente.email|default:"Sin correo" }}</div>
+                        </td>
+                        <!-- Concepto -->
+                        <td class="px-6 py-4 text-sm text-slate-650 font-medium">
+                            {{ cobro.get_concepto_display }}
+                        </td>
+                        <!-- Monto -->
+                        <td class="px-6 py-4 text-sm text-slate-650 text-right font-medium">
+                            {{ cobro.monto|formatear_moneda }}
+                        </td>
+                        <!-- IGV -->
+                        <td class="px-6 py-4 text-sm text-slate-400 text-right">
+                            {{ cobro.igv|formatear_moneda }}
+                        </td>
+                        <!-- Total -->
+                        <td class="px-6 py-4 text-sm font-black text-slate-800 text-right">
+                            {{ cobro.total|formatear_moneda }}
+                        </td>
+                        <!-- Estado (Badge) -->
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider 
+                                {% if cobro.estado == 'pagado' %}
+                                bg-emerald-50 text-emerald-700 border border-emerald-250 border-emerald-200
+                                {% elif cobro.estado == 'pendiente' %}
+                                bg-amber-50 text-amber-700 border border-amber-250 border-amber-250/50
+                                {% else %}
+                                bg-rose-50 text-rose-700 border border-rose-200
+                                {% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full 
+                                    {% if cobro.estado == 'pagado' %}
+                                    bg-emerald-500
+                                    {% elif cobro.estado == 'pendiente' %}
+                                    bg-amber-500 animate-pulse
+                                    {% else %}
+                                    bg-rose-500
+                                    {% endif %}"></span>
                                 {{ cobro.get_estado_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-700">
+                        <!-- Método -->
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">
                             {% if cobro.metodo_pago_usado %}
-                            <i data-lucide="{{ cobro.metodo_pago_usado|icono_metodo_pago }}" class="w-4 h-4 inline"></i>
-                            {{ cobro.get_metodo_pago_usado_display }}
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="{{ cobro.metodo_pago_usado|icono_metodo_pago }}" class="w-4 h-4 text-slate-400"></i>
+                                <span>{{ cobro.get_metodo_pago_usado_display }}</span>
+                            </div>
                             {% else %}
-                            -
+                            <span class="text-slate-400 font-light">-</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-500">{{ cobro.fecha_creacion|date:"d/m/Y H:i" }}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
+                        <!-- Fecha -->
+                        <td class="px-6 py-4 text-xs text-slate-500 font-light">
+                            {{ cobro.fecha_creacion|date:"d/m/Y H:i" }}
+                        </td>
+                        <!-- Acciones -->
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center gap-2.5 opacity-60 group-hover:opacity-100 transition-opacity">
                                 <a href="{% url 'facturacion:cobro_detalle' pk=cobro.pk %}"
-                                   class="text-slate-400 hover:text-teal-600 transition-colors">
+                                   class="p-1.5 bg-slate-50 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg border border-slate-100 hover:border-teal-100 transition-all shadow-xs"
+                                   title="Ver detalle del cobro">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </a>
                                 {% if cobro.esta_pagado %}
                                 <a href="{% url 'facturacion:cobro_descargar_boleta' pk=cobro.pk %}"
-                                   class="text-slate-400 hover:text-teal-600 transition-colors"
-                                   title="Descargar boleta">
+                                   class="p-1.5 bg-slate-50 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-100 hover:border-emerald-100 transition-all shadow-xs"
+                                   title="Descargar boleta PDF">
                                     <i data-lucide="file-text" class="w-4 h-4"></i>
                                 </a>
                                 {% endif %}
@@ -132,29 +252,37 @@
             </table>
         </div>
 
-        <!-- Paginación -->
+        <!-- Paginación Premium -->
         {% if page_obj.has_other_pages %}
-        <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-            <p class="text-sm text-slate-500">
-                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+        <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Mostrando <strong class="text-slate-700 font-extrabold">{{ page_obj.start_index }}</strong> - <strong class="text-slate-700 font-extrabold">{{ page_obj.end_index }}</strong> de <strong class="text-slate-700 font-extrabold">{{ page_obj.paginator.count }}</strong> cobros
             </p>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
                 {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}"
-                   class="px-3 py-1 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">
-                    ← Anterior
+                   class="p-2 rounded-xl border border-slate-200 text-slate-650 bg-white hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center justify-center">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </a>
                 {% endif %}
+                
                 {% for num in page_obj.paginator.page_range %}
-                <a href="?page={{ num }}"
-                   class="px-3 py-1 rounded-lg text-sm {% if page_obj.number == num %}bg-teal-600 text-white{% else %}border border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
-                    {{ num }}
-                </a>
+                    {% if page_obj.number == num %}
+                    <span class="w-8.5 h-8.5 w-8 h-8 rounded-xl bg-teal-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-teal-600/10">
+                        {{ num }}
+                    </span>
+                    {% else %}
+                    <a href="?page={{ num }}"
+                       class="w-8.5 h-8.5 w-8 h-8 rounded-xl border border-slate-200 text-slate-650 bg-white hover:bg-slate-50 font-semibold text-xs flex items-center justify-center transition-all">
+                        {{ num }}
+                    </a>
+                    {% endif %}
                 {% endfor %}
+                
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}"
-                   class="px-3 py-1 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">
-                    Siguiente →
+                   class="p-2 rounded-xl border border-slate-200 text-slate-650 bg-white hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center justify-center">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </a>
                 {% endif %}
             </div>
@@ -162,15 +290,17 @@
         {% endif %}
 
         {% else %}
-        <div class="text-center py-12">
-            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="receipt" class="w-8 h-8 text-slate-400"></i>
+        <!-- Sin Resultados -->
+        <div class="text-center py-16 bg-white flex flex-col items-center justify-center">
+            <div class="w-16 h-16 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center mb-4 text-slate-400">
+                <i data-lucide="receipt" class="w-8 h-8"></i>
             </div>
-            <p class="text-slate-500">No se encontraron cobros con los filtros aplicados.</p>
+            <h4 class="text-base font-bold text-slate-800">No se encontraron cobros</h4>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm font-light">No hay registros que coincidan con los filtros aplicados en este momento.</p>
             <a href="{% url 'facturacion:cobro_crear' %}"
-               class="inline-flex items-center mt-3 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
-                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                Crear nuevo cobro
+               class="mt-5 inline-flex items-center px-4 py-2.5 bg-teal-650 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-all text-xs font-bold shadow-sm">
+                <i data-lucide="plus" class="w-4 h-4 mr-1.5"></i>
+                Crear Nuevo Cobro
             </a>
         </div>
         {% endif %}

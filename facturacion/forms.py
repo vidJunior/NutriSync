@@ -12,6 +12,7 @@ from facturacion.models import (
 )
 from facturacion.choices import MetodoPago, ConceptoCobro, TipoFacturacion
 from facturacion.utils import calcular_total_con_igv
+from facturacion.validators import validate_comprobante
 
 
 class CobroForm(forms.ModelForm):
@@ -53,6 +54,14 @@ class CobroForm(forms.ModelForm):
             self.fields["cita"].required = False
         self.fields["notas"].required = False
 
+    def clean(self):
+        cleaned_data = super().clean()
+        paciente = cleaned_data.get("paciente")
+        cita = cleaned_data.get("cita")
+        if paciente and cita and cita.paciente_id != paciente.id:
+            self.add_error("cita", "La cita seleccionada no pertenece al paciente.")
+        return cleaned_data
+
 
 class CobroPagoForm(forms.Form):
     """Formulario para registrar el pago de un cobro."""
@@ -80,6 +89,12 @@ class CobroPagoForm(forms.Form):
         widget=forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         label="Notas",
     )
+
+    def clean_comprobante(self):
+        comprobante = self.cleaned_data.get("comprobante")
+        if comprobante:
+            validate_comprobante(comprobante)
+        return comprobante
 
 
 class FacturaFiltroForm(forms.Form):
@@ -135,6 +150,14 @@ class FacturaCrearForm(forms.ModelForm):
                 nutricionista=nutricionista, estado=True
             )
         self.fields["notas"].required = False
+
+    def clean_fecha_vencimiento(self):
+        fecha = self.cleaned_data.get("fecha_vencimiento")
+        if fecha and fecha < timezone.localdate():
+            raise forms.ValidationError(
+                "La fecha de vencimiento no puede estar en el pasado."
+            )
+        return fecha
 
 
 class ItemFacturaForm(forms.ModelForm):

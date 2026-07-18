@@ -1,5 +1,5 @@
 # facturacion/admin.py
-# Registro de modelos de Facturación en el Admin de Django.
+# Admin de facturación.
 
 from django.contrib import admin
 from facturacion.models import (

@@ -20,11 +20,14 @@
                 {{ factura.get_estado_display }}
             </span>
             {% if factura.estado == 'borrador' and factura.items.count > 0 %}
-            <a href="{% url 'facturacion:factura_emitir' pk=factura.pk %}"
+            <form method="post" action="{% url 'facturacion:factura_emitir' pk=factura.pk %}">
+                {% csrf_token %}
+            <button type="submit"
                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                 <i data-lucide="send" class="w-4 h-4 mr-2 inline"></i>
                 Emitir factura
-            </a>
+            </button>
+            </form>
             {% endif %}
             {% if factura.archivo_pdf %}
             <a href="{{ factura.archivo_pdf.url }}" target="_blank"

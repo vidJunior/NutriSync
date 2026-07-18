@@ -1,5 +1,5 @@
 # facturacion/templatetags/facturacion_tags.py
-# Template tags personalizados para el módulo de Facturación.
+# Etiquetas de facturación.
 
 from django import template
 from decimal import Decimal

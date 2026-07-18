@@ -292,11 +292,28 @@ class Cobro(models.Model):
 
     def save(self, *args, **kwargs):
         # Calcular IGV, total y monto neto automáticamente
+        if not (self.descripcion or "").strip():
+            self.descripcion = self.get_concepto_display()
         if self.monto:
+            monto_dec = Decimal(str(self.monto))
+            if self.nutricionista_id:
+                try:
+                    suscripcion = self.nutricionista.suscripcion
+                except Exception:
+                    suscripcion = None
+                if suscripcion and suscripcion.estado == "activa":
+                    comision_pct = suscripcion.plan.comision_cobros
+                else:
+                    comision_pct = Decimal("3.00")
+                self.comision_plataforma = round((monto_dec * comision_pct) / Decimal("100.00"), 2)
+            else:
+                self.comision_plataforma = Decimal("0.00")
+
             from facturacion.utils import calcular_igv, calcular_total_con_igv, calcular_monto_neto
-            self.igv = calcular_igv(self.monto)
-            self.total = calcular_total_con_igv(self.monto)
+            self.igv = calcular_igv(monto_dec)
+            self.total = calcular_total_con_igv(monto_dec)
             self.monto_neto = calcular_monto_neto(self.total, self.comision_plataforma)
+        self.full_clean()
         super().save(*args, **kwargs)
 
     @property

@@ -102,9 +102,7 @@ class TipoFacturacion:
 class PlanNutricionista:
     BASICO = "basico"
     PROFESIONAL = "profesional"
-    ENTERPRISE = "enterprise"
     CHOICES = [
         (BASICO, "Básico"),
         (PROFESIONAL, "Profesional"),
-        (ENTERPRISE, "Enterprise"),
     ]

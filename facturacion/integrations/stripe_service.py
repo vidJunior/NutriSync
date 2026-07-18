@@ -1,5 +1,5 @@
 # facturacion/integrations/stripe_service.py
-# Servicio de integración con Stripe para cobros y suscripciones.
+# Integración con Stripe.
 
 import stripe
 from django.conf import settings
