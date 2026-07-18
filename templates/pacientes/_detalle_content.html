@@ -1,18 +1,12 @@
-<!-- pacientes/_detalle_content.html -->
-<!-- Estructura Principal de la Ficha de Paciente (Layout Rediseñado con Módulo Información Avanzado) -->
+
 
 <div id="paciente-detail-content" class="space-y-6">
 
-
-
-    <!-- ─── 1. CABECERA DEL PACIENTE ─── -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
 
-            <!-- Bloque Izquierdo: Foto/Avatar + Nombre + Estado + Datos Rápidos -->
             <div class="flex flex-col sm:flex-row items-start gap-5 flex-1">
 
-                <!-- Foto de Perfil o Iniciales -->
                 <div class="flex-shrink-0">
                     {% if paciente.informacion_clinica.foto_url %}
                     <img src="{{ paciente.informacion_clinica.foto_url }}"
@@ -30,7 +24,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Info Principal y Grid de Datos Rápidos -->
                 <div class="space-y-3 flex-1">
                     <div class="flex flex-wrap items-center gap-3">
                         <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">{{ paciente.nombre_completo }}
@@ -38,10 +31,9 @@
                         {% include "components/badge_estado.html" with activo=paciente.estado %}
                     </div>
 
-                    <!-- Datos Rápidos Grid -->
                     <div
                         class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2.5 text-xs text-slate-600">
-                        <!-- Edad -->
+                        
                         <div class="flex items-center gap-2">
                             <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -51,7 +43,6 @@
                             </div>
                         </div>
 
-                        <!-- Sexo -->
                         <div class="flex items-center gap-2">
                             <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -61,7 +52,6 @@
                             </div>
                         </div>
 
-                        <!-- DNI -->
                         <div class="flex items-center gap-2">
                             <i data-lucide="id-card" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -71,7 +61,6 @@
                             </div>
                         </div>
 
-                        <!-- Teléfono -->
                         <div class="flex items-center gap-2">
                             <i data-lucide="phone" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -81,7 +70,6 @@
                             </div>
                         </div>
 
-                        <!-- Email -->
                         <div class="flex items-center gap-2 col-span-2 sm:col-span-2">
                             <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -91,7 +79,6 @@
                             </div>
                         </div>
 
-                        <!-- Dirección -->
                         <div class="flex items-center gap-2 col-span-2 sm:col-span-2">
                             <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -101,7 +88,6 @@
                             </div>
                         </div>
 
-                        <!-- Próxima Cita -->
                         <div class="flex items-center gap-2 col-span-2">
                             <i data-lucide="calendar-clock" class="w-4 h-4 text-slate-400"></i>
                             <div>
@@ -121,7 +107,6 @@
                 </div>
             </div>
 
-            <!-- Bloque Derecho: ACCIONES PRINCIPALES -->
             <div class="flex flex-col sm:flex-row lg:flex-col gap-2 w-full lg:w-48 flex-shrink-0">
                 <button onclick="abrirModalNuevaConsulta()"
                     class="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl py-2.5 px-4 text-xs transition-all duration-200 shadow-sm hover:shadow-md">
@@ -155,7 +140,6 @@
         </div>
     </div>
 
-    <!-- ─── CARD DE CONSULTA NUTRICIONAL ACTIVA ─── -->
     <div
         class="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center gap-4 flex-1">
@@ -227,10 +211,8 @@
         </div>
     </div>
 
-    <!-- ─── 2. TARJETAS RESUMEN (SUPERIORES) ─── -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
 
-        <!-- Tarjeta 1: Peso Actual -->
         <div
             class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[100px]">
             <div class="flex items-center justify-between mb-2">
@@ -246,7 +228,6 @@
             </div>
         </div>
 
-        <!-- Tarjeta 2: IMC Actual -->
         <div
             class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[100px]">
             <div class="flex items-center justify-between mb-2">
@@ -267,7 +248,6 @@
             </div>
         </div>
 
-        <!-- Tarjeta 3: Objetivo Principal -->
         <div
             class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[100px]">
             <div class="flex items-center justify-between mb-2">
@@ -282,7 +262,6 @@
             </div>
         </div>
 
-        <!-- Tarjeta 4: Adherencia -->
         <div
             class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[100px]">
             <div class="flex items-center justify-between mb-2">
@@ -297,7 +276,6 @@
             </div>
         </div>
 
-        <!-- Tarjeta 5: Última Consulta -->
         <div
             class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[100px]">
             <div class="flex items-center justify-between mb-2">
@@ -318,57 +296,88 @@
 
     </div>
 
-    <!-- ─── 3. NAVEGACIÓN INTERNA (PESTAÑAS HORIZONTALES) ─── -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-        <!-- Contenedor del Tabbar -->
-        <div class="border-b border-slate-200 px-6 bg-slate-50/50">
-            <nav class="-mb-px flex space-x-6 overflow-x-auto scrollbar-none" aria-label="Tabs">
+        
+        <div class="relative">
+            
+            <nav class="hidden md:flex -mb-px space-x-2 overflow-x-auto scrollbar-thin px-4 py-3" 
+                 aria-label="Tabs" 
+                 id="tabs-container">
+                
                 <button onclick="switchTab(event, 'tab-informacion')"
-                    class="tab-btn border-b-2 border-teal-500 py-4 px-1 text-sm font-bold text-teal-650 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="info" class="w-4 h-4"></i> Información
+                    class="tab-btn border-b-2 border-teal-600 py-3 px-2 text-sm font-semibold text-teal-600 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-all">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    <span>Información</span>
                 </button>
                 <button onclick="switchTab(event, 'tab-mediciones')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="scale" class="w-4 h-4"></i> Mediciones
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="scale" class="w-4 h-4"></i>
+                    <span>Mediciones</span>
                 </button>
                 <button onclick="switchTab(event, 'tab-evaluacion')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="clipboard-check" class="w-4 h-4"></i> Evaluación
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                    <span>Evaluación</span>
                 </button>
                 <button onclick="switchTab(event, 'tab-plan')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="utensils" class="w-4 h-4"></i> Plan Alimentario
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="utensils" class="w-4 h-4"></i>
+                    <span>Plan</span>
                 </button>
                 <button onclick="switchTab(event, 'tab-recomendaciones')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="heart" class="w-4 h-4"></i> Recomendaciones
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="heart" class="w-4 h-4"></i>
+                    <span>Recs</span>
                 </button>
-
                 <button onclick="switchTab(event, 'tab-seguimiento')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="activity" class="w-4 h-4"></i> Seguimiento
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="activity" class="w-4 h-4"></i>
+                    <span>Follow</span>
                 </button>
                 <button onclick="switchTab(event, 'tab-entregables')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="share-2" class="w-4 h-4"></i> Entregables
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span>Entrega</span>
                 </button>
                 <button onclick="switchTab(event, 'tab-archivos')"
-                    class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 whitespace-nowrap flex items-center gap-2">
-                    <i data-lucide="folder-open" class="w-4 h-4"></i> Archivos
+                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
+                    <i data-lucide="folder-open" class="w-4 h-4"></i>
+                    <span>Arch</span>
                 </button>
             </nav>
-        </div>
 
-        <!-- ─── 4. TAB PANELS ─── -->
+            <div class="hidden md:flex flex-col justify-center items-center gap-1 absolute top-1/2 -translate-y-1/2 right-2 z-30 space-y-1">
+                <button class="scroll-btn p-1.5 rounded-full text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
+                    onclick="scrollTabs('left')">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </button>
+                <div class="w-px h-6 bg-slate-200"></div>
+                <button class="scroll-btn p-1.5 rounded-full text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
+                    onclick="scrollTabs('right')">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <select onchange="switchTab(null, this.value)" 
+                    class="grid grid-cols-2 md:hidden w-full text-sm font-medium text-slate-700 border-0 bg-transparent p-2 cursor-pointer">
+                <option value="tab-informacion">Información</option>
+                <option value="tab-mediciones">Mediciones</option>
+                <option value="tab-evaluacion">Evaluación</option>
+                <option value="tab-plan">Plan</option>
+                <option value="tab-recomendaciones">Recs</option>
+                <option value="tab-seguimiento">Follow</option>
+                <option value="tab-entregables">Entrega</option>
+                <option value="tab-archivos">Arch</option>
+            </select>
+        </div>
+    </div>
+
         <div class="p-6">
 
-            <!-- Panel 1: INFORMACIÓN (5 Tarjetas Resumen del Expediente) -->
             <div id="tab-informacion" class="tab-panel space-y-6 animate-fade-in">
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    <!-- 1. Datos Personales Card -->
                     <div onclick="openSectionModal('modal-datos-personales')"
                         class="group cursor-pointer bg-slate-50/50 hover:bg-teal-50/10 border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 relative flex flex-col justify-between">
                         <div>
@@ -426,7 +435,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. Datos de Contacto Card -->
                     <div onclick="openSectionModal('modal-contacto')"
                         class="group cursor-pointer bg-slate-50/50 hover:bg-teal-50/10 border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 relative flex flex-col justify-between">
                         <div>
@@ -484,7 +492,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. Historia Clínica Card -->
                     <div onclick="openSectionModal('modal-historia-clinica')"
                         class="group cursor-pointer bg-slate-50/50 hover:bg-teal-50/10 border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 relative flex flex-col justify-between">
                         <div>
@@ -519,7 +526,6 @@
                                     <div class="flex flex-wrap gap-1">
                                         {% if paciente.informacion_clinica.enfermedades.all or paciente.informacion_clinica.enfermedad_personalizada %}
 
-                                        <!-- 1. Renderizar enfermedades de la lista (si existen) -->
                                         {% for cond in paciente.informacion_clinica.enfermedades.all %}
                                         <span
                                             class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">
@@ -527,7 +533,6 @@
                                         </span>
                                         {% endfor %}
 
-                                        <!-- 2. Renderizar enfermedad personalizada (si existe) -->
                                         {% if paciente.informacion_clinica.enfermedad_personalizada %}
                                         <span
                                             class="inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">
@@ -536,7 +541,7 @@
                                         {% endif %}
 
                                         {% else %}
-                                        <!-- 3. Si no hay absolutamente nada -->
+                                        
                                         <span class="text-slate-400 font-medium italic">Ninguna registrada</span>
                                         {% endif %}
                                     </div>
@@ -559,7 +564,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Alerta visual si tiene Alergias -->
                                 {% if paciente.informacion_clinica.alergias_intolerancias or paciente.informacion_clinica.alergias_personalizadas %}
                                 <div
                                     class="mt-2.5 p-2 bg-red-50 border border-red-150 rounded-xl flex items-center gap-2 text-[10px] text-red-700 font-bold">
@@ -576,7 +580,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. Hábitos y Estilo de Vida Card -->
                     <div onclick="openSectionModal('modal-habitos')"
                         class="group cursor-pointer bg-slate-50/50 hover:bg-teal-50/10 border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 relative flex flex-col justify-between">
                         <div>
@@ -635,7 +638,6 @@
                         </div>
                     </div>
 
-                    <!-- 5. Historia Alimentaria Card -->
                     <div onclick="openSectionModal('modal-alimentaria')"
                         class="group cursor-pointer bg-slate-50/50 hover:bg-teal-50/10 border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 relative flex flex-col justify-between col-span-1 lg:col-span-2">
                         <div>
@@ -703,7 +705,6 @@
 
                 </div>
 
-                <!-- Historial de Consultas Timeline -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mt-6">
                     <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-6">
                         <i data-lucide="history" class="w-4.5 h-4.5 text-teal-600"></i>
@@ -714,7 +715,7 @@
                     <div class="relative border-l-2 border-slate-100 ml-4 space-y-6">
                         {% for c in consultas %}
                         <div class="relative pl-6">
-                            <!-- Marker icon -->
+                            
                             <div class="absolute -left-[15px] top-0.5 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-xs transition-colors {% if c.id == active_consulta.id %}bg-teal-500 border-teal-200 text-white{% elif c.estado == 'finalizada' %}bg-white border-emerald-500 text-emerald-600{% else %}bg-white border-amber-500 text-amber-600{% endif %}">
                                 {% if c.estado == "finalizada" %}
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
@@ -771,13 +772,10 @@
 
             </div>
 
-            <!-- Panel 2: Mediciones -->
             <div id="tab-mediciones" class="tab-panel hidden space-y-6">
-                <!-- Script de Chart.js cargado localmente para el panel -->
+                
                 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
-                <!-- Barra de Acciones Superior -->
                 <div
                     class="flex items-center justify-between bg-white rounded-2xl border border-slate-200/60 p-4 shadow-sm">
                     <div>
@@ -791,7 +789,6 @@
                     </button>
                 </div>
 
-                <!-- Estado Vacío -->
                 <div id="mediciones-empty-state"
                     class="hidden flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-slate-200/60 shadow-sm max-w-lg mx-auto">
                     <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
@@ -808,48 +805,44 @@
                     </button>
                 </div>
 
-                <!-- Dashboard de Mediciones -->
                 <div id="mediciones-dashboard" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                    <!-- Panel Izquierdo: Categorías -->
+                    
                     <div class="lg:col-span-1 space-y-4">
-                        <!-- Antropometría Básica -->
+                        
                         <div class="bg-white rounded-2xl border border-slate-250/60 p-4 shadow-sm">
                             <h5
                                 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                                 <i data-lucide="scale" class="w-3.5 h-3.5 text-teal-600"></i> Antropometría Básica
                             </h5>
                             <div class="space-y-1" id="list-antropometria">
-                                <!-- Generado por JS -->
+                                
                             </div>
                         </div>
 
-                        <!-- Circunferencias -->
                         <div class="bg-white rounded-2xl border border-slate-250/60 p-4 shadow-sm">
                             <h5
                                 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                                 <i data-lucide="ruler" class="w-3.5 h-3.5 text-indigo-600"></i> Circunferencias (cm)
                             </h5>
                             <div class="space-y-1" id="list-circunferencias">
-                                <!-- Generado por JS -->
+                                
                             </div>
                         </div>
 
-                        <!-- Composición Corporal -->
                         <div class="bg-white rounded-2xl border border-slate-250/60 p-4 shadow-sm">
                             <h5
                                 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                                 <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-600"></i> Composición Corporal
                             </h5>
                             <div class="space-y-1" id="list-composicion">
-                                <!-- Generado por JS -->
+                                
                             </div>
                         </div>
                     </div>
 
-                    <!-- Panel Derecho: Detalle, Gráfico e Historial -->
                     <div class="lg:col-span-2 space-y-6">
                         <div class="bg-white rounded-2xl border border-slate-250/60 p-6 shadow-sm space-y-6">
-                            <!-- Cabecera de Medición Activa -->
+                            
                             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                                 <div>
                                     <h4 class="text-base font-bold text-slate-800" id="active-field-title">Peso Corporal
@@ -864,16 +857,14 @@
                                 </div>
                             </div>
 
-                            <!-- Gráfico de Evolución -->
                             <div class="relative w-full bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
                                 <div class="h-64 w-full">
                                     <canvas id="mediciones-evolution-chart"></canvas>
                                 </div>
                             </div>
 
-                            <!-- Formulario y Tabla -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                                <!-- Registro Rápido -->
+                                
                                 <div class="space-y-4">
                                     <h5
                                         class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -919,7 +910,6 @@
                                     </form>
                                 </div>
 
-                                <!-- Historial -->
                                 <div class="space-y-4">
                                     <h5
                                         class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -938,7 +928,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="mediciones-history-tbody">
-                                                <!-- Generado por JS -->
+                                                
                                             </tbody>
                                         </table>
                                     </div>
@@ -949,12 +939,11 @@
                 </div>
             </div>
 
-            <!-- Modal Evaluación Completa -->
             <div id="modal-evaluacion-completa"
                 class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all duration-200 scale-95 opacity-0"
                     id="modal-eval-container">
-                    <!-- Header -->
+                    
                     <div class="flex items-center justify-between px-6 py-4 bg-teal-600 rounded-t-2xl flex-shrink-0">
                         <div class="flex items-center gap-2 text-white">
                             <i data-lucide="activity" class="w-5 h-5"></i>
@@ -966,11 +955,10 @@
                         </button>
                     </div>
 
-                    <!-- Form -->
                     <form id="form-evaluacion-completa" class="flex flex-col flex-1 overflow-hidden">
-                        <!-- Scrollable Body -->
+                        
                         <div class="p-6 overflow-y-auto flex-1 space-y-6">
-                            <!-- Date and Notes row -->
+                            
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha de la
@@ -989,7 +977,7 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <!-- Column 1: Antropometría Básica -->
+                                
                                 <div class="bg-slate-50/50 rounded-xl border border-slate-100 p-4 space-y-4">
                                     <h4
                                         class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
@@ -1016,7 +1004,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Column 2: Circunferencias -->
                                 <div class="bg-slate-50/50 rounded-xl border border-slate-100 p-4 space-y-4">
                                     <h4
                                         class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
@@ -1073,7 +1060,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Column 3: Composición Corporal -->
                                 <div class="bg-slate-50/50 rounded-xl border border-slate-100 p-4 space-y-3">
                                     <h4
                                         class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
@@ -1149,7 +1135,6 @@
                             </div>
                         </div>
 
-                        <!-- Footer -->
                         <div
                             class="px-6 py-4 bg-slate-50 border-t border-slate-150 flex items-center justify-end gap-3 flex-shrink-0">
                             <button type="button" onclick="closeEvaluacionModal()"
@@ -1165,9 +1150,8 @@
                 </div>
             </div>
 
-            <!-- Panel 3: Evaluación -->
             <div id="tab-evaluacion" class="tab-panel hidden space-y-6">
-                <!-- Estado vacío -->
+                
                 <div id="evaluacion-empty-state"
                     class="flex flex-col items-center justify-center py-12 text-center max-w-md mx-auto">
                     <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
@@ -1184,9 +1168,8 @@
                     </button>
                 </div>
 
-                <!-- Contenido principal de la evaluación -->
                 <div id="evaluacion-main-content" class="hidden space-y-6">
-                    <!-- Top Summary Card (Resumen de Evaluación) -->
+                    
                     <div
                         class="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-wrap gap-6 items-center justify-between">
                         <div class="flex items-center gap-4">
@@ -1227,11 +1210,10 @@
                         </div>
                     </div>
 
-                    <!-- Cards Grid -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Columna izquierda -->
+                        
                         <div class="space-y-6">
-                            <!-- Card 1: Diagnóstico Nutricional -->
+                            
                             <div onclick="openEvalModal('modal-eval-diagnostico')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1256,7 +1238,7 @@
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Diagnósticos
                                                 Secundarios</span>
                                             <div class="flex flex-wrap gap-1.5" id="card-diagnosticos-secundarios">
-                                                <!-- Dynamic badges -->
+                                                
                                             </div>
                                         </div>
                                         <div>
@@ -1270,7 +1252,6 @@
                                 </div>
                             </div>
 
-                            <!-- Card 2: Interpretación Antropométrica -->
                             <div onclick="openEvalModal('modal-eval-interpretacion')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1283,7 +1264,7 @@
                                             class="text-[10px] text-slate-400 font-bold hover:text-teal-600 transition-colors">Editar</span>
                                     </div>
                                     <div class="space-y-3.5">
-                                        <!-- Grid of consumed metrics -->
+                                        
                                         <div
                                             class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                                             <div>
@@ -1338,7 +1319,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Auto-generated interpretations -->
                                         <div class="space-y-2">
                                             <span
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Interpretación
@@ -1373,7 +1353,6 @@
                                 </div>
                             </div>
 
-                            <!-- Card 3: Objetivos Nutricionales -->
                             <div onclick="openEvalModal('modal-eval-objetivos')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1398,7 +1377,7 @@
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Objetivos
                                                 Específicos</span>
                                             <div class="space-y-2 text-xs" id="card-objetivos-especificos">
-                                                <!-- Dynamic goal rows with priority badge -->
+                                                
                                             </div>
                                         </div>
                                     </div>
@@ -1406,9 +1385,8 @@
                             </div>
                         </div>
 
-                        <!-- Columna derecha -->
                         <div class="space-y-6">
-                            <!-- Card 4: Factores de Riesgo -->
+                            
                             <div onclick="openEvalModal('modal-eval-riesgos')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1426,7 +1404,7 @@
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Factores
                                                 Activos</span>
                                             <div class="flex flex-wrap gap-1.5" id="card-riesgos-activos">
-                                                <!-- Active risks badges -->
+                                                
                                             </div>
                                         </div>
                                         <div>
@@ -1434,14 +1412,13 @@
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Factores
                                                 Descartados</span>
                                             <div class="flex flex-wrap gap-1.5" id="card-riesgos-descartados">
-                                                <!-- Descartados badges -->
+                                                
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Card 5: Fortalezas y Barreras -->
                             <div onclick="openEvalModal('modal-eval-fortalezas-barreras')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1459,7 +1436,7 @@
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 text-emerald-600">Fortalezas</span>
                                             <ul class="text-xs text-slate-650 list-disc list-inside space-y-1"
                                                 id="card-fortalezas-list">
-                                                <!-- Fortalezas items -->
+                                                
                                             </ul>
                                         </div>
                                         <div class="pl-2">
@@ -1467,14 +1444,13 @@
                                                 class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 text-rose-600">Barreras</span>
                                             <ul class="text-xs text-slate-650 list-disc list-inside space-y-1"
                                                 id="card-barreras-list">
-                                                <!-- Barreras items -->
+                                                
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Card 6: Adherencia Estimada -->
                             <div onclick="openEvalModal('modal-eval-adherencia')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1503,7 +1479,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Nice progress bar for scale -->
                                         <div class="w-full bg-slate-100 rounded-full h-2">
                                             <div class="bg-teal-500 h-2 rounded-full transition-all duration-500"
                                                 id="card-adherencia-bar" style="width: 0%"></div>
@@ -1519,7 +1494,6 @@
                                 </div>
                             </div>
 
-                            <!-- Card 7: Observación Profesional -->
                             <div onclick="openEvalModal('modal-eval-observaciones')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                 <div>
@@ -1551,10 +1525,8 @@
                 </div>
             </div>
 
-            <!-- Panel 4: Plan Alimentario -->
             <div id="tab-plan" class="tab-panel hidden space-y-6">
 
-                <!-- Estado vacío -->
                 <div id="plan-empty-state"
                     class="flex flex-col items-center justify-center py-12 text-center max-w-md mx-auto">
                     <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
@@ -1577,10 +1549,8 @@
                     </div>
                 </div>
 
-                <!-- Contenido principal del Plan -->
                 <div id="plan-main-content" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-                    <!-- Banner modo lectura -->
                     <div id="plan-read-only-banner"
                         class="hidden col-span-1 lg:col-span-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3 text-amber-800 text-xs">
                         <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0"></i>
@@ -1591,7 +1561,6 @@
                         </div>
                     </div>
 
-                    <!-- Columna Izquierda: Parámetros Clínicos de Referencia (Read-Only) -->
                     <div class="lg:col-span-1 space-y-6">
                         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-xs">
                             <h4
@@ -1649,19 +1618,17 @@
                                         class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Factores
                                         de Riesgo</span>
                                     <div class="flex flex-wrap gap-1" id="ref-riesgos">
-                                        <!-- Dynamic badges -->
+                                        
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Columnas Derechas: Tarjetas de Intervención -->
                     <div class="lg:col-span-3 space-y-6">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                            <!-- 1. Resumen del Plan -->
                             <div onclick="openPlanModal('modal-plan-resumen')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300">
                                 <div class="flex items-center justify-between mb-3.5">
@@ -1728,7 +1695,6 @@
                                 </div>
                             </div>
 
-                            <!-- 2. Prescripción Nutricional -->
                             <div onclick="openPlanModal('modal-plan-prescripcion')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300">
                                 <div class="flex items-center justify-between mb-3.5">
@@ -1781,7 +1747,6 @@
 
                         </div>
 
-                        <!-- 3. Plan de Comidas -->
                         <div onclick="openPlanModal('modal-plan-comidas')"
                             class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300">
                             <div class="flex items-center justify-between mb-3.5">
@@ -1793,7 +1758,7 @@
                                     class="text-[10px] text-slate-400 font-bold group-hover:text-teal-650 transition-colors">Editar</span>
                             </div>
                             <div class="text-xs space-y-2" id="card-plan-comidas-container">
-                                <!-- Dynamic list -->
+                                
                             </div>
                             <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
                                 <span class="text-slate-400">Total de comidas planificadas:</span>
@@ -1803,7 +1768,6 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                            <!-- 4. Sustituciones -->
                             <div onclick="openPlanModal('modal-plan-sustituciones')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300">
                                 <div class="flex items-center justify-between mb-3.5">
@@ -1815,11 +1779,10 @@
                                         class="text-[10px] text-slate-400 font-bold group-hover:text-teal-650 transition-colors">Editar</span>
                                 </div>
                                 <div class="text-xs space-y-2" id="card-plan-sustituciones-container">
-                                    <!-- List -->
+                                    
                                 </div>
                             </div>
 
-                            <!-- 5. Recomendaciones -->
                             <div onclick="openPlanModal('modal-plan-recomendaciones')"
                                 class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300">
                                 <div class="flex items-center justify-between mb-3.5">
@@ -1832,13 +1795,12 @@
                                 </div>
                                 <ul class="list-disc list-inside text-xs text-slate-600 space-y-1.5"
                                     id="card-plan-recomendaciones-container">
-                                    <!-- Bullet list -->
+                                    
                                 </ul>
                             </div>
 
                         </div>
 
-                        <!-- 6. Suplementación -->
                         <div onclick="openPlanModal('modal-plan-suplementacion')"
                             class="group cursor-pointer bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-300">
                             <div class="flex items-center justify-between mb-3.5">
@@ -1861,23 +1823,21 @@
                                         </tr>
                                     </thead>
                                     <tbody id="card-plan-suplementacion-container" class="divide-y divide-slate-100">
-                                        <!-- Rows -->
+                                        
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- 7 y 8. Historial y Entrega -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                            <!-- Historial de Planes -->
                             <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
                                 <h4 class="text-sm font-extrabold text-slate-700 flex items-center gap-2 mb-3.5">
                                     <i data-lucide="history" class="w-4 h-4 text-teal-650"></i>
                                     Historial de Planes
                                 </h4>
                                 <div class="space-y-3 max-h-48 overflow-y-auto pr-1" id="plan-historial-container">
-                                    <!-- History rows -->
+                                    
                                 </div>
                                 <div class="mt-4 pt-3 border-t border-slate-150 flex gap-2">
                                     <button onclick="crearNuevaVersionPlan()"
@@ -1891,7 +1851,6 @@
                                 </div>
                             </div>
 
-
                         </div>
 
                     </div>
@@ -1900,7 +1859,6 @@
 
             </div>
 
-            <!-- Modal: Confirmar Finalización de Consulta -->
             <div id="modal-confirmar-finalizar"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div id="modal-confirmar-finalizar-card"
@@ -1935,7 +1893,6 @@
                 </div>
             </div>
 
-            <!-- Modal: Iniciar Nueva Consulta -->
             <div id="modal-nueva-consulta"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div
@@ -1953,7 +1910,7 @@
                             </button>
                         </div>
                         <div class="p-6 space-y-4">
-                            <!-- Alerta de error -->
+                            
                             <div id="nueva-consulta-error" class="hidden bg-red-50 border border-red-150 text-red-700 rounded-xl p-3 text-xs flex items-start gap-2">
                                 <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5"></i>
                                 <span id="nueva-consulta-error-msg" class="font-semibold"></span>
@@ -2017,9 +1974,6 @@
                 </div>
             </div>
 
-            <!-- Modales del Módulo Plan Alimentario -->
-
-            <!-- Modal 1: Resumen -->
             <div id="modal-plan-resumen"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
@@ -2079,7 +2033,6 @@
                 </div>
             </div>
 
-            <!-- Modal 2: Prescripción -->
             <div id="modal-plan-prescripcion"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
@@ -2180,7 +2133,6 @@
                 </div>
             </div>
 
-            <!-- Modal 3: Plan de Comidas -->
             <div id="modal-plan-comidas"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full overflow-hidden">
@@ -2194,7 +2146,7 @@
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>
-                        <!-- Real-time Macro Validation Panel -->
+                        
                         <div id="comidas-macro-validation"
                             class="mx-6 mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
                             <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
@@ -2228,7 +2180,7 @@
 
                         <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto text-xs"
                             id="modal-comidas-list-container">
-                            <!-- Dynamic food lines will be generated here -->
+                            
                         </div>
                         <div
                             class="px-6 py-3 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -2257,7 +2209,6 @@
                 </div>
             </div>
 
-            <!-- Modal 4: Sustituciones -->
             <div id="modal-plan-sustituciones"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
@@ -2274,7 +2225,7 @@
                         </div>
                         <div class="p-6 space-y-3 max-h-[50vh] overflow-y-auto text-xs"
                             id="modal-sustituciones-container">
-                            <!-- Rows -->
+                            
                         </div>
                         <div class="px-6 py-3 border-t border-slate-100 bg-slate-50/50">
                             <button type="button" onclick="agregarSustitucionRow()"
@@ -2302,7 +2253,6 @@
                 </div>
             </div>
 
-            <!-- Modal 5: Recomendaciones -->
             <div id="modal-plan-recomendaciones"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
@@ -2318,7 +2268,7 @@
                         </div>
                         <div class="p-6 space-y-3 max-h-[50vh] overflow-y-auto text-xs"
                             id="modal-recomendaciones-container">
-                            <!-- Rows -->
+                            
                         </div>
                         <div class="px-6 py-3 border-t border-slate-100 bg-slate-50/50">
                             <button type="button" onclick="agregarRecomendacionRow()"
@@ -2346,7 +2296,6 @@
                 </div>
             </div>
 
-            <!-- Modal 6: Suplementación -->
             <div id="modal-plan-suplementacion"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full overflow-hidden">
@@ -2362,7 +2311,7 @@
                         </div>
                         <div class="p-6 space-y-4 max-h-[50vh] overflow-y-auto text-xs"
                             id="modal-suplementacion-container">
-                            <!-- Rows -->
+                            
                         </div>
                         <div class="px-6 py-3 border-t border-slate-100 bg-slate-50/50">
                             <button type="button" onclick="agregarSuplementoRow()"
@@ -2390,7 +2339,6 @@
                 </div>
             </div>
 
-            <!-- Modal: Aplicar Modelo de Plan -->
             <div id="modal-aplicar-modelo"
                 class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full overflow-hidden">
@@ -2413,7 +2361,7 @@
                                 class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-teal-500">
                         </div>
                         <div class="max-h-[50vh] overflow-y-auto space-y-3" id="modelos-list-container">
-                            <!-- Populated dynamically via JS -->
+                            
                         </div>
                     </div>
                     <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
@@ -2425,19 +2373,12 @@
                 </div>
             </div>
 
-            <!-- Fin de Panel 4: Plan Alimentario -->
-
-
-
-            <!-- Panel 6: Seguimiento -->
             <div id="tab-seguimiento" class="tab-panel hidden space-y-6">
 
-                <!-- 1. Banner de Alertas -->
                 <div id="seguimiento-alertas-container" class="space-y-2 hidden">
-                    <!-- Dynamic alert banners injected here -->
+                    
                 </div>
 
-                <!-- 2. Resumen de Evolución -->
                 <div
                     class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 bg-white rounded-2xl p-5 border border-slate-100 shadow-xs">
                     <div class="flex flex-col justify-center">
@@ -2482,13 +2423,10 @@
                     </div>
                 </div>
 
-                <!-- 3. Contenido Principal: Grilla de Dos Columnas -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                    <!-- Columna Izquierda: Evolución, Gráficos y Objetivos (span 7) -->
                     <div class="lg:col-span-7 space-y-6">
 
-                        <!-- Tarjeta: Evolución y Gráficos -->
                         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
                             <div class="flex items-center justify-between">
                                 <h5
@@ -2518,7 +2456,6 @@
                             </div>
                         </div>
 
-                        <!-- Tarjeta: Progreso de Objetivos -->
                         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
                             <div class="flex items-center justify-between">
                                 <h5
@@ -2532,11 +2469,10 @@
                                 </button>
                             </div>
                             <div class="space-y-3" id="seg-list-objetivos">
-                                <!-- populated dynamically -->
+                                
                             </div>
                         </div>
 
-                        <!-- Tarjeta: Adherencia al Plan -->
                         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
                             <div class="flex items-center justify-between">
                                 <h5
@@ -2581,10 +2517,8 @@
 
                     </div>
 
-                    <!-- Columna Derecha: Consultas, Dificultades, Logros, Notas (span 5) -->
                     <div class="lg:col-span-5 space-y-6">
 
-                        <!-- Tarjeta: Consultas de Seguimiento -->
                         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
                             <div class="flex items-center justify-between">
                                 <h5
@@ -2598,13 +2532,12 @@
                                 </button>
                             </div>
                             <div class="overflow-y-auto max-h-48 space-y-3 pr-1" id="seg-list-consultas">
-                                <!-- populated dynamically -->
+                                
                             </div>
                         </div>
 
-                        <!-- Tarjeta: Dificultades y Logros -->
                         <div class="grid grid-cols-2 gap-4">
-                            <!-- Dificultades -->
+                            
                             <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-3">
                                 <div class="flex items-center justify-between">
                                     <h5 class="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
@@ -2614,10 +2547,10 @@
                                             class="w-3 h-3"></i></button>
                                 </div>
                                 <div id="seg-list-dificultades" class="flex flex-wrap gap-1">
-                                    <!-- populated dynamically -->
+                                    
                                 </div>
                             </div>
-                            <!-- Logros -->
+                            
                             <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-3">
                                 <div class="flex items-center justify-between">
                                     <h5 class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Logros
@@ -2627,12 +2560,11 @@
                                             class="w-3 h-3"></i></button>
                                 </div>
                                 <div id="seg-list-logros" class="flex flex-wrap gap-1">
-                                    <!-- populated dynamically -->
+                                    
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tarjeta: Notas de Seguimiento -->
                         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
                             <div class="flex items-center justify-between">
                                 <h5
@@ -2645,11 +2577,10 @@
                                 </button>
                             </div>
                             <div class="space-y-2.5 max-h-40 overflow-y-auto pr-1" id="seg-list-notas">
-                                <!-- populated dynamically -->
+                                
                             </div>
                         </div>
 
-                        <!-- Tarjeta: Próxima Consulta -->
                         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-3">
                             <div class="flex items-center justify-between">
                                 <h5
@@ -2694,10 +2625,8 @@
 
             </div>
 
-
-            <!-- Panel 5.5: Recomendaciones -->
             <div id="tab-recomendaciones" class="tab-panel hidden space-y-6">
-                <!-- Header de la sección con selector de consultas -->
+                
                 <div
                     class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -2711,15 +2640,13 @@
                             class="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Consulta:</label>
                         <select id="recomendaciones-cita-select" onchange="changeRecomendacionesConsulta()"
                             class="text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none transition-colors max-w-xs">
-                            <!-- Citas populated dynamically -->
+                            
                         </select>
                     </div>
                 </div>
 
-                <!-- Grid de tarjetas de recomendaciones -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                    <!-- Card 1: Hidratación -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
                         <div class="space-y-4">
@@ -2756,7 +2683,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 2: Actividad Física -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
                         <div class="space-y-4">
@@ -2802,7 +2728,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 3: Alimentos Recomendados -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
                         <div class="space-y-4">
@@ -2818,7 +2743,7 @@
                                 </button>
                             </div>
                             <div id="rec-alimentos-recom-container" class="flex flex-wrap gap-1.5">
-                                <!-- Chips populated dynamically -->
+                                
                             </div>
                         </div>
                         <div
@@ -2829,7 +2754,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 4: Alimentos a Limitar -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px]">
                         <div class="space-y-4">
@@ -2845,7 +2769,7 @@
                                 </button>
                             </div>
                             <div id="rec-alimentos-limitar-container" class="flex flex-wrap gap-1.5">
-                                <!-- Chips populated dynamically -->
+                                
                             </div>
                         </div>
                         <div
@@ -2856,7 +2780,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 5: Recomendaciones Generales -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[220px] md:col-span-2 lg:col-span-1">
                         <div class="space-y-4">
@@ -2873,7 +2796,7 @@
                             </div>
                             <ul id="rec-generales-container"
                                 class="space-y-1.5 text-xs text-slate-600 list-disc list-inside pl-1">
-                                <!-- List populated dynamically -->
+                                
                             </ul>
                         </div>
                         <div
@@ -2887,10 +2810,8 @@
                 </div>
             </div>
 
-
-            <!-- Panel 5.8: Entregables -->
             <div id="tab-entregables" class="tab-panel hidden space-y-6 animate-fade-in">
-                <!-- Header de la sección con selector de consultas -->
+                
                 <div
                     class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -2904,15 +2825,13 @@
                             Asociada:</label>
                         <select id="entregables-cita-select" onchange="changeEntregablesConsulta()"
                             class="text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none transition-colors max-w-xs">
-                            <!-- Citas populated dynamically -->
+                            
                         </select>
                     </div>
                 </div>
 
-                <!-- Grid de tarjetas de entregables -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                    <!-- 1. Plan Alimentario -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
                         <div class="space-y-4">
@@ -2923,16 +2842,15 @@
                                 </span>
                             </div>
                             <div id="entregables-plan-info" class="space-y-2 text-xs">
-                                <!-- Populated dynamically -->
+                                
                             </div>
                         </div>
                         <div id="entregables-plan-actions"
                             class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <!-- Buttons populated dynamically -->
+                            
                         </div>
                     </div>
 
-                    <!-- 2. Recomendaciones -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
                         <div class="space-y-4">
@@ -2951,7 +2869,7 @@
                                         class="font-bold text-slate-700">Cargando...</span>
                                 </div>
                                 <div id="entregables-recom-categories" class="flex flex-wrap gap-1 mt-1">
-                                    <!-- Categories list chips -->
+                                    
                                 </div>
                             </div>
                         </div>
@@ -2967,7 +2885,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. Reportes -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
                         <div class="space-y-4">
@@ -3010,7 +2927,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. Material Educativo -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
                         <div class="space-y-4">
@@ -3026,7 +2942,7 @@
                                 </button>
                             </div>
                             <div id="entregables-material-list" class="space-y-2 max-h-24 overflow-y-auto pr-1 text-xs">
-                                <!-- Populated dynamically -->
+                                
                             </div>
                         </div>
                         <div
@@ -3035,7 +2951,6 @@
                         </div>
                     </div>
 
-                    <!-- 5. Lista de Compras -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
                         <div class="space-y-4">
@@ -3051,7 +2966,7 @@
                                     supermercado en base a los menús recomendados.</p>
                                 <div id="entregables-compras-resumen"
                                     class="bg-amber-50/50 border border-amber-100 p-2 rounded-xl text-[11px] text-amber-800 font-semibold">
-                                    <!-- summary -->
+                                    
                                 </div>
                             </div>
                         </div>
@@ -3064,7 +2979,6 @@
                         </div>
                     </div>
 
-                    <!-- 6. Resumen de Consulta -->
                     <div
                         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[240px]">
                         <div class="space-y-4">
@@ -3080,7 +2994,7 @@
                                     próxima cita para entregar al paciente.</p>
                                 <div id="entregables-resumen-preview-txt"
                                     class="text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                                    <!-- summary -->
+                                    
                                 </div>
                             </div>
                         </div>
@@ -3098,7 +3012,6 @@
 
                 </div>
 
-                <!-- ─── 7. TABLA DE HISTORIAL DE ENTREGABLES ─── -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-8">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <div>
@@ -3124,7 +3037,7 @@
                                 </tr>
                             </thead>
                             <tbody id="entregables-table-body" class="divide-y divide-slate-100">
-                                <!-- Populated dynamically -->
+                                
                             </tbody>
                         </table>
                     </div>
@@ -3135,10 +3048,8 @@
                 </div>
             </div>
 
-
-            <!-- Panel 6: Archivos -->
             <div id="tab-archivos" class="tab-panel hidden space-y-6">
-                <!-- Header / Search bar -->
+                
                 <div
                     class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -3162,10 +3073,8 @@
                     </div>
                 </div>
 
-                <!-- Cards Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                    <!-- Card 1: Documentos -->
                     <div onclick="openArchivosGeneralModal('Documentos')"
                         class="bg-white border border-slate-100 hover:border-teal-300 hover:shadow-md rounded-2xl p-6 cursor-pointer transition-all duration-300 group flex flex-col justify-between h-48">
                         <div>
@@ -3192,7 +3101,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 2: Laboratorios -->
                     <div onclick="openArchivosGeneralModal('Laboratorios')"
                         class="bg-white border border-slate-100 hover:border-violet-300 hover:shadow-md rounded-2xl p-6 cursor-pointer transition-all duration-300 group flex flex-col justify-between h-48">
                         <div>
@@ -3219,7 +3127,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 3: Fotos de Progreso -->
                     <div onclick="openArchivosFotosModal()"
                         class="bg-white border border-slate-100 hover:border-emerald-350 hover:shadow-md rounded-2xl p-6 cursor-pointer transition-all duration-300 group flex flex-col justify-between h-48">
                         <div>
@@ -3246,7 +3153,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 4: Informes -->
                     <div onclick="openArchivosGeneralModal('Informes')"
                         class="bg-white border border-slate-100 hover:border-amber-350 hover:shadow-md rounded-2xl p-6 cursor-pointer transition-all duration-300 group flex flex-col justify-between h-48">
                         <div>
@@ -3273,7 +3179,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 5: Archivos Adicionales -->
                     <div onclick="openArchivosGeneralModal('Otros')"
                         class="bg-white border border-slate-100 hover:border-slate-350 hover:shadow-md rounded-2xl p-6 cursor-pointer transition-all duration-300 group flex flex-col justify-between h-48">
                         <div>
@@ -3309,11 +3214,6 @@
 
 </div>
 
-<!-- ─── 5. MODALES INTERACTIVOS PARA CADA TARJETA ─── -->
-
-<!-- ─── MODALES DE RECOMENDACIONES ─── -->
-
-<!-- MODAL 1: Hidratación -->
 <div id="modal-rec-hidratacion"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3364,7 +3264,6 @@
     </div>
 </div>
 
-<!-- MODAL 2: Actividad Física -->
 <div id="modal-rec-actividad"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3430,7 +3329,6 @@
     </div>
 </div>
 
-<!-- MODAL 3: Alimentos Recomendados -->
 <div id="modal-rec-alimentos-recom"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3468,7 +3366,7 @@
                     <div class="text-[10px] text-slate-400 font-bold uppercase mt-3">Alimentos Agregados:</div>
                     <div id="modal-recom-tags-container"
                         class="flex flex-wrap gap-2 p-3 border border-slate-100 rounded-xl bg-slate-50 min-h-[80px]">
-                        <!-- Dynamic editable chips here -->
+                        
                     </div>
                 </div>
 
@@ -3484,7 +3382,6 @@
     </div>
 </div>
 
-<!-- MODAL 4: Alimentos a Limitar -->
 <div id="modal-rec-alimentos-limitar"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3524,7 +3421,7 @@
                     </div>
                     <div id="modal-limitar-tags-container"
                         class="flex flex-wrap gap-2 p-3 border border-slate-100 rounded-xl bg-slate-50 min-h-[80px]">
-                        <!-- Dynamic editable chips here -->
+                        
                     </div>
                 </div>
 
@@ -3540,7 +3437,6 @@
     </div>
 </div>
 
-<!-- MODAL 5: Recomendaciones Generales -->
 <div id="modal-rec-generales"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3579,7 +3475,7 @@
                     </div>
                     <div id="modal-generales-tags-container"
                         class="flex flex-col gap-2 p-3 border border-slate-100 rounded-xl bg-slate-50 min-h-[80px] max-h-48 overflow-y-auto">
-                        <!-- Dynamic checklist items with delete button -->
+                        
                     </div>
                 </div>
 
@@ -3595,9 +3491,6 @@
     </div>
 </div>
 
-<!-- ─── MODALES DE ENTREGABLES ─── -->
-
-<!-- MODAL: Material Educativo (Subir/Editar) -->
 <div id="modal-entregables-educativo"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3637,7 +3530,7 @@
                             Relacionada</label>
                         <select name="cita_id" id="select-edu-cita"
                             class="w-full text-sm border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
-                            <!-- Populated dynamically -->
+                            
                         </select>
                     </div>
                     <div>
@@ -3671,7 +3564,6 @@
     </div>
 </div>
 
-<!-- MODAL: Confirmar Eliminación de Entregable -->
 <div id="modal-entregable-eliminar-confirm"
     class="modal-overlay fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[60] hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 relative" onclick="event.stopPropagation()">
@@ -3699,7 +3591,6 @@
     </div>
 </div>
 
-<!-- MODAL: Resumen de Consulta Preview -->
 <div id="modal-entregables-resumen-preview"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto"
@@ -3718,7 +3609,7 @@
 
             <div id="resumen-preview-container"
                 class="space-y-4 text-xs text-slate-700 p-4 bg-slate-50 rounded-xl border border-slate-150">
-                <!-- Dynamic preview populated via JS -->
+                
             </div>
         </div>
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
@@ -3731,7 +3622,6 @@
     </div>
 </div>
 
-<!-- MODAL: Lista de Compras Preview -->
 <div id="modal-entregables-compras-preview"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto"
@@ -3749,7 +3639,7 @@
 
             <div id="compras-preview-container"
                 class="space-y-4 text-xs text-slate-700 p-4 bg-slate-50 rounded-xl border border-slate-150">
-                <!-- Dynamic categories and list populated via JS -->
+                
             </div>
         </div>
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
@@ -3765,7 +3655,6 @@
     </div>
 </div>
 
-<!-- MODAL: Reporte Clínico Preview -->
 <div id="modal-entregables-reporte-preview"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto"
@@ -3783,7 +3672,7 @@
 
             <div id="reporte-preview-container"
                 class="space-y-4 text-xs text-slate-700 p-4 bg-slate-50 rounded-xl border border-slate-150">
-                <!-- Dynamic charts and numbers -->
+                
             </div>
         </div>
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
@@ -3796,7 +3685,6 @@
     </div>
 </div>
 
-<!-- MODAL 1: Datos Personales -->
 <div id="modal-datos-personales"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3903,7 +3791,6 @@
     </div>
 </div>
 
-<!-- MODAL 2: Datos de Contacto -->
 <div id="modal-contacto"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between"
@@ -3988,7 +3875,6 @@
     </div>
 </div>
 
-<!-- MODAL 3: Historia Clínica -->
 <div id="modal-historia-clinica"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between"
@@ -4010,7 +3896,6 @@
                 <input type="hidden" name="section" value="historia_clinica">
                 <input type="hidden" id="meds_data_input" name="meds_data" value="[]">
 
-                <!-- Motivo y Observaciones -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Objetivo / Motivo
@@ -4036,7 +3921,6 @@
                     </div>
                 </div>
 
-                <!-- Enfermedades / Condiciones (Chips interactivos) -->
                 <div>
                     <label class="block text-xs font-bold text-slate-450 uppercase mb-2">Enfermedades o Condiciones
                         Actuales</label>
@@ -4105,7 +3989,6 @@
                         placeholder="Agregar condición personalizada o notas...">
                 </div>
 
-                <!-- Antecedentes Médicos y Familiares -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-2">Antecedentes Médicos
@@ -4196,7 +4079,6 @@
                     </div>
                 </div>
 
-                <!-- Alergias e Intolerancias -->
                 <div>
                     <label class="block text-xs font-bold text-slate-450 uppercase mb-2">Alergias e Intolerancias
                         Alimentarias</label>
@@ -4249,7 +4131,6 @@
                         placeholder="Agregar alergia personalizada o notas de tolerancia...">
                 </div>
 
-                <!-- Medicación y Suplementación (Tabla Dinámica) -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-xs font-bold text-slate-450 uppercase">Medicación y Suplementación
@@ -4283,7 +4164,7 @@
                                 </tr>
                             </thead>
                             <tbody id="meds-table-body" class="divide-y divide-slate-100">
-                                <!-- Filas inyectadas por Javascript -->
+                                
                             </tbody>
                         </table>
                     </div>
@@ -4301,7 +4182,6 @@
     </div>
 </div>
 
-<!-- MODAL 4: Hábitos y Estilo de Vida -->
 <div id="modal-habitos"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between"
@@ -4322,7 +4202,6 @@
                 {% csrf_token %}
                 <input type="hidden" name="section" value="habitos">
 
-                <!-- Sueño -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Horas de sueño por
@@ -4346,7 +4225,6 @@
                     </div>
                 </div>
 
-                <!-- Actividad Física -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Nivel de Actividad Física
@@ -4381,7 +4259,6 @@
                     </div>
                 </div>
 
-                <!-- Estrés y Sustancias -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1 flex justify-between">
@@ -4414,7 +4291,6 @@
                     </div>
                 </div>
 
-                <!-- Hidratación y Notas -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Consumo de Agua
@@ -4444,7 +4320,6 @@
     </div>
 </div>
 
-<!-- MODAL 5: Historia Alimentaria -->
 <div id="modal-alimentaria"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between"
@@ -4502,7 +4377,6 @@
                     </div>
                 </div>
 
-                <!-- Restricciones -->
                 <div>
                     <label class="block text-xs font-bold text-slate-450 uppercase mb-2">Restricciones
                         Alimentarias</label>
@@ -4535,7 +4409,6 @@
                     </div>
                 </div>
 
-                <!-- Patrones Apetito y Ansiedad -->
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Apetito</label>
@@ -4567,7 +4440,6 @@
                     </div>
                 </div>
 
-                <!-- Agua y Hábitos de Comida Rápida -->
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Agua pura (L/día)</label>
@@ -4597,7 +4469,6 @@
                     </div>
                 </div>
 
-                <!-- Recordatorio 24 horas y Observaciones -->
                 <div>
                     <label class="block text-xs font-bold text-slate-450 uppercase mb-1">Recordatorio Alimentario de 24
                         Horas</label>
@@ -4625,9 +4496,6 @@
     </div>
 </div>
 
-<!-- ─── MODALS DE EVALUACIÓN ─── -->
-
-<!-- 1. Modal Diagnóstico -->
 <div id="modal-eval-diagnostico"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -4668,7 +4536,7 @@
                     Múltiple)</label>
                 <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-slate-100 rounded-xl bg-slate-50"
                     id="input-eval-diagnosticos-secundarios-container">
-                    <!-- Checkboxes populated via JS -->
+                    
                 </div>
             </div>
             <div>
@@ -4688,7 +4556,6 @@
     </div>
 </div>
 
-<!-- 2. Modal Interpretación Antropométrica -->
 <div id="modal-eval-interpretacion"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -4745,7 +4612,6 @@
     </div>
 </div>
 
-<!-- 3. Modal Objetivos Nutricionales -->
 <div id="modal-eval-objetivos"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -4787,7 +4653,7 @@
                 </div>
                 <div class="space-y-2 border border-slate-105 rounded-xl p-3 bg-slate-50"
                     id="modal-eval-objetivos-especificos-container">
-                    <!-- Dynamic goal rows (with priority/target date) -->
+                    
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
@@ -4801,7 +4667,6 @@
     </div>
 </div>
 
-<!-- 4. Modal Factores de Riesgo -->
 <div id="modal-eval-riesgos"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -4825,7 +4690,7 @@
                 <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Factores
                     Autodetectados / Disponibles</span>
                 <div class="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs" id="modal-riesgos-checkboxes-container">
-                    <!-- Standard factor checkboxes populated dynamically -->
+                    
                 </div>
             </div>
 
@@ -4840,7 +4705,7 @@
                 </div>
                 <div class="space-y-2 border border-slate-100 rounded-xl p-3 bg-slate-50"
                     id="modal-riesgos-personalizados-container">
-                    <!-- Dynamic inputs populated via JS -->
+                    
                 </div>
             </div>
 
@@ -4855,7 +4720,6 @@
     </div>
 </div>
 
-<!-- 5. Modal Fortalezas y Barreras -->
 <div id="modal-eval-fortalezas-barreras"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -4875,7 +4739,7 @@
             {% csrf_token %}
             <input type="hidden" name="section" value="fortalezas_barreras">
             <div class="grid grid-cols-2 gap-6">
-                <!-- Fortalezas -->
+                
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
                         <label class="block text-xs font-bold text-emerald-600 uppercase">Fortalezas</label>
@@ -4886,10 +4750,10 @@
                     </div>
                     <div class="space-y-2 border border-slate-100 rounded-xl p-2.5 bg-slate-50"
                         id="modal-fortalezas-container">
-                        <!-- populated dynamically -->
+                        
                     </div>
                 </div>
-                <!-- Barreras -->
+                
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
                         <label class="block text-xs font-bold text-rose-600 uppercase">Barreras</label>
@@ -4900,7 +4764,7 @@
                     </div>
                     <div class="space-y-2 border border-slate-100 rounded-xl p-2.5 bg-slate-50"
                         id="modal-barreras-container">
-                        <!-- populated dynamically -->
+                        
                     </div>
                 </div>
             </div>
@@ -4915,7 +4779,6 @@
     </div>
 </div>
 
-<!-- 6. Modal Adherencia Estimada -->
 <div id="modal-eval-adherencia"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -4978,7 +4841,6 @@
     </div>
 </div>
 
-<!-- 7. Modal Observación Profesional (Timeline/Historial) -->
 <div id="modal-eval-observaciones"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div
@@ -5008,7 +4870,7 @@
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Historial de
                     Observaciones</label>
                 <div class="space-y-2 max-h-56 overflow-y-auto p-1" id="modal-observaciones-timeline">
-                    <!-- Timeline rows populated dynamically -->
+                    
                 </div>
             </div>
 
@@ -5023,12 +4885,11 @@
     </div>
 </div>
 
-<!-- MODAL: Gestor General de Archivos -->
 <div id="modal-archivos-general"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl p-6 relative flex flex-col justify-between"
         onclick="event.stopPropagation()">
-        <!-- Header -->
+        
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2" id="modal-archivos-general-title">
                 <i data-lucide="file" class="w-5 h-5 text-teal-650" id="modal-archivos-general-icon"></i>
@@ -5040,10 +4901,8 @@
             </button>
         </div>
 
-        <!-- Layout de dos columnas -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto flex-1 pr-1">
 
-            <!-- Columna Izquierda: Formulario de Subida -->
             <div class="lg:col-span-4 border-r border-slate-100 pr-0 lg:pr-6 flex flex-col space-y-4">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider">Subir nuevo archivo</h4>
 
@@ -5052,7 +4911,6 @@
                     {% csrf_token %}
                     <input type="hidden" name="categoria" id="upload-form-categoria">
 
-                    <!-- Nombre (opcional) -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Nombre personalizado
                             (opcional)</label>
@@ -5061,26 +4919,23 @@
                             class="w-full text-xs border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
                     </div>
 
-                    <!-- Subcategoria selectiva -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Subcategoría / Tipo</label>
                         <select name="subcategoria" id="upload-form-subcategoria"
                             onchange="handleSubcategoriaSelectChange(this)"
                             class="w-full text-xs border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white outline-none">
-                            <!-- populated dynamically in JS -->
+                            
                         </select>
                         <input type="text" id="upload-form-subcategoria-text" placeholder="Ej: Glucemia"
                             class="w-full text-xs border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors mt-2 hidden">
                     </div>
 
-                    <!-- Observaciones -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Observaciones (opcional)</label>
                         <textarea name="observaciones" rows="2" placeholder="..."
                             class="w-full text-xs border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors"></textarea>
                     </div>
 
-                    <!-- Input de archivo -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Seleccionar archivo</label>
                         <div class="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50 hover:bg-slate-100 transition-colors flex flex-col items-center justify-center text-center cursor-pointer relative"
@@ -5094,7 +4949,6 @@
                         </div>
                     </div>
 
-                    <!-- Botón Guardar -->
                     <button type="submit" id="btn-archivo-subir"
                         class="w-full bg-teal-650 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs">
                         <i data-lucide="plus" class="w-4 h-4"></i> Subir Documento
@@ -5102,7 +4956,6 @@
                 </form>
             </div>
 
-            <!-- Columna Derecha: Lista de Archivos -->
             <div class="lg:col-span-8 flex flex-col">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider mb-4"
                     id="modal-archivos-general-list-title">Archivos Registrados</h4>
@@ -5119,7 +4972,7 @@
                             </tr>
                         </thead>
                         <tbody id="modal-archivos-general-table-body">
-                            <!-- populated dynamically in JS -->
+                            
                         </tbody>
                     </table>
 
@@ -5135,12 +4988,11 @@
     </div>
 </div>
 
-<!-- MODAL: Fotografías de Progreso y Comparador -->
 <div id="modal-archivos-fotos"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] shadow-2xl p-6 relative flex flex-col justify-between"
         onclick="event.stopPropagation()">
-        <!-- Header -->
+        
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
                 <i data-lucide="camera" class="w-5 h-5 text-emerald-600"></i>
@@ -5152,10 +5004,8 @@
             </button>
         </div>
 
-        <!-- Layout 12-columnas -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto flex-1 pr-1">
 
-            <!-- Columna Izquierda: Formulario de Carga (span 3) -->
             <div class="lg:col-span-3 border-r border-slate-100 pr-0 lg:pr-6 flex flex-col space-y-4">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider">Añadir foto</h4>
 
@@ -5164,7 +5014,6 @@
                     {% csrf_token %}
                     <input type="hidden" name="categoria" value="Fotos de Progreso">
 
-                    <!-- Vista -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Ángulo / Vista</label>
                         <select name="subcategoria"
@@ -5177,14 +5026,12 @@
                         </select>
                     </div>
 
-                    <!-- Observaciones -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Observaciones (opcional)</label>
                         <input type="text" name="observaciones" placeholder="Ej. Ayunas, semana 4"
                             class="w-full text-xs border border-slate-200 rounded-xl p-2.5 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-colors">
                     </div>
 
-                    <!-- Archivo de Imagen -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-455 mb-1">Imagen</label>
                         <div class="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50 hover:bg-slate-100 transition-colors flex flex-col items-center justify-center text-center cursor-pointer relative"
@@ -5197,7 +5044,6 @@
                         </div>
                     </div>
 
-                    <!-- Botón Guardar -->
                     <button type="submit" id="btn-foto-subir"
                         class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs">
                         <i data-lucide="plus" class="w-4 h-4"></i> Subir Foto
@@ -5205,14 +5051,13 @@
                 </form>
             </div>
 
-            <!-- Columna Central: Galería y Timeline (span 5) -->
             <div class="lg:col-span-5 border-r border-slate-100 px-0 lg:px-6 flex flex-col max-h-[60vh]">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider mb-4">Línea de Tiempo y Fotos</h4>
 
                 <div class="overflow-y-auto flex-grow space-y-4 pr-1">
                     <div id="modal-fotos-timeline-container"
                         class="space-y-4 relative pl-4 border-l-2 border-slate-150">
-                        <!-- timeline items dynamically added here -->
+                        
                     </div>
 
                     <div id="modal-fotos-empty"
@@ -5223,7 +5068,6 @@
                 </div>
             </div>
 
-            <!-- Columna Derecha: Comparador Dinámico (span 4) -->
             <div class="lg:col-span-4 pl-0 lg:pl-6 flex flex-col space-y-4">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider">Comparador Lado a Lado</h4>
 
@@ -5248,7 +5092,6 @@
                     </div>
                 </div>
 
-                <!-- Visualización lado a lado -->
                 <div
                     class="grid grid-cols-2 gap-2 flex-grow h-64 border border-slate-150 rounded-xl overflow-hidden bg-slate-100">
                     <div
@@ -5275,10 +5118,6 @@
     </div>
 </div>
 
-
-<!-- MODALES DE SEGUIMIENTO -->
-
-<!-- MODAL 1: Consultas de Seguimiento -->
 <div id="modal-seg-consultas"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5294,7 +5133,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 overflow-y-auto flex-1 pr-1">
-            <!-- Formulario (Izquierda) -->
+            
             <form id="form-seg-consultas" class="md:col-span-5 space-y-4"
                 onsubmit="saveSeguimientoSection(event, 'consultas', 'modal-seg-consultas')">
                 <div>
@@ -5328,7 +5167,6 @@
                 </button>
             </form>
 
-            <!-- Historial (Derecha) -->
             <div class="md:col-span-7 flex flex-col">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider mb-3">Historial de Consultas</h4>
                 <div class="overflow-y-auto flex-grow max-h-[50vh] pr-1">
@@ -5342,7 +5180,7 @@
                             </tr>
                         </thead>
                         <tbody id="modal-seg-consultas-table-body">
-                            <!-- populated dynamically -->
+                            
                         </tbody>
                     </table>
                 </div>
@@ -5351,7 +5189,6 @@
     </div>
 </div>
 
-<!-- MODAL 2: Adherencia al Plan -->
 <div id="modal-seg-adherencia"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5424,7 +5261,6 @@
     </div>
 </div>
 
-<!-- MODAL 3: Progreso de Objetivos -->
 <div id="modal-seg-objetivos"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5442,7 +5278,7 @@
         <form id="form-seg-objetivos" class="space-y-5 overflow-y-auto max-h-[70vh] pr-1"
             onsubmit="saveObjetivosForm(event)">
             <div class="space-y-4" id="modal-seg-objetivos-list">
-                <!-- populated dynamically in JS -->
+                
             </div>
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button type="button" onclick="closeSeguimientoModal('modal-seg-objetivos')"
@@ -5455,7 +5291,6 @@
     </div>
 </div>
 
-<!-- MODAL 4: Dificultades y Barreras -->
 <div id="modal-seg-dificultades"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5476,7 +5311,7 @@
                 <label class="block text-[11px] font-bold text-slate-455 mb-2 uppercase">Selecciona Barreras
                     Activas</label>
                 <div class="grid grid-cols-2 gap-2" id="modal-seg-dificultades-checkboxes">
-                    <!-- populated dynamically -->
+                    
                 </div>
             </div>
 
@@ -5491,7 +5326,7 @@
                             data-lucide="plus" class="w-4 h-4"></i></button>
                 </div>
                 <div id="modal-dificultades-custom-list" class="mt-2 space-y-2 max-h-32 overflow-y-auto">
-                    <!-- custom difficulties lists -->
+                    
                 </div>
             </div>
 
@@ -5506,7 +5341,6 @@
     </div>
 </div>
 
-<!-- MODAL 5: Logros Obtenidos -->
 <div id="modal-seg-logros"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5526,7 +5360,7 @@
                 <label class="block text-[11px] font-bold text-slate-455 mb-2 uppercase">Selecciona Logros
                     Obtenidos</label>
                 <div class="grid grid-cols-2 gap-2" id="modal-seg-logros-checkboxes">
-                    <!-- populated dynamically -->
+                    
                 </div>
             </div>
 
@@ -5540,7 +5374,7 @@
                             data-lucide="plus" class="w-4 h-4"></i></button>
                 </div>
                 <div id="modal-logros-custom-list" class="mt-2 space-y-2 max-h-32 overflow-y-auto">
-                    <!-- custom achievements lists -->
+                    
                 </div>
             </div>
 
@@ -5555,7 +5389,6 @@
     </div>
 </div>
 
-<!-- MODAL 6: Notas de Seguimiento -->
 <div id="modal-seg-notas"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5571,7 +5404,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 overflow-y-auto flex-1 pr-1">
-            <!-- Formulario (Izquierda) -->
+            
             <form id="form-seg-notas" class="md:col-span-5 space-y-4"
                 onsubmit="saveSeguimientoSection(event, 'notas', 'modal-seg-notas')">
                 <div>
@@ -5587,18 +5420,16 @@
                 </button>
             </form>
 
-            <!-- Timeline (Derecha) -->
             <div class="md:col-span-7 flex flex-col">
                 <h4 class="text-xs font-bold text-slate-455 uppercase tracking-wider mb-3">Historial Cronológico</h4>
                 <div class="overflow-y-auto flex-grow max-h-[50vh] pr-1 space-y-3" id="modal-seg-notas-list">
-                    <!-- populated dynamically -->
+                    
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL 7: Próxima Consulta -->
 <div id="modal-seg-proxima-cita"
     class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden transition-all duration-300 p-4">
     <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col justify-between"
@@ -5659,48 +5490,34 @@
     </div>
 </div>
 
-
-<!-- ─── 6. SCRIPTS DE CONTROL DE NAVEGACIÓN Y CÁLCULOS ─── -->
 {{ paciente.informacion_clinica.medicacion_suplementacion|json_script:"meds-data-json" }}
 <script>
     const activeConsultaId = {% if active_consulta %}"{{ active_consulta.id }}"{% else %} null{% endif %};
 
-    // Control de Pestañas
     function switchTab(event, tabId) {
-        document.querySelectorAll('.tab-panel').forEach(panel => {
-            panel.classList.add('hidden');
-        });
-        const targetPanel = document.getElementById(tabId);
-        if (targetPanel) {
-            targetPanel.classList.remove('hidden');
-        }
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        const panel = document.getElementById(tabId);
+        if (panel) panel.classList.remove('hidden');
 
-        // Lock finalized elements if consultation is finalized
         setTimeout(lockFinalizedFields, 50);
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('border-teal-500', 'text-teal-650', 'font-bold');
-            btn.classList.add('border-transparent', 'text-slate-500', 'font-medium');
+            btn.classList.remove('border-teal-600', 'text-teal-600', 'font-semibold');
+            btn.classList.add('border-transparent', 'text-slate-600', 'font-medium');
         });
 
-        event.currentTarget.classList.add('border-teal-500', 'text-teal-650', 'font-bold');
-        event.currentTarget.classList.remove('border-transparent', 'text-slate-500', 'font-medium');
-
-        if (tabId === 'tab-mediciones') {
-            loadMediciones();
-        } else if (tabId === 'tab-evaluacion') {
-            loadEvaluacion();
-        } else if (tabId === 'tab-plan') {
-            loadPlanAlimentario();
-        } else if (tabId === 'tab-recomendaciones') {
-            loadRecomendaciones();
-        } else if (tabId === 'tab-entregables') {
-            loadEntregables();
-        } else if (tabId === 'tab-archivos') {
-            loadArchivos();
-        } else if (tabId === 'tab-seguimiento') {
-            loadSeguimiento();
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('border-teal-600', 'text-teal-600', 'font-semibold');
+            event.currentTarget.classList.remove('border-transparent', 'text-slate-600', 'font-medium');
         }
+
+        if (tabId === 'tab-mediciones') loadMediciones();
+        else if (tabId === 'tab-evaluacion') loadEvaluacion();
+        else if (tabId === 'tab-plan') loadPlanAlimentario();
+        else if (tabId === 'tab-recomendaciones') loadRecomendaciones();
+        else if (tabId === 'tab-entregables') loadEntregables();
+        else if (tabId === 'tab-archivos') loadArchivos();
+        else if (tabId === 'tab-seguimiento') loadSeguimiento();
     }
 
     // Apertura y Cierre de Modales de Sección
@@ -5738,7 +5555,6 @@
             e.target.classList.add('hidden');
         }
     });
-
 
     // Guardado Asíncrono AJAX de Sección
     function submitSectionForm(event, formId, modalId) {
@@ -10551,7 +10367,6 @@
         };
         sendSeguimientoData(payload, 'modal-seg-logros');
     }
-
 
     // Auto-activar pestaña basada en query param '?tab=...'
     window.addEventListener('DOMContentLoaded', () => {

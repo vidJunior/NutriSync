@@ -1,7 +1,4 @@
-// static/js/app.js
-// Funciones globales de NutriSync: modales, carga AJAX de formularios/detalles.
 
-// ─── Modal ──────────────────────────────────────────────────────────────────
 
 function openModal(title) {
     const overlay = document.getElementById('modal-overlay');
@@ -61,6 +58,88 @@ function _showError(message) {
     content.replaceChildren(p);
 }
 
+const tabsContainer = document.getElementById('tabs-container');
+const scrollBtns = document.querySelectorAll('.scroll-btn');
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(updateTabScrollIndicators, 100);
+    if (tabsContainer && window.innerWidth <= 767) setupTouchScroll(tabsContainer);
+});
+
+function updateTabScrollIndicators() {
+    if (!tabsContainer || !scrollBtns) return;
+
+    const canScrollLeft = tabsContainer.scrollLeft > 0;
+    const canScrollRight = tabsContainer.scrollLeft + tabsContainer.clientWidth < tabsContainer.scrollWidth - 10;
+
+    scrollBtns[0].style.opacity = canScrollLeft ? '1' : '0.3';
+    scrollBtns[1].style.opacity = canScrollRight ? '1' : '0.3';
+    
+    scrollBtns.forEach(btn => {
+        btn.style.display = canScrollLeft || canScrollRight ? 'flex' : 'none';
+    });
+}
+
+function scrollTabs(direction) {
+    if (!tabsContainer) return;
+
+    const scrollAmount = window.innerWidth <= 374 ? 120 : 
+                        window.innerWidth <= 767 ? 140 : 
+                        window.innerWidth <= 1023 ? 200 : 260;
+
+    const target = direction === 'left' 
+        ? Math.max(0, tabsContainer.scrollLeft - scrollAmount)
+        : Math.min(tabsContainer.scrollWidth - tabsContainer.clientWidth, tabsContainer.scrollLeft + scrollAmount);
+
+    if (tabsContainer.scrollLeft !== target) {
+        tabsContainer.scrollTo({ left: target, behavior: 'smooth' });
+    }
+}
+
+function setupTouchScroll(container) {
+    let startX = 0;
+    let isScrolling = false;
+    let resizeTimeout;
+
+    container.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isScrolling = setTimeout(() => isScrolling = false, 300);
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+        if (!isScrolling) return;
+        
+        const diff = e.touches[0].clientX - startX;
+        if (Math.abs(diff) > 50) {
+            container.scrollBy({ left: diff > 0 ? -120 : 120, behavior: 'smooth' });
+            startX = e.touches[0].clientX;
+            clearTimeout(isScrolling);
+            isScrolling = false;
+        }
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateTabScrollIndicators();
+            if (window.innerWidth <= 767) setupTouchScroll(container);
+        }, 150);
+    });
+}
+
+if (tabsContainer) {
+    setInterval(updateTabScrollIndicators, 500);
+}
+
+if (tabsContainer && window.innerWidth >= 768) {
+    tabsContainer.addEventListener('wheel', (e) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+            e.preventDefault();
+            tabsContainer.scrollLeft += e.deltaX;
+        }
+    }, { passive: false });
+}
+
 function setModalContent(htmlOrElement) {
     const content = document.getElementById('modal-content');
     content.replaceChildren();
@@ -75,7 +154,6 @@ function setModalContent(htmlOrElement) {
         content.appendChild(document.importNode(htmlOrElement, true));
     }
 
-    // Ejecutar scripts insertados dinámicamente para que corran los cálculos en tiempo real
     const scripts = content.querySelectorAll('script');
     scripts.forEach(oldScript => {
         const newScript = document.createElement('script');
@@ -88,8 +166,6 @@ function setModalContent(htmlOrElement) {
         lucide.createIcons();
     }
 }
-
-// ─── Carga de formulario (Nuevo / Editar) ──────────────────────────────────
 
 async function openModalNuevo() {
     openModal('Nuevo Paciente');
@@ -125,7 +201,6 @@ function bindFormSubmit() {
     const form = document.getElementById('paciente-form');
     if (!form) return;
 
-    // Extraer la URL directamente del atributo action nativo del formulario
     let targetUrl = form.getAttribute('action');
     if (!targetUrl || targetUrl === 'undefined' || targetUrl.includes('undefined')) {
         targetUrl = '/pacientes/nuevo/';
@@ -134,7 +209,6 @@ function bindFormSubmit() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Evitar doble envío concurrente
         if (form.dataset.submitting === 'true') {
             return;
         }
@@ -205,9 +279,6 @@ function bindFormSubmit() {
     });
 }
 
-
-// ─── Toggle estado (desde modal o desde lista) ──────────────────────────────
-
 async function toggleEstado(pk) {
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.CSRF_TOKEN || '';
@@ -232,15 +303,11 @@ async function toggleEstado(pk) {
     }
 }
 
-// ─── Refrescar lista de pacientes (recarga la tabla sin recargar la página) ─
-
 let refreshCounter = 0;
 async function refreshListaPacientes() {
     const oldContainer = document.getElementById('pacientes-list-container');
     const oldTable = document.getElementById('pacientes-table-body');
 
-    // Si no estamos en la página de lista de pacientes (por ejemplo, en el Dashboard), 
-    // recargamos la página completa para reflejar los cambios.
     if (!oldContainer && !oldTable) {
         location.reload();
         return;
@@ -271,16 +338,14 @@ async function refreshListaPacientes() {
         const oldActivosCount = document.getElementById('pacientes-activos-count');
         const oldInactivosCount = document.getElementById('pacientes-inactivos-count');
 
-        // Reemplazar el contenedor completo (maneja la transición vacío <-> con datos de forma robusta)
         if (oldContainer && newContainer) {
             oldContainer.replaceWith(document.importNode(newContainer, true));
         } else {
-            // Fallback en caso de que solo exista la tabla
+
             if (oldTable && newTable) oldTable.replaceWith(document.importNode(newTable, true));
             if (oldPagination && newPagination) oldPagination.replaceWith(document.importNode(newPagination, true));
         }
 
-        // Reemplazar los conteos/filtros
         if (oldCounts && newCounts) {
             oldCounts.replaceWith(document.importNode(newCounts, true));
         }
@@ -296,8 +361,6 @@ async function refreshListaPacientes() {
     }
 }
 
-// ─── Sidebar Responsive ────────────────────────────────────────────────────
-
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (sidebar) {
@@ -312,28 +375,24 @@ function closeSidebar() {
     }
 }
 
-// ─── Inicialización al cargar la página ─────────────────────────────────────
-
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
 
-    // Sidebar responsive toggle
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
     const sidebarLinks = sidebar ? sidebar.querySelectorAll('a') : [];
 
     if (menuBtn && sidebar) {
-        // Toggle sidebar con el botón del menú
+
         menuBtn.addEventListener('click', () => {
             toggleSidebar();
         });
 
-        // Cerrar sidebar cuando se hace clic en un enlace (en móvil)
         sidebarLinks.forEach(link => {
             link.addEventListener('click', () => {
-                // Solo cerrar en dispositivos pequeños (menos de lg)
+
                 if (window.innerWidth < 1024) {
                     closeSidebar();
                 }
@@ -341,14 +400,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cerrar sidebar al cambiar el tamaño de la ventana a desktop
     window.addEventListener('resize', () => {
         const sidebar = document.getElementById('sidebar');
         if (sidebar && window.innerWidth >= 1024) {
             sidebar.classList.remove('-translate-x-full');
         }
     });
-    // Solución para evitar cerrar modal al seleccionar texto (drag selection)
+
     const modalOverlay = document.getElementById('modal-overlay');
     if (modalOverlay) {
         let mousedownTarget = null;
@@ -356,10 +414,11 @@ document.addEventListener('DOMContentLoaded', () => {
             mousedownTarget = e.target;
         });
         modalOverlay.addEventListener('click', (e) => {
-            // Solo cerrar si el mousedown y el click ocurrieron en el overlay y no hay texto seleccionado
+
             if (e.target === modalOverlay && mousedownTarget === modalOverlay && !window.getSelection().toString()) {
                 closeModal();
             }
         });
     }
 });
+

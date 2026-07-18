@@ -1,16 +1,11 @@
-/* static/css/custom.css */
-/* Variables CSS y estilos base premium complementarios a Tailwind CDN. */
-
-/* ─── Utilidades del sidebar moderno ────────────────────────────────────────── */
-
 .sidebar-link {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
     border-radius: 14px;
-    font-size: 0.875rem;     /* text-sm */
-    color: #94A3B8;          /* slate-400 */
+    font-size: 0.875rem;
+    color: #94A3B8;
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -18,12 +13,12 @@
 
 .sidebar-link:hover {
     background-color: rgba(255, 255, 255, 0.05);
-    color: #F8FAFC;          /* slate-50 */
-    padding-left: 20px;      /* Desplazamiento sutil a la derecha */
+    color: #F8FAFC;
+    padding-left: 20px;
 }
 
 .sidebar-link.active {
-    background: linear-gradient(135deg, #0d9488, #10b981); /* teal-600 a emerald-500 */
+    background: linear-gradient(135deg, #0d9488, #10b981);
     color: #ffffff;
     font-weight: 600;
     box-shadow: 0 10px 20px -5px rgba(13, 148, 136, 0.3);
@@ -33,24 +28,14 @@
     transform: scale(1.05);
 }
 
-/* ─── Animaciones Premium ─────────────────────────────────────────────────── */
-
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-/* ─── Transiciones suaves globales ───────────────────────────────────────── */
 
 a, button, input, select, textarea {
     transition-property: color, background-color, border-color, box-shadow, transform;
@@ -58,31 +43,97 @@ a, button, input, select, textarea {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── Scroll suave ───────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
 
-html {
-    scroll-behavior: smooth;
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* ─── Focus visible para accesibilidad ──────────────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar { height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.tab-scroll-wrapper { position: relative; }
+
+.scroll-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    padding: 0.25rem;
+}
+
+.scroll-indicator:hover {
+    background: rgba(13, 148, 136, 0.2);
+    color: #0d9488;
+    transform: scale(1.05);
+}
+
+.scroll-indicator.hidden { opacity: 0; pointer-events: none; }
+
+@media (max-width: 1023px) {
+    #tabs-container { padding: 0.75rem 0; }
+    .tab-btn { padding: 0.75rem 1rem; font-size: 0.85rem; }
+    .tab-btn i { width: 1.5rem; height: 1.5rem; }
+}
+
+@media (max-width: 767px) {
+    #tabs-container {
+        padding: 0.75rem 0;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    .tab-btn {
+        padding: 1.125rem 1rem;
+        font-size: 0.75rem;
+        border-radius: 0.75rem;
+        min-width: 4rem;
+    }
+    .tab-btn i { width: 2.25rem; height: 2.25rem; margin-bottom: 0.25rem; }
+}
+
+@media (max-width: 374px) {
+    .tab-btn span { display: none; }
+    .tab-btn { min-width: 3.75rem; padding: 1rem 0.75rem; }
+    .tab-btn i { margin: 0; width: 2rem; height: 2rem; }
+}
+
+@media (min-width: 1024px) {
+    #tabs-container { padding: 1rem 0; }
+    .tab-btn { padding: 1rem 1.25rem; font-size: 0.875rem; }
+    .tab-btn i { width: 1.75rem; height: 1.75rem; margin-bottom: 0.25rem; }
+}
+
+@media (min-width: 1280px) {
+    .tab-btn { padding: 1.25rem 1.5rem; font-size: 0.9375rem; }
+    .tab-btn i { width: 2rem; height: 2rem; }
+}
+
+@media (hover: none) {
+    .tab-btn:active { transform: scale(0.97); }
+    .tab-btn:focus { outline: 2px dashed #0D9488; outline-offset: 2px; }
+}
 
 :focus-visible {
     outline: 2px solid #0D9488;
     outline-offset: 2px;
 }
 
-/* ─── Pulido de Tarjetas (Hover Elevado) ────────────────────────────────── */
-
 body {
     background-color: #F8FAFC;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-.card-premium-hover {
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.card-premium-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
-}
+.card-premium-hover { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.card-premium-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05); }
