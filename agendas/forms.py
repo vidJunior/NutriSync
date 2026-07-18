@@ -1,6 +1,6 @@
 # agendas/forms.py
 # Formulario de registro y edición de Citas.
-# Filtra dinámicamente los pacientes del nutricionista autenticado y aplica el sistema de diseño.
+# Filtra pacientes y configura el formulario de citas.
 
 from django import forms
 from django.utils import timezone
@@ -41,13 +41,13 @@ class CitaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Extraemos el usuario (nutricionista) de los kwargs pasados por la vista
+        # Obtiene el nutricionista de la vista.
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        # 1. Filtrado dinámico de pacientes: solo los del nutricionista logueado y activos
+        # 1. Filtra pacientes activos.
         if self.user:
-            # Mostramos únicamente los pacientes que pertenecen a este profesional y que estén activos (estado=True)
+            # Muestra solo pacientes activos del profesional.
             self.fields["paciente"].queryset = Paciente.objects.filter(
                 nutricionista=self.user,
                 estado=True,
@@ -56,21 +56,20 @@ class CitaForm(forms.ModelForm):
             # Fallback seguro en caso de que no se pase usuario
             self.fields["paciente"].queryset = Paciente.objects.none()
 
-        # 2. Restringir selección de fechas pasadas en el navegador para citas nuevas
+        # 2. Bloquea fechas pasadas.
         if not self.instance.pk:
             ahora_local = timezone.localtime(timezone.now())
-            # Formato requerido por el input HTML5 datetime-local: YYYY-MM-DDTHH:MM
+            # Formato de datetime-local.
             self.fields["fecha_hora"].widget.attrs["min"] = ahora_local.strftime("%Y-%m-%dT%H:%M")
 
-        # 3. Manejo condicional de la edición del estado del paciente
+        # 3. Configura los estados.
         if not self.instance.pk:
-            # En creación: el estado se maneja automáticamente como 'programada' (por defecto en el modelo)
-            # y se remueve del formulario para evitar que sea alterado por el usuario.
+            # Usa 'programada' al crear.
             if "estado" in self.fields:
                 del self.fields["estado"]
         else:
-            # En edición: restringir los estados de cambio a: Completada, Cancelada, No asistió.
-            # Conservamos 'programada' como opción seleccionable SOLAMENTE si la cita está actualmente en ese estado.
+            # Limita los estados editables.
+            # Mantiene 'programada' si es el estado actual.
             if "estado" in self.fields:
                 from config.choices import EstadoCita
                 
@@ -79,19 +78,19 @@ class CitaForm(forms.ModelForm):
                     (EstadoCita.CANCELADA, "Cancelada"),
                 ]
                 
-                # "No asistió" solo debe estar disponible si la cita ya inició o pasó en el tiempo
+                # Habilita "No asistió" al iniciar.
                 ahora = timezone.now()
                 if self.instance.fecha_hora and self.instance.fecha_hora < ahora:
                     opciones.append((EstadoCita.NO_ASISTIO, "No asistió"))
                 elif self.instance.estado == EstadoCita.NO_ASISTIO:
-                    # Si ya estaba en No asistió por alguna razón, se mantiene en la lista
+                    # Conserva el estado actual.
                     opciones.append((EstadoCita.NO_ASISTIO, "No asistió"))
                     
                 if self.instance.estado == EstadoCita.PROGRAMADA:
                     opciones.insert(0, (EstadoCita.PROGRAMADA, "Programada"))
                 self.fields["estado"].choices = opciones
 
-            # Bloqueo del cambio de tipo y de paciente si la cita ya es de tipo 'Primera Consulta'
+            # Bloquea tipo y paciente en la primera consulta.
             from config.choices import TipoCita
             if self.instance.tipo == TipoCita.PRIMERA_CONSULTA:
                 if "tipo" in self.fields:
@@ -102,7 +101,7 @@ class CitaForm(forms.ModelForm):
                     self.fields["paciente"].help_text = "El paciente de una 'Primera Consulta' no puede ser modificado."
 
 
-        # 3. Aplicar clases CSS del sistema de diseño (Tailwind) a todos los campos
+        # 3. Aplica clases Tailwind.
         for field_name, field in self.fields.items():
             if field_name == "fecha_hora":
                 # Dejamos espacio para el icono a la izquierda (pl-10)
@@ -118,7 +117,7 @@ class CitaForm(forms.ModelForm):
                     "transition duration-150"
                 )
 
-            # Si es un checkbox (no lo hay en este form por defecto, pero por robustez)
+            # Configura campos booleanos.
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs["class"] = "rounded text-teal-600 focus:ring-teal-500 border-slate-300"
             else:

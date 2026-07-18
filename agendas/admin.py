@@ -31,6 +31,6 @@ class CitaAdmin(admin.ModelAdmin):
     ordering = ("-fecha_hora",)
 
     def get_queryset(self, request):
-        # Optimizamos queries en el admin agregando select_related para evitar N+1 queries
+        # Evita consultas N+1 en el admin.
         return super().get_queryset(request).select_related("paciente", "paciente__nutricionista")
 

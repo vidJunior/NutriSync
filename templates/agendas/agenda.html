@@ -50,7 +50,7 @@
 {% block content %}
 <div class="flex flex-col lg:flex-row gap-6 relative overflow-hidden">
     
-    <!-- ─── SECCIÓN IZQUIERDA: CALENDARIO Y CONTROLES ─── -->
+    <!-- Calendario y controles -->
     <div class="flex-1 space-y-6">
         
         <!-- Header de la Agenda -->
@@ -59,7 +59,7 @@
             <p class="text-xs text-slate-400">Gestiona tus consultas y citas</p>
         </div>
 
-        <!-- ─── 1. PANEL SUPERIOR ─── -->
+        <!-- Panel superior -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <form method="GET" action="{% url 'agendas:agenda' %}" id="agenda-filters-form" class="flex flex-wrap items-center gap-3 flex-1">
                 
@@ -136,10 +136,10 @@
             </form>
         </div>
 
-        <!-- ─── 2. CALENDARIO ─── -->
+        <!-- Calendario -->
         {% if citas or not buscar and not filtro_tipo and not filtro_estado %}
         
-            <!-- ─── VISTA SEMANAL (GRILLA DE HORAS) ─── -->
+            <!-- Vista semanal -->
             {% if vista == 'semana' %}
             <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
                 <!-- Cabecera de Días de la semana -->
@@ -195,10 +195,10 @@
                             {% endfor %}
                         </div>
 
-                        <!-- Columnas de cada día con posicionamiento absoluto -->
+                        <!-- Columnas del día -->
                         {% for ds in dias_semana %}
                         <div class="relative h-full p-1">
-                            <!-- Indicador de hora actual en la columna del día de hoy -->
+                                <!-- Hora actual -->
                             {% if ds.fecha == ahora_date and current_time_top_pct %}
                             <div class="current-time-indicator" style="top: {{ current_time_top_pct|unlocalize }}%;">
                                 <div class="current-time-dot"></div>
@@ -244,7 +244,7 @@
                 </div>
             </div>
 
-            <!-- ─── VISTA DIARIA ─── -->
+            <!-- Vista diaria -->
             {% elif vista == 'dia' %}
             <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
                 <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -326,7 +326,7 @@
                 </div>
             </div>
 
-            <!-- ─── VISTA MENSUAL ─── -->
+            <!-- Vista mensual -->
             {% elif vista == 'mes' %}
             <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
                 <div class="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-semibold text-slate-500 py-3">
@@ -372,7 +372,7 @@
             </div>
             {% endif %}
 
-            <!-- ─── LEYENDA DEL CALENDARIO ─── -->
+            <!-- Leyenda -->
             <div class="flex flex-wrap items-center gap-4 text-[10px] text-slate-450 font-bold px-2 py-1 select-none">
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Primera consulta
@@ -395,7 +395,7 @@
             </div>
 
         {% else %}
-            <!-- ─── ESTADO VACÍO ─── -->
+            <!-- Sin citas -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
                 <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
                     <i data-lucide="calendar" class="w-8 h-8 text-slate-300"></i>
@@ -414,7 +414,7 @@
             </div>
         {% endif %}
 
-        <!-- ─── SECCIÓN INFERIOR: PRÓXIMAS CONSULTAS Y ESTADÍSTICAS DEL DÍA ─── -->
+    <!-- Consultas y estadísticas -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             <!-- Listado de Próximas Consultas -->
@@ -516,7 +516,7 @@
 
     </div>
 
-    <!-- ─── SECCIÓN DERECHA: DRAWER/PANEL DETALLADO DE CONSULTA ─── -->
+    <!-- Detalle de consulta -->
     <div id="appointment-drawer" class="w-full lg:w-96 bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-5 shrink-0 hidden flex flex-col justify-between h-[750px] sticky top-24 drawer-transition">
         
         <!-- Contenido Superior -->
@@ -671,7 +671,7 @@
 
 </div>
 
-<!-- ─── MODAL DE BLOQUEAR HORARIO ─── -->
+<!-- Bloquear horario -->
 <div id="bloqueo-modal" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden border border-slate-200">
         <div class="p-5 border-b border-slate-150 flex items-center justify-between bg-slate-50">
@@ -877,7 +877,7 @@
         document.getElementById('appointment-drawer').classList.add('hidden');
     }
 
-    // Función auxiliar para sumar minutos a una hora HH:MM
+        // Suma minutos a una hora.
     function calcularHoraFin(horaInicio, duracionMinutos) {
         const partes = horaInicio.split(':');
         let horas = parseInt(partes[0]);

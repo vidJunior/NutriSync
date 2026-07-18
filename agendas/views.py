@@ -297,6 +297,32 @@ class CitaCreateView(LoginRequiredMixin, CitaFormFragmentMixin, CreateView):
     form_class = CitaForm
     template_name = "agendas/form.html"
 
+    def form_valid(self, form):
+        try:
+            suscripcion = self.request.user.suscripcion
+        except Exception:
+            suscripcion = None
+
+        if suscripcion and suscripcion.estado == "activa":
+            limite = suscripcion.plan.limite_citas_mes
+        else:
+            from facturacion.models import PlanSuscripcion
+            plan_defecto = PlanSuscripcion.objects.filter(nombre="Prueba Gratis").first()
+            limite = plan_defecto.limite_citas_mes if plan_defecto else -1
+
+        if limite != -1:
+            hoy = timezone.now().date()
+            inicio_mes = hoy.replace(day=1)
+            total = Cita.objects.filter(
+                Q(paciente__nutricionista=self.request.user) | Q(nutricionista=self.request.user),
+                fecha_hora__date__gte=inicio_mes
+            ).count()
+            if total >= limite:
+                form.add_error(None, f"Límite alcanzado: Tu plan actual solo permite registrar hasta {limite} citas mensuales. Por favor, actualiza tu plan en la sección de Facturación.")
+                return self.form_invalid(form)
+        form.instance.nutricionista = self.request.user
+        return super().form_valid(form)
+
     def get_form_kwargs(self):
         # Pasamos el usuario logueado al formulario para filtrar sus pacientes activos
         kwargs = super().get_form_kwargs()

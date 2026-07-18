@@ -28,7 +28,7 @@
     <!-- Fila principal -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Columna Izquierda: Información de Cita (2/3 de ancho) -->
+        <!-- Datos de la cita -->
         <div class="lg:col-span-2 space-y-6">
 
             <!-- Ficha técnica -->
@@ -161,7 +161,7 @@
 
         </div>
 
-        <!-- Columna Derecha: Paciente & Acciones Rápidas (1/3 de ancho) -->
+        <!-- Paciente y acciones -->
         <div class="space-y-6">
 
             <!-- Ficha rápida del Paciente -->
@@ -223,7 +223,7 @@
                                 Marcar como Completada
                             </button>
                         </form>
-                        <!-- No asistió (Solo disponible si la cita ya inició o pasó en el tiempo) -->
+                        <!-- No asistió -->
                         {% if puede_marcar_no_asistio %}
                         <form method="post" action="{% url 'agendas:cambiar_estado' cita.pk %}">
                             {% csrf_token %}

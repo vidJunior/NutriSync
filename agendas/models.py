@@ -1,6 +1,5 @@
 # agendas/models.py
-# Modelo Cita — representa la agenda y las consultas de los pacientes.
-# Incluye validaciones atómicas de solapamiento y de estado del paciente.
+# Citas y bloqueos de agenda.
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -92,7 +91,7 @@ class Cita(models.Model):
             f"Cita con {self.paciente} - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
         )
 
-    # ─── Properties de Estado ────────────────────────────────────────────────
+    # Estado
     @property
     def esta_programada(self):
         return self.estado == EstadoCita.PROGRAMADA
@@ -132,7 +131,7 @@ class Cita(models.Model):
             return 'orange'
         return 'blue'
 
-    # ─── Validaciones de Negocio ─────────────────────────────────────────────
+    # Validaciones
     def clean(self):
         super().clean()
         errors = {}
@@ -147,7 +146,7 @@ class Cita(models.Model):
 
         # 1. Validar que el paciente esté activo
         if self.paciente_id:
-            # Recargamos de la BD para asegurar que no se use caché obsoleto
+            # Recarga el estado guardado.
             paciente = Paciente.objects.only("estado", "nombre", "apellido").get(
                 pk=self.paciente_id
             )
@@ -155,36 +154,42 @@ class Cita(models.Model):
                 errors["paciente"] = ValidationError(
                     "No se pueden programar citas para un paciente inactivo."
                 )
+            if (
+                self.nutricionista_id
+                and self.nutricionista_id != self.paciente.nutricionista_id
+            ):
+                errors["nutricionista"] = ValidationError(
+                    "El nutricionista debe ser el responsable del paciente."
+                )
 
-        # 1.5 Validar inalterabilidad de cita completada/finalizada
+        # 1.5 Bloquea citas finalizadas.
         if original and original.estado in [EstadoCita.COMPLETADA, EstadoCita.FINALIZADA]:
             if self.estado != original.estado:
                 errors["estado"] = ValidationError(
                     "El estado de una cita completada o finalizada es inalterable."
                 )
 
-        # 2. Validar que la fecha no sea en el pasado (tanto para citas nuevas como para modificaciones de fecha)
+        # 2. Bloquea fechas pasadas.
         if self.fecha_hora:
             validar_fecha_pasada = False
             if not self.pk:
                 # Cita nueva: la fecha siempre debe ser a futuro
                 validar_fecha_pasada = True
             else:
-                # Edición: solo validamos si la fecha ha sido modificada
+                # Valida solo si cambió la fecha.
                 if original and self.fecha_hora != original.fecha_hora:
                     validar_fecha_pasada = True
 
             if validar_fecha_pasada:
-                # Añadimos un pequeño margen de 1 minuto para evitar errores por desfases de milisegundos
+                # Tolera un minuto de desfase.
                 if self.fecha_hora < timezone.now() - timedelta(minutes=1):
                     errors["fecha_hora"] = ValidationError(
                         "La fecha y hora de la cita no puede ser en el pasado."
                     )
 
-        # 3. Validar solapamiento de horarios para el mismo nutricionista
+        # 3. Valida cruces de horario.
         if self.fecha_hora and self.duracion_minutos:
-            # Si hay paciente, el nutricionista es paciente.nutricionista
-            # Si no hay paciente (bloqueo), debe estar asociado directamente al nutricionista
+            # Obtiene el nutricionista de la cita.
             nutricionista = self.paciente.nutricionista if self.paciente_id else self.nutricionista
             
             if nutricionista:
@@ -192,8 +197,8 @@ class Cita(models.Model):
                 fin_nuevo = self.fecha_fin
                 fecha_dia = timezone.localtime(self.fecha_hora).date()
 
-                # Obtenemos todas las citas activas/bloqueos de este nutricionista en el mismo día
-                # Filtramos por nutricionista del paciente o nutricionista directo en Cita
+                # Busca cruces de horario del mismo día.
+                # Incluye citas directas y de pacientes.
                 citas_dia = (
                     Cita.objects.filter(
                         models.Q(paciente__nutricionista=nutricionista) | models.Q(nutricionista=nutricionista),
@@ -210,7 +215,7 @@ class Cita(models.Model):
                     inicio_existente = cita_existente.fecha_hora
                     fin_existente = cita_existente.fecha_fin
 
-                    # Condición de traslape: (inicio1 < fin2) AND (fin1 > inicio2)
+                    # Detecta intervalos superpuestos.
                     if inicio_existente < fin_nuevo and fin_existente > inicio_nuevo:
                         desc_cita = (
                             f"otra cita del paciente {cita_existente.paciente.nombre_completo}"
@@ -227,11 +232,11 @@ class Cita(models.Model):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        # Auto-asignar nutricionista desde el paciente si existe
+        # Asigna el nutricionista del paciente.
         if self.paciente_id and not self.nutricionista_id:
             self.nutricionista = self.paciente.nutricionista
             
         # Siguiendo los estándares del docente de la sesión 2,
-        # forzamos full_clean() antes de guardar para asegurar la integridad de datos
+        # Valida antes de guardar.
         self.full_clean()
         super().save(*args, **kwargs)

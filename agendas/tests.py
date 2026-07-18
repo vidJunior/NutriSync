@@ -1,5 +1,5 @@
 # agendas/tests.py
-# Pruebas unitarias de integridad de datos y lógica de solapamiento en NutriSync.
+# Pruebas de agenda.
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -117,7 +117,7 @@ class CitaModelTestCase(TestCase):
         with self.assertRaises(ValidationError):
             cita_solapada_1.save()
 
-        # Intento 2: Solapamiento parcial al inicio (09:45 - 10:30)
+        # 2. Cruce al inicio.
         cita_solapada_2 = Cita(
             paciente=self.paciente_activo_a,
             fecha_hora=hora_cita - timedelta(minutes=15),
@@ -127,7 +127,7 @@ class CitaModelTestCase(TestCase):
         with self.assertRaises(ValidationError):
             cita_solapada_2.save()
 
-        # Intento 3: Solapamiento parcial al final (10:15 - 11:00)
+        # 3. Cruce al final.
         cita_solapada_3 = Cita(
             paciente=self.paciente_activo_a,
             fecha_hora=hora_cita + timedelta(minutes=15),
@@ -137,7 +137,7 @@ class CitaModelTestCase(TestCase):
         with self.assertRaises(ValidationError):
             cita_solapada_3.save()
 
-        # Intento 4: Totalmente contenida dentro (10:10 - 10:30)
+        # 4. Intervalo contenido.
         cita_solapada_4 = Cita(
             paciente=self.paciente_activo_a,
             fecha_hora=hora_cita + timedelta(minutes=10),
@@ -182,7 +182,7 @@ class CitaModelTestCase(TestCase):
             motivo="Consulta de rutina",
         )
 
-        # Nutricionista B programa cita de 10:00 a 10:45 para su propio paciente
+        # Otro nutricionista usa el mismo horario.
         cita_nutri_b = Cita(
             paciente=self.paciente_activo_b,
             fecha_hora=hora_cita,
