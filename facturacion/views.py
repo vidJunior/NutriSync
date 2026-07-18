@@ -576,7 +576,7 @@ def factura_registrar_pago(request, pk):
 
 @login_required
 def suscripcion_detalle(request):
-    """Muestra el plan actual del nutricionista."""
+    """Muestra el plan actual del nutricionista y su método de pago vinculado."""
     try:
         suscripcion = SuscripcionNutricionista.objects.get(
             nutricionista=request.user
@@ -584,18 +584,50 @@ def suscripcion_detalle(request):
     except SuscripcionNutricionista.DoesNotExist:
         suscripcion = None
 
+    # Obtener el método de pago guardado analizando las notas del último pago
+    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").order_by("-fecha_pago").first()
+    metodo_guardado = None
+    if ultimo_pago and "removido" not in ultimo_pago.notas:
+        if "Tarjeta terminada en" in ultimo_pago.notas:
+            digitos = ultimo_pago.notas.split("terminada en")[-1].strip()
+            metodo_guardado = {
+                "tipo": "tarjeta",
+                "detalle": f"Tarjeta terminada en {digitos}"
+            }
+        elif "Celular Yape:" in ultimo_pago.notas:
+            partes = ultimo_pago.notas.split("Celular Yape:")[-1].strip().split(" - Código:")
+            celular = partes[0].strip()
+            codigo = partes[1].strip() if len(partes) > 1 else ""
+            detalle = f"Celular: {celular}"
+            if codigo:
+                detalle += f" (Código: {codigo})"
+            metodo_guardado = {
+                "tipo": "yape",
+                "detalle": detalle
+            }
+        elif "PayPal Email:" in ultimo_pago.notas:
+            email_paypal = ultimo_pago.notas.split("PayPal Email:")[-1].strip()
+            metodo_guardado = {
+                "tipo": "paypal",
+                "detalle": f"PayPal ({email_paypal})"
+            }
+
     planes = PlanSuscripcion.objects.filter(activo=True)
     return render(
         request,
         "facturacion/suscripcion/plan_actual.html",
-        {"suscripcion": suscripcion, "planes": planes},
+        {
+            "suscripcion": suscripcion, 
+            "planes": planes,
+            "metodo_guardado": metodo_guardado
+        },
     )
 
 
 @login_required
 def suscripcion_cambiar_plan(request):
     """Permite cambiar el plan de suscripción."""
-    planes = PlanSuscripcion.objects.filter(activo=True)
+    planes = PlanSuscripcion.objects.filter(activo=True).exclude(nombre="Prueba Gratis")
 
     if request.method == "POST":
         form = CambiarPlanForm(request.POST, planes=planes)
@@ -609,6 +641,7 @@ def suscripcion_cambiar_plan(request):
             )
 
             # Crear o actualizar suscripción
+            from facturacion.utils import calcular_fecha_fin
             suscripcion, _ = SuscripcionNutricionista.objects.update_or_create(
                 nutricionista=request.user,
                 defaults={
@@ -617,8 +650,7 @@ def suscripcion_cambiar_plan(request):
                     "precio_aplicado": precio,
                     "estado": EstadoSuscripcion.PENDIENTE,
                     "fecha_inicio": timezone.now().date(),
-                    "fecha_fin": timezone.now().date()
-                    + timedelta(days=365 if tipo == "anual" else 30),
+                    "fecha_fin": calcular_fecha_fin(timezone.now().date(), tipo),
                 },
             )
 
@@ -630,10 +662,42 @@ def suscripcion_cambiar_plan(request):
     else:
         form = CambiarPlanForm(planes=planes)
 
+    # Buscar el método de pago guardado del nutricionista
+    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").order_by("-fecha_pago").first()
+    metodo_guardado = None
+    if ultimo_pago and "removido" not in ultimo_pago.notas:
+        if "Tarjeta terminada en" in ultimo_pago.notas:
+            digitos = ultimo_pago.notas.split("terminada en")[-1].strip()
+            metodo_guardado = {
+                "tipo": "tarjeta",
+                "detalle": f"Tarjeta terminada en {digitos}"
+            }
+        elif "Celular Yape:" in ultimo_pago.notas:
+            partes = ultimo_pago.notas.split("Celular Yape:")[-1].strip().split(" - Código:")
+            celular = partes[0].strip()
+            codigo = partes[1].strip() if len(partes) > 1 else ""
+            detalle = f"Celular: {celular}"
+            if codigo:
+                detalle += f" (Código: {codigo})"
+            metodo_guardado = {
+                "tipo": "yape",
+                "detalle": detalle
+            }
+        elif "PayPal Email:" in ultimo_pago.notas:
+            email_paypal = ultimo_pago.notas.split("PayPal Email:")[-1].strip()
+            metodo_guardado = {
+                "tipo": "paypal",
+                "detalle": f"PayPal ({email_paypal})"
+            }
+
     return render(
         request,
         "facturacion/suscripcion/cambiar_plan.html",
-        {"form": form, "planes": planes},
+        {
+            "form": form, 
+            "planes": planes,
+            "metodo_guardado": metodo_guardado
+        },
     )
 
 
@@ -863,10 +927,91 @@ def crear_checkout_cobro(request, pk):
 
 @login_required
 def crear_checkout_suscripcion(request):
-    """Activa la suscripción del nutricionista (simulado, sin Stripe real)."""
-    if request.method != "POST":
-        return redirect("facturacion:suscripcion_cambiar")
+    """Activa la suscripción del nutricionista (simulado, con validación de método de pago)."""
+    if request.method == "GET":
+        plan_id = request.GET.get("plan")
+        tipo = request.GET.get("tipo_facturacion", "mensual")
 
+        if not plan_id:
+            messages.error(request, "Selecciona un plan.")
+            return redirect("facturacion:suscripcion_cambiar")
+
+        plan = get_object_or_404(PlanSuscripcion, pk=plan_id, activo=True)
+        precio = plan.precio_anual if tipo == "anual" else plan.precio_mensual
+
+        # Si el plan es gratuito (Prueba Gratis), activarlo directamente sin mostrar checkout
+        if precio == 0:
+            from facturacion.utils import calcular_fecha_fin
+            suscripcion, _ = SuscripcionNutricionista.objects.update_or_create(
+                nutricionista=request.user,
+                defaults={
+                    "plan": plan,
+                    "tipo_facturacion": tipo,
+                    "precio_aplicado": precio,
+                    "estado": EstadoSuscripcion.ACTIVA,
+                    "fecha_inicio": timezone.now().date(),
+                    "fecha_fin": calcular_fecha_fin(timezone.now().date(), tipo),
+                },
+            )
+
+            Pago.objects.create(
+                nutricionista=request.user,
+                monto=precio,
+                metodo_pago=MetodoPago.EFECTIVO,
+                referencia=f"SUS-{request.user.pk}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                estado=EstadoPago.COMPLETADO,
+                comision_stripe=Decimal("0.00"),
+                monto_neto=precio,
+                notas=f"Registro de plan {plan.nombre} (Gratuito)",
+            )
+
+            messages.success(
+                request,
+                f"Plan {plan.nombre} activado exitosamente.",
+            )
+            return redirect("facturacion:suscripcion_detalle")
+
+        # Buscar el método de pago guardado del nutricionista
+        ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").order_by("-fecha_pago").first()
+        metodo_guardado = None
+        if ultimo_pago and "removido" not in ultimo_pago.notas:
+            if "Tarjeta terminada en" in ultimo_pago.notas:
+                digitos = ultimo_pago.notas.split("terminada en")[-1].strip()
+                metodo_guardado = {
+                    "tipo": "tarjeta",
+                    "detalle": f"Tarjeta terminada en {digitos}"
+                }
+            elif "Celular Yape:" in ultimo_pago.notas:
+                partes = ultimo_pago.notas.split("Celular Yape:")[-1].strip().split(" - Código:")
+                celular = partes[0].strip()
+                codigo = partes[1].strip() if len(partes) > 1 else ""
+                detalle = f"Celular: {celular}"
+                if codigo:
+                    detalle += f" (Código: {codigo})"
+                metodo_guardado = {
+                    "tipo": "yape",
+                    "detalle": detalle
+                }
+            elif "PayPal Email:" in ultimo_pago.notas:
+                email_paypal = ultimo_pago.notas.split("PayPal Email:")[-1].strip()
+                metodo_guardado = {
+                    "tipo": "paypal",
+                    "detalle": f"PayPal ({email_paypal})"
+                }
+
+        # Renderizar la pasarela de pagos intermedia dedicada
+        return render(
+            request,
+            "facturacion/suscripcion/checkout_suscripcion.html",
+            {
+                "plan": plan,
+                "tipo_facturacion": tipo,
+                "precio": precio,
+                "metodo_guardado": metodo_guardado
+            }
+        )
+
+    # Si es POST, procesamos el pago
     plan_id = request.POST.get("plan")
     tipo = request.POST.get("tipo_facturacion", "mensual")
 
@@ -877,7 +1022,70 @@ def crear_checkout_suscripcion(request):
     plan = get_object_or_404(PlanSuscripcion, pk=plan_id, activo=True)
     precio = plan.precio_anual if tipo == "anual" else plan.precio_mensual
 
-    # Activar suscripción directamente
+    # 1. Comprobar si el usuario ya tiene un método de pago guardado
+    ultimo_pago = request.user.pagos_facturacion.filter(estado="completado").order_by("-fecha_pago").first()
+    tiene_metodo = False
+    if ultimo_pago and "removido" not in ultimo_pago.notas:
+        if "Tarjeta terminada en" in ultimo_pago.notas or "Celular Yape:" in ultimo_pago.notas or "PayPal Email:" in ultimo_pago.notas:
+            tiene_metodo = True
+
+    # 2. Si el plan es de pago (precio > 0) y no tiene método guardado (o decidió usar uno nuevo), validar y guardar
+    notas_pago = f"Cobro inicial plan {plan.nombre} ({tipo})"
+    metodo_usado = MetodoPago.EFECTIVO # Default
+    
+    # Comprobamos si explícitamente se envió un payment_method en el POST
+    nuevo_metodo_enviado = "payment_method" in request.POST
+
+    if precio > 0:
+        if not tiene_metodo or nuevo_metodo_enviado:
+            payment_method = request.POST.get("payment_method")
+            if not payment_method:
+                messages.error(request, "Por favor, selecciona un método de pago para activar tu plan de pago.")
+                return redirect(f"/facturacion/suscripcion/checkout/?plan={plan.pk}&tipo_facturacion={tipo}")
+                
+            if payment_method == "tarjeta":
+                nro_tarjeta = request.POST.get("nro_tarjeta")
+                if not nro_tarjeta or len(nro_tarjeta.strip()) < 15:
+                    messages.error(request, "Número de tarjeta inválido.")
+                    return redirect(f"/facturacion/suscripcion/checkout/?plan={plan.pk}&tipo_facturacion={tipo}")
+                notas_pago += f" - Tarjeta terminada en {nro_tarjeta.strip()[-4:]}"
+                metodo_usado = MetodoPago.STRIPE # Se mapea como tarjeta
+            elif payment_method == "yape":
+                celular_yape = request.POST.get("celular_yape")
+                codigo_yape = request.POST.get("codigo_yape")
+                if not celular_yape or len(celular_yape.strip()) != 9:
+                    messages.error(request, "El número de celular de Yape debe tener 9 dígitos.")
+                    return redirect(f"/facturacion/suscripcion/checkout/?plan={plan.pk}&tipo_facturacion={tipo}")
+                if not codigo_yape or len(codigo_yape.strip()) != 6 or not codigo_yape.strip().isdigit():
+                    messages.error(request, "El código de aprobación de Yape debe tener 6 dígitos numéricos.")
+                    return redirect(f"/facturacion/suscripcion/checkout/?plan={plan.pk}&tipo_facturacion={tipo}")
+                notas_pago += f" - Celular Yape: {celular_yape.strip()} - Código: {codigo_yape.strip()}"
+                metodo_usado = MetodoPago.YAPE
+            elif payment_method == "paypal":
+                email_paypal = request.POST.get("email_paypal")
+                if not email_paypal or "@" not in email_paypal:
+                    messages.error(request, "Correo electrónico de PayPal inválido.")
+                    return redirect(f"/facturacion/suscripcion/checkout/?plan={plan.pk}&tipo_facturacion={tipo}")
+                notas_pago += f" - PayPal Email: {email_paypal.strip()}"
+                metodo_usado = MetodoPago.PAYPAL
+        else:
+            # Reutilizar el método de pago guardado anterior
+            metodo_usado = ultimo_pago.metodo_pago
+            if "Tarjeta terminada en" in ultimo_pago.notas:
+                digitos = ultimo_pago.notas.split("terminada en")[-1].strip()
+                notas_pago += f" - Tarjeta terminada en {digitos}"
+            elif "Celular Yape:" in ultimo_pago.notas:
+                celular = ultimo_pago.notas.split("Celular Yape:")[-1].strip()
+                notas_pago += f" - Celular Yape: {celular}"
+            elif "PayPal Email:" in ultimo_pago.notas:
+                email = ultimo_pago.notas.split("PayPal Email:")[-1].strip()
+                notas_pago += f" - PayPal Email: {email}"
+    else:
+        # Plan gratuito
+        notas_pago = f"Registro de plan {plan.nombre} (Gratuito)"
+
+    # 3. Activar suscripción directamente
+    from facturacion.utils import calcular_fecha_fin
     suscripcion, _ = SuscripcionNutricionista.objects.update_or_create(
         nutricionista=request.user,
         defaults={
@@ -886,21 +1094,20 @@ def crear_checkout_suscripcion(request):
             "precio_aplicado": precio,
             "estado": EstadoSuscripcion.ACTIVA,
             "fecha_inicio": timezone.now().date(),
-            "fecha_fin": timezone.now().date()
-            + timedelta(days=365 if tipo == "anual" else 30),
+            "fecha_fin": calcular_fecha_fin(timezone.now().date(), tipo),
         },
     )
 
-    # Crear registro de pago para que aparezca en ingresos
+    # 4. Crear registro de pago para que figure en ingresos
     Pago.objects.create(
         nutricionista=request.user,
         monto=precio,
-        metodo_pago=MetodoPago.EFECTIVO,
+        metodo_pago=metodo_usado,
         referencia=f"SUS-{request.user.pk}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
         estado=EstadoPago.COMPLETADO,
         comision_stripe=Decimal("0.00"),
         monto_neto=precio,
-        notas=f"Suscripción plan {plan.nombre} ({tipo})",
+        notas=notas_pago,
     )
 
     messages.success(
@@ -948,6 +1155,7 @@ def checkout_exito(request):
             try:
                 plan = PlanSuscripcion.objects.get(pk=plan_id)
                 precio = plan.precio_anual if tipo_fact == "anual" else plan.precio_mensual
+                from facturacion.utils import calcular_fecha_fin
                 SuscripcionNutricionista.objects.update_or_create(
                     nutricionista=request.user,
                     defaults={
@@ -956,8 +1164,7 @@ def checkout_exito(request):
                         "precio_aplicado": precio,
                         "estado": EstadoSuscripcion.ACTIVA,
                         "fecha_inicio": timezone.now().date(),
-                        "fecha_fin": timezone.now().date()
-                        + timedelta(days=365 if tipo_fact == "anual" else 30),
+                        "fecha_fin": calcular_fecha_fin(timezone.now().date(), tipo_fact),
                     },
                 )
             except PlanSuscripcion.DoesNotExist:

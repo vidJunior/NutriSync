@@ -1,25 +1,25 @@
-# Imagen base ligera de Python
+# Imagen base
 FROM python:3.12-slim
 
-# Evita que Python genere archivos .pyc (.py bytecode)
+# Desactiva archivos .pyc.
 ENV PYTHONDONTWRITEBYTECODE=1
-# Evita que Python almacene la salida en buffer (logs en tiempo real)
+# Envía los registros sin búfer.
 ENV PYTHONUNBUFFERED=1
 
-# Directorio de trabajo dentro del contenedor
+# Directorio de trabajo
 WORKDIR /app
 
-# Copia solo los requerimientos para aprovechar la caché de Docker
+# Copia las dependencias.
 COPY requirements.txt .
 
-# Instala las dependencias
+# Instala dependencias.
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copia el resto del código del proyecto
+# Copia el proyecto.
 COPY . .
 
-# Expone el puerto 8000 para el servidor web
+# Expone el puerto 8000.
 EXPOSE 8000
 
-# Ejecuta las migraciones y luego levanta el servidor
+# Migra e inicia el servidor.
 CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]

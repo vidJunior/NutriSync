@@ -241,16 +241,17 @@ def register_view(request):
         # Importaciones locales para facturación
         from facturacion.models import Pago
         from facturacion.choices import MetodoPago, EstadoPago
+        from facturacion.utils import calcular_fecha_fin
         from decimal import Decimal
 
         # Configurar de acuerdo al tipo de plan
         if plan.nombre == "Prueba Gratis":
             precio = Decimal("0.00")
-            fecha_fin = timezone.now().date() + timedelta(days=7)
+            fecha_fin = timezone.now().date() + timedelta(days=14)
             tipo_facturacion = "mensual"
         else:
             precio = plan.precio_anual if tipo_facturacion == "anual" else plan.precio_mensual
-            fecha_fin = timezone.now().date() + timedelta(days=365 if tipo_facturacion == "anual" else 30)
+            fecha_fin = calcular_fecha_fin(timezone.now().date(), tipo_facturacion)
 
         # Crear la suscripción ACTIVA directamente
         SuscripcionNutricionista.objects.create(

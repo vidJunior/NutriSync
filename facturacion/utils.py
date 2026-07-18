@@ -176,3 +176,30 @@ def generar_pdf_boleta_suscripcion(suscripcion, pago):
     if pdf.err:
         raise RuntimeError(f"Error al generar PDF: {pdf.err}")
     return result.getvalue()
+
+
+def calcular_fecha_fin(fecha_inicio, tipo_facturacion):
+
+    import calendar
+    
+    if tipo_facturacion == "anual":
+        try:
+            return fecha_inicio.replace(year=fecha_inicio.year + 1)
+        except ValueError:
+            # Año bisiesto (29 de febrero)
+            return fecha_inicio.replace(year=fecha_inicio.year + 1, day=28)
+    else:
+        # Sumar 1 mes (mensual)
+        month = fecha_inicio.month
+        year = fecha_inicio.year
+        
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+            
+        ultimo_dia = calendar.monthrange(year, month)[1]
+        day = min(fecha_inicio.day, ultimo_dia)
+        
+        return fecha_inicio.replace(year=year, month=month, day=day)
+

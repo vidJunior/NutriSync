@@ -25,3 +25,6 @@ docs/
 # Entorno local
 .env
 .env.local
+
+# Media (Cargas de usuario)
+media/

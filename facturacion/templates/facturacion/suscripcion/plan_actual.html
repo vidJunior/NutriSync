@@ -2,138 +2,287 @@
 {% load static %}
 {% load facturacion_tags %}
 
-{% block title %}Mi Suscripción{% endblock %}
-{% block page_title %}Mi Suscripción{% endblock %}
+{% block title %}Mi Plan{% endblock %}
+{% block page_title %}Mi Plan{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
 
-    <!-- Encabezado -->
-    <div class="mb-2">
-        <a href="{% url 'facturacion:dashboard' %}"
-           class="inline-flex items-center text-sm text-slate-500 hover:text-teal-600 transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i>
-            Volver al dashboard
-        </a>
+    {% if suscripcion %}
+    <!-- Tarjeta Principal del Plan Actual -->
+    <div class="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+        
+        <!-- Header Banner Premium con Gradiente -->
+        <div class="bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 px-8 py-8 text-white relative">
+            <div class="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -mr-8 -mt-8 blur-2xl"></div>
+            <div class="absolute left-1/3 bottom-0 w-24 h-24 bg-white/5 rounded-full -mb-12 blur-xl"></div>
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full text-white">Plan Profesional Activo</span>
+                    <h3 class="text-3xl font-extrabold tracking-tight mt-2 text-white">{{ suscripcion.plan.nombre }}</h3>
+                    <p class="text-teal-100 text-sm mt-1">Detalles de tu licencia profesional para la plataforma clínica</p>
+                </div>
+                <span class="px-4 py-2 rounded-xl text-sm font-bold bg-white text-teal-700 shadow-sm self-start md:self-center border border-teal-50">
+                    {{ suscripcion.get_estado_display }}
+                </span>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <!-- Grid de Características con Iconos Dinámicos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Caja Precio -->
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 hover:bg-slate-100/50 transition-all duration-200 flex flex-col justify-between min-h-[110px]">
+                    <div class="flex items-center justify-between text-slate-400">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Precio</span>
+                        <i data-lucide="credit-card" class="w-4 h-4 text-teal-600"></i>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-2xl font-black text-slate-800">{{ suscripcion.precio_aplicado|formatear_moneda }}</p>
+                        <p class="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">/{{ suscripcion.get_tipo_facturacion_display }}</p>
+                    </div>
+                </div>
+
+                <!-- Caja Facturación -->
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 hover:bg-slate-100/50 transition-all duration-200 flex flex-col justify-between min-h-[110px]">
+                    <div class="flex items-center justify-between text-slate-400">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Ciclo</span>
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-teal-600"></i>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-lg font-bold text-slate-800">{{ suscripcion.get_tipo_facturacion_display }}</p>
+                        <p class="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">Facturación recurrente</p>
+                    </div>
+                </div>
+
+                <!-- Caja Fecha de Inicio -->
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 hover:bg-slate-100/50 transition-all duration-200 flex flex-col justify-between min-h-[110px]">
+                    <div class="flex items-center justify-between text-slate-400">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Desde</span>
+                        <i data-lucide="calendar-range" class="w-4 h-4 text-teal-600"></i>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-lg font-bold text-slate-800">{{ suscripcion.fecha_inicio|date:"d/m/Y" }}</p>
+                        <p class="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">Fecha de activación</p>
+                    </div>
+                </div>
+
+                <!-- Caja Vencimiento / Días Restantes -->
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 hover:bg-slate-100/50 transition-all duration-200 flex flex-col justify-between min-h-[110px]">
+                    <div class="flex items-center justify-between text-slate-400">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Vence el</span>
+                        <i data-lucide="clock" class="w-4 h-4 text-teal-600"></i>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-lg font-bold text-slate-800">{{ suscripcion.fecha_fin|date:"d/m/Y" }}</p>
+                        <p class="text-[10px] text-emerald-600 font-extrabold uppercase mt-0.5 flex items-center gap-1">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            {{ suscripcion.dias_restantes }} días restantes
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Características del plan -->
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Características de tu Plan:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flex items-center gap-3 bg-slate-50/50 rounded-lg p-3 border border-slate-100">
+                        <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-md">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-650">
+                            {% if suscripcion.plan.limite_pacientes == -1 %}
+                            Pacientes Ilimitados
+                            {% else %}
+                            Hasta {{ suscripcion.plan.limite_pacientes }} Pacientes
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50/50 rounded-lg p-3 border border-slate-100">
+                        <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-md">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-650">
+                            {% if suscripcion.plan.limite_citas_mes == -1 %}
+                            Citas Médicas Ilimitadas
+                            {% else %}
+                            Hasta {{ suscripcion.plan.limite_citas_mes }} Citas al mes
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50/50 rounded-lg p-3 border border-slate-100">
+                        <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-md">
+                            <i data-lucide="percent" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-650">
+                            Comisión por cobros: {{ suscripcion.plan.comision_cobros }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {% if suscripcion %}
-    <!-- Plan actual -->
-    <div class="bg-white rounded-xl border border-slate-200 p-8">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h3 class="text-2xl font-bold text-slate-800">{{ suscripcion.plan.nombre }}</h3>
-                <p class="text-slate-500 mt-1">Tu plan de suscripción actual</p>
-            </div>
-            <span class="px-4 py-2 rounded-full text-sm font-medium bg-{{ suscripcion.estado|color_estado_suscripcion }}-100 text-{{ suscripcion.estado|color_estado_suscripcion }}-700">
-                {{ suscripcion.get_estado_display }}
-            </span>
+    <!-- TARJETA: Método de Pago Vinculado (Diseño Premium de Tarjeta Física) -->
+    <div class="bg-white rounded-2xl border border-slate-150 shadow-sm p-8 transition-all duration-300 hover:shadow-md">
+        <div class="flex items-center gap-2 mb-6">
+            <i data-lucide="shield-check" class="w-5 h-5 text-teal-600"></i>
+            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Método de Pago Vinculado</h4>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-slate-50 rounded-lg p-4">
-                <p class="text-sm text-slate-500">Precio</p>
-                <p class="text-2xl font-bold text-slate-800">{{ suscripcion.precio_aplicado|formatear_moneda }}</p>
-                <p class="text-sm text-slate-500">/{{ suscripcion.tipo_facturacion }}</p>
-            </div>
-            <div class="bg-slate-50 rounded-lg p-4">
-                <p class="text-sm text-slate-500">Tipo de facturación</p>
-                <p class="text-lg font-semibold text-slate-800">{{ suscripcion.get_tipo_facturacion_display }}</p>
-            </div>
-            <div class="bg-slate-50 rounded-lg p-4">
-                <p class="text-sm text-slate-500">Inicio</p>
-                <p class="text-lg font-semibold text-slate-800">{{ suscripcion.fecha_inicio|date:"d/m/Y" }}</p>
-            </div>
-            <div class="bg-slate-50 rounded-lg p-4">
-                <p class="text-sm text-slate-500">Vencimiento</p>
-                <p class="text-lg font-semibold text-slate-800">{{ suscripcion.fecha_fin|date:"d/m/Y" }}</p>
-                <p class="text-sm text-slate-500">{{ suscripcion.dias_restantes }} días restantes</p>
-            </div>
-        </div>
-
-        <!-- Características del plan -->
-        <div class="mt-6 pt-6 border-t border-slate-200">
-            <h4 class="font-medium text-slate-700 mb-3">Características incluidas:</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="flex items-center gap-2 text-sm text-slate-600">
-                    <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-                    {% if suscripcion.plan.limite_pacientes == -1 %}
-                    Pacientes ilimitados
-                    {% else %}
-                    Hasta {{ suscripcion.plan.limite_pacientes }} pacientes
-                    {% endif %}
-                </div>
-                <div class="flex items-center gap-2 text-sm text-slate-600">
-                    <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-                    {% if suscripcion.plan.limite_citas_mes == -1 %}
-                    Citas ilimitadas al mes
-                    {% else %}
-                    Hasta {{ suscripcion.plan.limite_citas_mes }} citas al mes
-                    {% endif %}
-                </div>
-                <div class="flex items-center gap-2 text-sm text-slate-600">
-                    <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-                    Comisión por cobros: {{ suscripcion.plan.comision_cobros }}%
-                </div>
-            </div>
-        </div>
-
-        <!-- Acciones según estado -->
-        <div class="mt-6 flex items-center gap-3">
-            {% if suscripcion.estado == 'pendiente_pago' %}
-            <div class="w-full p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600"></i>
-                        <div>
-                            <p class="font-medium text-amber-800">Suscripción pendiente de pago</p>
-                            <p class="text-sm text-amber-600">Completa el pago para activar tu plan.</p>
+        {% if metodo_guardado %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <!-- Render de la Tarjeta Premium (Lado Izquierdo) -->
+                <div>
+                    {% if metodo_guardado.tipo == 'tarjeta' %}
+                    <!-- Tarjeta de Crédito Oscura Premium -->
+                    <div class="w-full max-w-[340px] aspect-[1.58/1] bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden border border-slate-700/50 flex flex-col justify-between">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -mr-8 -mt-8 blur-xl"></div>
+                        <!-- Top Row: Chip & Contactless -->
+                        <div class="flex justify-between items-center z-10">
+                            <div class="w-10 h-7 bg-amber-200/80 rounded-md border border-amber-300/40 relative flex items-center justify-center">
+                                <div class="w-6 h-5 border border-slate-800/20 rounded-sm"></div>
+                            </div>
+                            <i data-lucide="rss" class="w-5 h-5 text-slate-400 transform rotate-90"></i>
+                        </div>
+                        <!-- Number Row -->
+                        <div class="mt-4 z-10">
+                            <p class="text-sm text-slate-400 tracking-wider">NÚMERO DE TARJETA</p>
+                            <p class="text-lg font-black tracking-widest text-slate-100 mt-1">••••  ••••  ••••  {{ metodo_guardado.detalle|slice:"-4:" }}</p>
+                        </div>
+                        <!-- Bottom Row: Holder & Card Brand -->
+                        <div class="flex justify-between items-end mt-4 z-10">
+                            <div>
+                                <p class="text-[9px] text-slate-400 tracking-wider">TITULAR</p>
+                                <p class="text-xs font-bold text-slate-200 uppercase tracking-wide mt-0.5">{{ user.perfil.nombre_completo|default:user.username }}</p>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="credit-card" class="w-7 h-7 text-white/90"></i>
+                                <span class="text-xs font-black italic text-teal-400">VISA/MC</span>
+                            </div>
                         </div>
                     </div>
-                    <form method="POST" action="{% url 'facturacion:crear_checkout_suscripcion' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="plan" value="{{ suscripcion.plan.pk }}">
-                        <input type="hidden" name="tipo_facturacion" value="{{ suscripcion.tipo_facturacion }}">
-                        <button type="submit"
-                                class="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
-                            <i data-lucide="check" class="w-4 h-4 mr-2 inline"></i>
-                            Activar plan
-                        </button>
-                    </form>
+
+                    {% elif metodo_guardado.tipo == 'yape' %}
+                    <!-- Tarjeta Yape Premium -->
+                    <div class="w-full max-w-[340px] aspect-[1.58/1] bg-gradient-to-br from-[#742284] to-[#9c2ba6] text-white rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border border-purple-500/20">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
+                        <div class="flex justify-between items-center z-10">
+                            <span class="text-xs font-extrabold bg-white/20 px-2 py-0.5 rounded text-white tracking-widest uppercase">Yape</span>
+                            <i data-lucide="smartphone" class="w-5 h-5 text-purple-200"></i>
+                        </div>
+                        <div class="z-10">
+                            <p class="text-xs text-purple-200 tracking-wider">CELULAR REGISTRADO</p>
+                            <p class="text-xl font-black text-white mt-1">{{ metodo_guardado.detalle }}</p>
+                        </div>
+                        <div class="flex justify-between items-end z-10">
+                            <div>
+                                <p class="text-[9px] text-purple-200 tracking-wider">NUTRICIONISTA</p>
+                                <p class="text-xs font-bold text-white uppercase mt-0.5">{{ user.perfil.nombre_completo|default:user.username }}</p>
+                            </div>
+                            <span class="text-xs font-black tracking-widest text-teal-400">ACTIVO</span>
+                        </div>
+                    </div>
+
+                    {% elif metodo_guardado.tipo == 'paypal' %}
+                    <!-- Tarjeta PayPal Premium -->
+                    <div class="w-full max-w-[340px] aspect-[1.58/1] bg-gradient-to-br from-[#003087] to-[#0079C1] text-white rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border border-blue-500/20">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
+                        <div class="flex justify-between items-center z-10">
+                            <span class="text-xs font-extrabold bg-white/20 px-2 py-0.5 rounded text-white tracking-widest uppercase">PayPal</span>
+                            <i data-lucide="mail" class="w-5 h-5 text-blue-200"></i>
+                        </div>
+                        <div class="z-10">
+                            <p class="text-xs text-blue-100 tracking-wider">CORREO PAYPAL</p>
+                            <p class="text-sm font-bold text-white mt-1 truncate">{{ metodo_guardado.detalle }}</p>
+                        </div>
+                        <div class="flex justify-between items-end z-10">
+                            <div>
+                                <p class="text-[9px] text-blue-100 tracking-wider">CUENTA ASOCIADA</p>
+                                <p class="text-xs font-bold text-white uppercase mt-0.5">{{ user.perfil.nombre_completo|default:user.username }}</p>
+                            </div>
+                            <span class="text-xs font-black tracking-widest text-teal-400 font-mono">PAY</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Detalle y Alerta de Renovación (Lado Derecho) -->
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase">Estado de Pago</p>
+                        <p class="text-sm font-semibold text-slate-700 mt-1 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Método de pago principal verificado y activo.
+                        </p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                            Los cargos automáticos de renovación del plan se procesarán usando este método. Puedes cambiarlo en cualquier momento desde tu perfil.
+                        </p>
+                    </div>
+                    <a href="{% url 'core:perfil' %}" 
+                       class="inline-flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors">
+                        Gestionar métodos de pago en Mi Perfil
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
                 </div>
             </div>
-            {% endif %}
+        {% else %}
+            <!-- Estado Vacío: Sin métodos de pago vinculados -->
+            <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-250 p-6 flex flex-col items-center justify-center">
+                <div class="w-12 h-12 bg-amber-50 border border-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-3">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+                <h5 class="text-sm font-bold text-slate-700">Sin método de pago recurrente</h5>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm leading-relaxed mx-auto">
+                    No hemos detectado un método de pago activo para renovación automática. Puedes vincular uno en tu próximo periodo de facturación.
+                </p>
+                <a href="{% url 'facturacion:suscripcion_cambiar' %}"
+                   class="mt-4 inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all text-xs font-bold shadow-sm hover:shadow">
+                    Vincular método ahora
+                </a>
+            </div>
+        {% endif %}
+    </div>
 
+    <!-- ACCIONES: Botones de Gestión del Plan -->
+    <div class="bg-white rounded-2xl border border-slate-150 shadow-sm p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-center sm:text-left">
+            <h4 class="text-sm font-bold text-slate-800">¿Deseas modificar tu suscripción clínica?</h4>
+            <p class="text-xs text-slate-400 mt-1">Puedes cambiar tu plan o facturación en cualquier momento según tus necesidades.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             {% if suscripcion.estado == 'activa' %}
             <a href="{% url 'facturacion:suscripcion_boleta' %}"
-               class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium">
-                <i data-lucide="file-text" class="w-4 h-4 mr-2 inline"></i>
+               class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-slate-250 text-slate-700 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all text-sm font-bold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] duration-150">
+                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
                 Generar boleta
             </a>
             {% endif %}
 
             <a href="{% url 'facturacion:suscripcion_cambiar' %}"
-               class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">
+               class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 bg-teal-600 text-white rounded-xl hover:bg-teal-750 transition-all text-sm font-bold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] duration-150">
+                <i data-lucide="arrow-left-right" class="w-4 h-4 mr-2"></i>
                 Cambiar plan
             </a>
         </div>
     </div>
 
     {% else %}
-    <!-- Sin suscripción -->
-    <div class="bg-white rounded-xl border border-slate-200 p-8">
-        <div class="text-center py-8">
-            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="credit-card" class="w-10 h-10 text-slate-400"></i>
-            </div>
-            <h3 class="text-xl font-semibold text-slate-800 mb-2">No tienes una suscripción activa</h3>
-            <p class="text-slate-500 mb-6">Elige un plan para comenzar a usar NutriSync con todas sus funcionalidades.</p>
-            <a href="{% url 'facturacion:suscripcion_cambiar' %}"
-               class="inline-flex items-center px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium">
-                <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
-                Elegir un plan
-            </a>
+    <!-- SIN SUSCRIPCIÓN -->
+    <div class="bg-white rounded-2xl border border-slate-150 p-8 shadow-sm text-center py-12">
+        <div class="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="credit-card" class="w-10 h-10 text-slate-400"></i>
         </div>
+        <h3 class="text-2xl font-bold text-slate-800 mb-2">No tienes un plan activo</h3>
+        <p class="text-slate-500 mb-6 max-w-md mx-auto text-sm">Elige un plan para comenzar a usar NutriSync con todas sus funcionalidades clínicas y de gestión de pacientes.</p>
+        <a href="{% url 'facturacion:suscripcion_cambiar' %}"
+           class="inline-flex items-center px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all font-bold shadow-md hover:scale-[1.02] duration-150">
+            <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+            Elegir un plan
+        </a>
     </div>
     {% endif %}
 
