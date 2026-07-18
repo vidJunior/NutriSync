@@ -1,5 +1,5 @@
 # core/context_processors.py
-# Inyecta el PerfilNutricionista y las alertas del sistema en el contexto de todos los templates.
+# Añade el perfil y las alertas al contexto.
 
 from .models import PerfilNutricionista
 from administracion.models import NotificacionSistema

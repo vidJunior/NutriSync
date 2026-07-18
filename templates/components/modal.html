@@ -1,12 +1,11 @@
 <!-- templates/components/modal.html -->
-<!-- Componente modal reutilizable. Overlay con backdrop que cubre toda la pantalla.
-     Se abre/cierra vía JS: openModal(title, content) / closeModal() -->
+<!-- Modal reutilizable -->
 
 <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[95vh] flex flex-col
                 transform transition-all duration-200 scale-95 opacity-0"
          id="modal-container">
-        <!-- Header sticky con título y botón cerrar -->
+        <!-- Encabezado fijo -->
         <div class="flex items-center justify-between px-6 py-4 bg-teal-600 rounded-t-2xl flex-shrink-0">
             <h2 id="modal-title" class="text-lg font-semibold text-white">Modal</h2>
             <button onclick="closeModal()"
@@ -14,7 +13,7 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <!-- Contenido del modal (se inyecta vía JS) -->
+        <!-- Contenido dinámico -->
         <div id="modal-content" class="p-6 overflow-y-auto flex-1">
             <div class="flex items-center justify-center py-12 text-slate-400">
                 <i data-lucide="loader" class="w-6 h-6 animate-spin"></i>

@@ -3,11 +3,11 @@
 <aside id="sidebar"
     class="w-60 bg-slate-900 h-[100dvh] min-h-[100dvh] fixed inset-y-0 left-0 transform -translate-x-full xl:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col z-40 shadow-2xl shadow-slate-950/30 xl:shadow-none overflow-y-auto overscroll-contain">
 
-    <div class="px-6 py-5 border-b border-slate-800">
+    <div class="px-4 py-4 border-b border-slate-800 flex-shrink-0">
         <a href="{% url 'core:dashboard' %}" class="flex items-center gap-2 group">
-            <i data-lucide="apple" class="w-6 h-6 text-teal-500"></i>
+            <i data-lucide="apple" class="w-5 h-5 text-teal-500"></i>
             <span
-                class="text-white font-semibold text-lg tracking-tight group-hover:text-teal-400 transition-colors duration-200">
+                class="text-white font-semibold text-base tracking-tight group-hover:text-teal-400 transition-colors duration-200">
                 NutriSync
             </span>
         </a>
@@ -17,7 +17,11 @@
     </div>
 
     <!-- Navegación principal -->
-    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto select-none">
+    <nav class="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto select-none">
+
+        <!-- Sección: PRINCIPAL -->
+        <p class="sidebar-section-label">Principal</p>
+
         <a href="{% url 'core:dashboard' %}"
             class="sidebar-link {% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
             <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
@@ -32,6 +36,9 @@
             class="sidebar-link {% if request.resolver_match.namespace and 'agendas' in request.resolver_match.namespace %}active{% endif %}">
             <i data-lucide="calendar" class="w-5 h-5"></i> Agenda
         </a>
+
+        <!-- Sección: NUTRICIÓN -->
+        <p class="sidebar-section-label">Nutrición</p>
 
         <a href="{% url 'nutricion:alimentos' %}"
             class="sidebar-link {% if request.resolver_match.namespace and 'nutricion' in request.resolver_match.namespace and 'alimento' in request.resolver_match.url_name %}active{% endif %}">
@@ -48,15 +55,21 @@
             <i data-lucide="utensils" class="w-5 h-5"></i> Planes
         </a>
 
+        <!-- Sección: SEGUIMIENTO CLÍNICO -->
+        <p class="sidebar-section-label">Seguimiento Clínico</p>
+
         <a href="{% url 'seguimiento:dashboard' %}"
-            class="sidebar-link {% if request.resolver_match.namespace == 'seguimiento' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-            <i data-lucide="activity" class="w-5 h-5"></i> Seguimiento
+            class="sidebar-link {% if request.resolver_match.namespace == 'seguimiento' and 'notas' not in request.resolver_match.url_name %}active{% endif %}">
+            <i data-lucide="activity" class="w-5 h-5"></i> Evolución Corporal
         </a>
 
         <a href="{% url 'seguimiento:notas_dashboard' %}"
-            class="sidebar-link {% if request.resolver_match.namespace == 'seguimiento' and request.resolver_match.url_name == 'notas_dashboard' %}active{% endif %}">
+            class="sidebar-link {% if request.resolver_match.namespace == 'seguimiento' and 'notas' in request.resolver_match.url_name %}active{% endif %}">
             <i data-lucide="clipboard-list" class="w-5 h-5"></i> Notas Clínicas
         </a>
+
+        <!-- Sección: GESTIÓN -->
+        <p class="sidebar-section-label">Gestión</p>
 
         <a href="{% url 'reportes:dashboard' %}"
             class="sidebar-link {% if request.resolver_match.namespace == 'reportes' %}active{% endif %}">
@@ -98,7 +111,7 @@
     </div>
 
     <style>
-        /* Estilos de scrollbar premium para el menú de navegación */
+        /* Barra de desplazamiento */
         #sidebar nav::-webkit-scrollbar {
             width: 5px;
         }
@@ -113,18 +126,31 @@
             background: rgba(148, 163, 184, 0.4);
         }
 
-        /* Ajustes compactos y estilizados para los enlaces del sidebar */
+        /* Sidebar compacto */
         #sidebar .sidebar-link {
-            padding: 8px 12px !important;
-            font-size: 0.825rem !important;
-            gap: 10px !important;
+            padding: 6px 10px !important;
+            font-size: 0.775rem !important;
+            gap: 8px !important;
         }
         #sidebar .sidebar-link:hover {
-            padding-left: 16px !important;
+            padding-left: 14px !important;
         }
         #sidebar .sidebar-link i {
-            width: 1.15rem !important;
-            height: 1.15rem !important;
+            width: 1rem !important;
+            height: 1rem !important;
+        }
+
+        /* Etiquetas de sección */
+        .sidebar-section-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(148, 163, 184, 0.5);
+            padding: 10px 10px 3px 10px;
+            margin: 0;
+            user-select: none;
+            pointer-events: none;
         }
     </style>
 </aside>

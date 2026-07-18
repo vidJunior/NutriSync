@@ -1,6 +1,5 @@
 # core/admin.py
-# Registro del PerfilNutricionista en el panel de administración.
-# Permite al admin gestionar y habilitar/deshabilitar nutricionistas.
+# Admin de nutricionistas.
 
 from django.contrib import admin
 from .models import PerfilNutricionista
@@ -18,7 +17,7 @@ class PerfilNutricionistaAdmin(admin.ModelAdmin):
     )
     list_filter = ("estado", "especialidad")
     search_fields = ("nombre_completo", "usuario__username", "numero_colegiatura")
-    # Permite cambiar el estado directamente desde la lista sin entrar al detalle
+    # Cambia el estado desde la lista.
     list_editable = ("estado",)
     readonly_fields = ("fecha_registro",)
     fieldsets = (

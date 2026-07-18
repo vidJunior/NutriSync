@@ -27,10 +27,50 @@
                 </div>
             </div>
 
-            <form method="post" action="{% url 'core:perfil' %}" novalidate>
+            <form method="post" action="{% url 'core:perfil' %}" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
 
                 <div class="space-y-4">
+                    <!-- Foto de Perfil -->
+                    <div class="flex items-center gap-6 pb-6 border-b border-slate-100/50">
+                        <!-- Avatar Redondo -->
+                        <div class="relative group cursor-pointer" onclick="document.getElementById('id_foto').click()">
+                            <div class="w-24 h-24 rounded-full border-4 border-slate-100 overflow-hidden shadow-md flex items-center justify-center bg-slate-50 relative">
+                                {% if perfil.foto %}
+                                    <img id="avatar-preview" src="{{ perfil.foto.url }}" alt="Foto de perfil" class="w-full h-full object-cover">
+                                {% else %}
+                                    <!-- Avatar por Defecto: Iniciales -->
+                                    <div id="avatar-initials" class="w-full h-full bg-teal-500/10 text-teal-700 flex items-center justify-center text-3xl font-black">
+                                        {{ perfil.nombre_completo|slice:":2"|upper|default:user.username|slice:":2"|upper }}
+                                    </div>
+                                    <img id="avatar-preview" src="" alt="Foto de perfil" class="w-full h-full object-cover hidden">
+                                {% endif %}
+                                <!-- Overlay de Hover -->
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Controles de Carga -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider">Foto de perfil</label>
+                            
+                            <!-- Input File Oculto -->
+                            <input type="file" name="foto" id="id_foto" class="hidden" accept="image/*" onchange="previewImage(this)">
+                            
+                            <div class="flex items-center gap-3">
+                                <button type="button" onclick="document.getElementById('id_foto').click()" class="bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm">
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+                                    Seleccionar Imagen
+                                </button>
+                            </div>
+                            
+                            {% if form.foto.errors %}
+                            <p class="text-red-500 text-xs font-medium">{{ form.foto.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
                     <!-- Fila 1: Nombre Completo -->
                     <div>
                         {{ form.nombre_completo }}
@@ -165,55 +205,31 @@
                 {% endif %}
             </div>
 
-            <!-- Card 2: Método de Pago Guardado -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-                <div class="mb-4 border-b border-slate-100 pb-4">
-                    <h2 class="text-lg font-semibold text-slate-850 flex items-center gap-2">
-                        <i data-lucide="credit-card" class="w-5 h-5 text-teal-600"></i>
-                        Método de Pago
-                    </h2>
-                </div>
-
-                {% if metodo_guardado %}
-                <div class="space-y-4">
-                    <div class="flex items-center gap-3 bg-slate-50 rounded-xl p-4 border border-slate-150">
-                        <div class="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-650 flex items-center justify-center min-w-[54px] min-h-[46px]">
-                            {% if metodo_guardado.tipo == 'tarjeta' %}
-                            <i data-lucide="credit-card" class="w-6 h-6 text-teal-650 text-teal-600"></i>
-                            {% elif metodo_guardado.tipo == 'yape' %}
-                            <span class="text-[10px] bg-[#742284] text-white px-2 py-1 rounded font-extrabold tracking-wider">YAPE</span>
-                            {% elif metodo_guardado.tipo == 'paypal' %}
-                            <span class="text-[10px] bg-[#003087] text-white px-2 py-1 rounded font-extrabold tracking-wider">PayPal</span>
-                            {% endif %}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[10px] text-slate-400 font-semibold uppercase">Método Registrado</p>
-                            <p class="text-sm font-semibold text-slate-700 truncate mt-0.5">{{ metodo_guardado.detalle }}</p>
-                        </div>
-                    </div>
-
-                    <form method="POST" action="{% url 'core:perfil' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="quitar_metodo">
-                        <button type="submit" onclick="return confirm('¿Estás seguro de que deseas eliminar este método de pago? Deberás registrar uno nuevo antes del próximo periodo de cobro para evitar la suspensión.')" 
-                                class="w-full text-center text-xs text-slate-500 hover:text-red-650 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-xl py-2.5 font-semibold transition-all duration-200">
-                            Quitar Método de Pago
-                        </button>
-                    </form>
-                </div>
-                {% else %}
-                <div class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-250 p-4">
-                    <p class="text-slate-400 text-xs font-semibold">No hay métodos de pago guardados.</p>
-                    <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                        Registra una tarjeta, Yape o PayPal la próxima vez que realices una renovación de suscripción.
-                    </p>
-                </div>
-                {% endif %}
-            </div>
-
         </div>
 
     </div>
 
 </div>
+
+<script>
+    function previewImage(input) {
+        const file = input.files[0];
+        const preview = document.getElementById('avatar-preview');
+        const initials = document.getElementById('avatar-initials');
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                if (initials) {
+                    initials.classList.add('hidden');
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+</script>
 {% endblock %}

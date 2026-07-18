@@ -71,6 +71,12 @@ class PerfilNutricionista(models.Model):
         blank=True,
         verbose_name="Dirección del consultorio",
     )
+    foto = models.ImageField(
+        upload_to="perfiles/fotos/",
+        blank=True,
+        null=True,
+        verbose_name="Foto de perfil",
+    )
     # El campo estado permite al admin deshabilitar el acceso sin eliminar la cuenta.
     # La login_view valida que estado == 'habilitado' antes de permitir el ingreso.
     estado = models.CharField(

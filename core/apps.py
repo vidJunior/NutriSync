@@ -1,5 +1,5 @@
 # core/apps.py
-# Configuración de la app 'core' con carga de signals al inicio.
+# Configuración de core.
 
 from django.apps import AppConfig
 
@@ -10,7 +10,6 @@ class CoreConfig(AppConfig):
     verbose_name = "Core — Autenticación y Perfil"
 
     def ready(self):
-        # Importa signals para que se registren al iniciar la app.
-        # Sin esto, los signals no se conectan y el PerfilNutricionista
+        # Registra las señales al iniciar.
         # no se crea automáticamente al crear un superusuario.
         import core.signals  # noqa: F401

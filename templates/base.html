@@ -68,8 +68,12 @@
                 
                 <div class="relative">
                     <button id="profile-dropdown-btn" class="flex items-center gap-3 bg-slate-100/50 hover:bg-slate-200/50 active:bg-slate-200/80 border border-slate-200/30 hover:border-slate-350 px-3.5 py-1.5 rounded-full shadow-sm cursor-pointer transition-all duration-200 focus:outline-none">
-                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white font-bold text-xs flex items-center justify-center shadow-inner">
-                            {{ user.username|slice:":2"|upper }}
+                        <div class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shadow-inner {% if not perfil.foto %}bg-gradient-to-tr from-teal-600 to-emerald-500 text-white font-bold text-xs{% endif %}">
+                            {% if perfil.foto %}
+                                <img src="{{ perfil.foto.url }}" alt="Avatar" class="w-full h-full object-cover">
+                            {% else %}
+                                {{ user.username|slice:":2"|upper }}
+                            {% endif %}
                         </div>
                         <span class="text-sm font-semibold text-slate-700 hidden sm:inline">
                             {{ perfil.nombre_completo|default:user.username }}

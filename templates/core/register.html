@@ -188,7 +188,7 @@
                 <p class="text-slate-500 text-sm mt-1.5 font-light">Configura tu perfil y elige el plan perfecto para tu consultorio</p>
             </div>
 
-            <!-- Step Indicator Premium -->
+            <!-- Indicador de pasos -->
             <div class="flex items-center gap-2 glass-card border border-slate-200/40 py-2 px-4 rounded-2xl shadow-sm self-center md:self-auto">
                 <div id="step-1-indicator" class="flex items-center gap-2 font-semibold text-teal-600 text-sm">
                     <span class="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-teal-600/20">1</span>
@@ -218,10 +218,10 @@
         <form id="register-form" method="POST" action="{% url 'core:register' %}" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {% csrf_token %}
 
-            <!-- Columna Izquierda: Información de Cuenta y Perfil -->
+            <!-- Cuenta y perfil -->
             <div id="left-column-wrapper" class="lg:col-span-7 form-card p-6 space-y-5 transition-all duration-300 animate-fade-in-delay">
                 
-                <!-- Paso 1: Datos de Acceso e Información Profesional -->
+                <!-- Paso 1: datos profesionales -->
                 <div id="paso-1-fields" class="space-y-6">
                 
                 <!-- Sección: Datos de Acceso -->
@@ -261,7 +261,7 @@
                     </div>
                 </div>
 
-                <!-- Divisor elegante -->
+                <!-- Separador -->
                 <div class="flex items-center gap-3">
                     <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
                 </div>
@@ -308,7 +308,7 @@
                     </div>
                 </div>
 
-                <!-- Divisor elegante -->
+                <!-- Separador -->
                 <div class="flex items-center gap-3">
                     <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
                 </div>
@@ -353,7 +353,7 @@
                 </p>
             </div> <!-- Fin paso-1-fields -->
 
-            <!-- Paso 2: Información de Facturación (Método de Pago) -->
+            <!-- Paso 2: método de pago -->
             <div id="paso-2-fields" class="space-y-6 hidden">
                 <!-- Resumen del Plan Seleccionado -->
                 <div class="bg-gradient-to-r from-teal-50 to-indigo-50/50 border border-teal-100/60 rounded-2xl p-5 flex items-center justify-between mb-2">
@@ -370,7 +370,7 @@
                     </div>
                 </div>
 
-                <!-- Información de Facturación (Pasarela Culqi / PayPal) -->
+                <!-- Datos de pago -->
                 <div class="space-y-4 pt-4 border-t border-slate-200 text-left">
                     <div class="flex items-center gap-3 mb-1">
                         <div class="section-icon bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm shadow-emerald-500/20">
@@ -382,15 +382,15 @@
                         </div>
                     </div>
                     
-                    <!-- Campo oculto para el Tipo de Método de Pago -->
+                    <!-- Tipo de pago -->
                     <input type="hidden" id="payment_method_type" name="payment_method_type" value="tarjeta">
-                    <!-- Campo oculto para el Nombre del Titular (tarjeta) -->
+                    <!-- Titular -->
                     <input type="hidden" id="card_name" name="card_name" value="{{ data.card_name|default:'' }}">
 
-                    <!-- Contenedor Estilo Discord Checkout (Adaptado al Light Theme de NutriSync) -->
+                    <!-- Formulario de pago -->
                     <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-5">
                         
-                        <!-- Pestañas de Método (Tarjeta / Yape / PayPal) -->
+                        <!-- Métodos de pago -->
                         <div class="flex gap-2">
                             <!-- Tab Tarjeta (Activo por defecto) -->
                             <button type="button" id="tab-tarjeta" class="flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 bg-gradient-to-r from-teal-600 to-teal-500 text-white text-[11px] font-bold shadow-md shadow-teal-600/10 transition-all focus:outline-none">
@@ -411,7 +411,7 @@
 
                         <!-- Sección: Campos de Tarjeta -->
                         <div id="card-fields-wrapper" class="space-y-4">
-                            <!-- Número de Tarjeta con logos internos -->
+                            <!-- Número de tarjeta -->
                             <div class="space-y-1.5">
                                 <label for="card_number" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Número de tarjeta *</label>
                                 <div class="relative">
@@ -427,7 +427,7 @@
                                 <p id="error-card_number" class="text-red-500 text-[10px] mt-1 hidden font-semibold px-2"></p>
                             </div>
 
-                            <!-- Fecha de caducidad y Código de seguridad side-by-side -->
+                            <!-- Vencimiento y seguridad -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1.5">
                                     <label for="card_expiry" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha de vencimiento *</label>
@@ -456,7 +456,7 @@
                             </p>
                         </div>
 
-                        <!-- Sección: Campos de Yape (Oculta por defecto) -->
+                        <!-- Campos de Yape -->
                         <div id="yape-fields-wrapper" class="space-y-4 hidden">
                             <!-- Número de Celular Yape -->
                             <div class="space-y-1.5">
@@ -498,7 +498,7 @@
                             </p>
                         </div>
 
-                        <!-- Sección: Campos de PayPal (Oculta por defecto) -->
+                        <!-- Campos de PayPal -->
                         <div id="paypal-fields-wrapper" class="space-y-4 hidden">
                             <!-- Correo de PayPal -->
                             <div class="space-y-1.5">
@@ -537,7 +537,7 @@
 
         </div>
 
-            <!-- Columna Derecha: Selección del Plan de Suscripción -->
+            <!-- Selección del plan -->
             <div id="plan-selection-sidebar" class="lg:col-span-5 plan-sidebar p-5 rounded-2xl shadow-sm flex flex-col justify-between space-y-4 transition-all duration-300 animate-fade-in-delay-2">
                 <div class="space-y-3.5">
                     <div class="flex items-center justify-between border-b border-slate-150 pb-2">
@@ -548,7 +548,7 @@
                         <span class="bg-teal-50/80 text-teal-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-teal-100">Nutricionistas</span>
                     </div>
 
-                    <!-- Billing Toggle Premium (Segment Control) -->
+                    <!-- Periodo de facturación -->
                     <div class="bg-white border border-slate-200/60 p-1 rounded-xl">
                         <div class="relative flex bg-slate-100 p-0.5 rounded-lg overflow-hidden">
                             <!-- Indicador deslizante de fondo -->
@@ -568,7 +568,7 @@
                     <input type="hidden" name="plan" id="selected-plan-id" value="">
                     <input type="hidden" name="tipo_facturacion" id="billing-cycle-input" value="anual">
 
-                    <!-- Plan Cards Premium -->
+                    <!-- Planes -->
                     <div class="space-y-2.5">
                         {% for plan in planes %}
                         <div class="plan-card bg-white border border-slate-200/80 hover:border-slate-350 rounded-xl p-3.5 cursor-pointer transition-all duration-200 flex items-center justify-between shadow-xs"
@@ -628,7 +628,7 @@
         
         let isAnnual = false; // Mensual por defecto (¡arreglado!)
 
-        // URL parsing to auto-select plan if passed in query params (?plan=ID)
+        // Selecciona el plan indicado en la URL.
         const urlParams = new URLSearchParams(window.location.search);
         const preselectedPlanId = urlParams.get('plan');
 
@@ -636,7 +636,7 @@
 
         function updateBillingUI() {
             if (isAnnual) {
-                // Activar anual (Desplazar fondo a la derecha)
+                // Activa el periodo anual.
                 if (billingIndicator) {
                     billingIndicator.style.transform = 'translateX(100%)';
                 }
@@ -648,7 +648,7 @@
                     const planName = card.querySelector('h4').textContent;
                     if (planName.includes("Prueba Gratis")) {
                         card.querySelector('.card-price').textContent = "0.00";
-                        card.querySelector('.card-period').textContent = '/7 días';
+                        card.querySelector('.card-period').textContent = '/14 días';
                     } else {
                         const price = card.getAttribute('data-price-anual');
                         card.querySelector('.card-price').textContent = price;
@@ -656,7 +656,7 @@
                     }
                 });
             } else {
-                // Activar mensual (Desplazar fondo a la izquierda)
+                // Activa el periodo mensual.
                 if (billingIndicator) {
                     billingIndicator.style.transform = 'translateX(0)';
                 }
@@ -668,7 +668,7 @@
                     const planName = card.querySelector('h4').textContent;
                     if (planName.includes("Prueba Gratis")) {
                         card.querySelector('.card-price').textContent = "0.00";
-                        card.querySelector('.card-period').textContent = '/7 días';
+                        card.querySelector('.card-period').textContent = '/14 días';
                     } else {
                         const price = card.getAttribute('data-price-mensual');
                         card.querySelector('.card-price').textContent = price;
@@ -688,10 +688,10 @@
             updateBillingUI();
         });
 
-        // Card Selection Logic
+        // Selección del plan
         planCards.forEach(card => {
             card.addEventListener('click', () => {
-                // Clear active states
+                // Limpia la selección.
                 planCards.forEach(c => {
                     c.classList.remove('active-card', 'border-teal-500', 'bg-teal-50/20', 'ring-1', 'ring-teal-500/20', 'shadow-sm');
                     c.classList.add('border-slate-200/80', 'bg-white', 'shadow-xs');
@@ -701,7 +701,7 @@
                     c.querySelector('.inner-dot').classList.add('scale-0');
                 });
 
-                // Apply active state to clicked
+                // Marca el plan elegido.
                 card.classList.add('active-card', 'border-teal-500', 'bg-teal-50/20', 'ring-1', 'ring-teal-500/20', 'shadow-sm');
                 card.classList.remove('border-slate-200/80', 'bg-white', 'shadow-xs');
                 card.querySelector('.radio-circle').classList.add('border-teal-600', 'bg-teal-50');
@@ -709,15 +709,15 @@
                 card.querySelector('.inner-dot').classList.remove('scale-0');
                 card.querySelector('.inner-dot').classList.add('scale-100');
 
-                // Set value in hidden input
+                // Actualiza el campo oculto.
                 selectedPlanInput.value = card.getAttribute('data-plan-id');
             });
         });
 
-        // Initialize Auto-selection
+        // Selección inicial
         let defaultSelectionIndex = 0; // Por defecto la primera tarjeta (Prueba Gratis)
         
-        // Buscar si alguna tarjeta tiene el nombre de "Prueba Gratis" para seleccionarla por defecto
+        // Busca la prueba gratuita.
         planCards.forEach((card, index) => {
             const planName = card.querySelector('h4').textContent.toLowerCase();
             if (planName.includes("prueba gratis") || planName.includes("gratis") || planName.includes("trial") || planName.includes("free")) {
@@ -725,7 +725,7 @@
             }
         });
 
-        // Si hay un preseleccionado en la URL, buscamos por ID o por coincidencia de texto (gratis/trial)
+        // Prioriza el plan indicado en la URL.
         if (preselectedPlanId) {
             planCards.forEach((card, index) => {
                 const planId = card.getAttribute('data-plan-id');
@@ -741,15 +741,15 @@
             });
         }
         
-        // Trigger click on default card
+        // Activa el plan inicial.
         if (planCards[defaultSelectionIndex]) {
             planCards[defaultSelectionIndex].click();
         }
 
-        // Run UI update
+        // Actualiza la interfaz.
         updateBillingUI();
 
-        // --- Lógica Interactiva de Método de Pago (Tarjeta / Yape / PayPal) ---
+        // Métodos de pago
         const tabTarjeta = document.getElementById('tab-tarjeta');
         const tabYape = document.getElementById('tab-yape');
         const tabPaypal = document.getElementById('tab-paypal');
@@ -770,7 +770,7 @@
 
         const paypalEmailInput = document.getElementById('paypal_email');
 
-        // Sincronizar el nombre del formulario con el Nombre del Titular de la tarjeta
+        // Sincroniza el titular.
         if (nombreCompleto && cardNameInput) {
             cardNameInput.value = nombreCompleto.value;
             nombreCompleto.addEventListener('input', (e) => {
@@ -778,7 +778,7 @@
             });
         }
 
-        // Forzar solo números en el teléfono
+        // Acepta solo números.
         const telefonoInput = document.getElementById('telefono');
         if (telefonoInput) {
             telefonoInput.addEventListener('input', (e) => {
@@ -786,11 +786,11 @@
             });
         }
 
-        // Definir campos de DNI y RUC
+        // Campos de DNI y RUC
         const inputDni = document.getElementById('dni');
         const inputRuc = document.getElementById('ruc');
 
-        // Restringir a números en DNI y RUC
+        // Acepta solo números.
         if (inputDni) {
             inputDni.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/\D/g, '');
@@ -831,7 +831,7 @@
             // Setear tipo
             paymentMethodType.value = 'tarjeta';
             
-            // Modificar atributos required (desactivados para pruebas libres)
+            // Requisitos desactivados para pruebas.
             // cardNumberInput.setAttribute('required', 'required');
             // cardExpiryInput.setAttribute('required', 'required');
             // cardCvvInput.setAttribute('required', 'required');
@@ -856,7 +856,7 @@
             // Setear tipo
             paymentMethodType.value = 'yape';
             
-            // Modificar atributos required (desactivados para pruebas libres)
+            // Requisitos desactivados para pruebas.
             cardNumberInput.removeAttribute('required');
             cardExpiryInput.removeAttribute('required');
             cardCvvInput.removeAttribute('required');
@@ -881,7 +881,7 @@
             // Setear tipo
             paymentMethodType.value = 'paypal';
             
-            // Modificar atributos required (desactivados para pruebas libres)
+            // Requisitos desactivados para pruebas.
             cardNumberInput.removeAttribute('required');
             cardExpiryInput.removeAttribute('required');
             cardCvvInput.removeAttribute('required');
@@ -929,7 +929,7 @@
             e.target.value = e.target.value.replace(/[^0-9]/gi, '');
         });
 
-        // --- Lógica de Registro Multi-paso (Estilo Discord) ---
+        // Registro por pasos
         const btnContinuarPago = document.getElementById('btn-continuar-pago');
         const btnPlanContinuar = document.getElementById('btn-plan-continuar');
         const btnAtras = document.getElementById('btn-atras');
@@ -939,7 +939,7 @@
         const planSelectionSidebar = document.getElementById('plan-selection-sidebar');
         const leftColumnWrapper = document.getElementById('left-column-wrapper');
         
-        // Elementos de Step Indicator
+        // Indicador de pasos
         const step1Indicator = document.getElementById('step-1-indicator');
         const step2Indicator = document.getElementById('step-2-indicator');
         const stepLine = document.getElementById('step-line');
@@ -949,7 +949,7 @@
         const resumenPlanNombre = document.getElementById('resumen-plan-nombre');
         const resumenPlanPrecio = document.getElementById('resumen-plan-precio');
         
-        // Lógica de errores individuales por campo
+        // Errores por campo
         function mostrarErrorCampo(idCampo, mensaje) {
             const inputElement = document.getElementById(idCampo);
             const errorElement = document.getElementById(`error-${idCampo}`);
@@ -1000,7 +1000,7 @@
         async function validarPaso1YContinuar() {
             limpiarErrores();
             
-            // Validaciones locales rápidas
+            // Validaciones locales
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -1080,7 +1080,7 @@
                 return;
             }
 
-            // Deshabilitar botones mientras validamos
+            // Bloquea botones durante la validación.
             btnContinuarPago.disabled = true;
             if (btnPlanContinuar) btnPlanContinuar.disabled = true;
             const originalText1 = btnContinuarPago.innerHTML;
@@ -1089,7 +1089,7 @@
             if (btnPlanContinuar) btnPlanContinuar.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin inline-block"></i> Validando...';
             lucide.createIcons();
 
-            // Petición AJAX de validación al backend
+            // Valida en el servidor.
             try {
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 const formData = new FormData();
@@ -1144,14 +1144,14 @@
             if (btnPlanContinuar) btnPlanContinuar.innerHTML = originalText2;
             lucide.createIcons();
 
-            // Si es válido, recopilar resumen del plan para el Paso 2
+            // Prepara el resumen del plan.
             const activeCard = document.querySelector('.plan-card.active-card');
             if (activeCard) {
                 const planNombre = activeCard.querySelector('h4').textContent;
                 const planPrecio = activeCard.querySelector('.card-price').textContent;
                 const planPeriodo = activeCard.querySelector('.card-period').textContent;
                 
-                resumenPlanNombre.textContent = `${planNombre} (${planPeriodo === '/año' ? 'Anual' : planPeriodo === '/mes' ? 'Mensual' : 'Prueba 7 días'})`;
+                resumenPlanNombre.textContent = `${planNombre} (${planPeriodo === '/año' ? 'Anual' : planPeriodo === '/mes' ? 'Mensual' : 'Prueba 14 días'})`;
                 resumenPlanPrecio.textContent = `S/ ${planPrecio}`;
             }
 
@@ -1165,7 +1165,7 @@
             
             paso2Fields.classList.remove('hidden');
             
-            // Actualizar Step Indicator
+            // Actualiza el indicador.
             step1Indicator.className = "flex items-center gap-2 font-semibold text-slate-400 text-sm";
             step1Indicator.querySelector('span').className = "w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs";
             
@@ -1225,18 +1225,18 @@
         }
         btnAtras.addEventListener('click', irAtras);
 
-        // --- Validación final antes del envío (Submit Validation) ---
+        // Validación final
         const registerForm = document.getElementById('register-form');
         if (registerForm) {
             registerForm.addEventListener('submit', (e) => {
-                // Si por alguna razón el formulario se envía estando en el paso 1 (ej. presionando Enter en un input)
+                // Evita enviar desde el primer paso.
                 if (!paso1Fields.classList.contains('hidden')) {
                     e.preventDefault();
                     validarPaso1YContinuar();
                     return;
                 }
 
-                // Limpiar errores previos del paso 2 antes de validar
+                // Limpia errores del segundo paso.
                 limpiarErrores();
 
                 const method = paymentMethodType.value;
@@ -1284,32 +1284,32 @@
                 if (hasErrorsStep2) {
                     e.preventDefault(); // Detener el envío
 
-                    // Hacer scroll al primer campo con error en el paso 2
+                    // Enfoca el primer error.
                     const primerCampoError = method === 'tarjeta' ? 'card_number' : method === 'yape' ? 'yape_phone' : 'paypal_email';
                     document.getElementById(primerCampoError).scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             });
         }
 
-        // --- Restauración del Paso 2 tras recarga de página por errores del Backend ---
+        // Restaura el segundo paso
         {% if errors %}
             const hasPaymentErrors = {% if data.payment_method_type %}true{% else %}false{% endif %};
             if (hasPaymentErrors) {
-                // Forzar visualización directa del paso 2
+                // Muestra el segundo paso.
                 paso1Fields.classList.add('hidden');
                 planSelectionSidebar.classList.add('hidden');
                 leftColumnWrapper.classList.remove('lg:col-span-7');
                 leftColumnWrapper.classList.add('lg:col-span-8', 'lg:col-start-3');
                 paso2Fields.classList.remove('hidden');
                 
-                // Actualizar Step Indicator a paso 2
+                // Actualiza el indicador.
                 step1Indicator.className = "flex items-center gap-2 font-semibold text-slate-400 text-sm";
                 step1Indicator.querySelector('span').className = "w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs";
                 stepLine.className = "w-12 h-[2px] bg-teal-600";
                 step2Indicator.className = "flex items-center gap-2 font-semibold text-teal-600 text-sm";
                 step2Circle.className = "w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-xs";
                 
-                // Activar la pestaña correcta según el método enviado
+                // Restaura el método enviado.
                 const lastMethod = "{{ data.payment_method_type|default:'tarjeta' }}";
                 setTimeout(() => {
                     if (lastMethod === 'yape') {

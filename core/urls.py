@@ -1,5 +1,5 @@
 # core/urls.py
-# URLs de la app core: autenticación, dashboard y perfil.
+# Rutas de autenticación y perfil.
 
 from django.urls import path
 from . import views

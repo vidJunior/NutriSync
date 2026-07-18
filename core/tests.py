@@ -8,7 +8,7 @@ from facturacion.models import PlanSuscripcion
 
 class ColegiaturaUnicaTestCase(TestCase):
     def setUp(self):
-        # Crear un plan de suscripción de prueba para el registro
+        # Crea el plan de prueba.
         self.plan = PlanSuscripcion.objects.create(
             nombre="Prueba Gratis",
             descripcion="Plan de prueba",
@@ -25,8 +25,7 @@ class ColegiaturaUnicaTestCase(TestCase):
             password="Password123"
         )
         
-        # PerfilNutricionista se crea automáticamente por signal en superusuarios/staff, 
-        # pero si no se creó para usuarios normales, lo creamos manualmente.
+        # Completa el perfil si la señal no lo creó.
         self.perfil1, created = PerfilNutricionista.objects.get_or_create(
             usuario=self.user1,
             defaults={
@@ -40,7 +39,7 @@ class ColegiaturaUnicaTestCase(TestCase):
             self.perfil1.numero_colegiatura = "CNP-12345"
             self.perfil1.save()
 
-        # Crear un segundo usuario para pruebas de edición de perfil
+        # Crea otro usuario.
         self.user2 = User.objects.create_user(
             username="nutri2",
             email="nutri2@example.com",
@@ -79,18 +78,18 @@ class ColegiaturaUnicaTestCase(TestCase):
             'dni': '77777777'
         })
         
-        # Debe renderizar el formulario nuevamente con código 200 y el error en la página
+        # Muestra el formulario con el error.
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "El número de colegiatura C.N.P. ya está registrado.")
         
-        # Verificar que el usuario no se haya creado en la base de datos
+        # Confirma que el usuario no existe.
         self.assertFalse(User.objects.filter(username='nutri_nuevo').exists())
 
     def test_editar_perfil_rechaza_cnp_duplicado(self):
         """Valida que al editar el perfil no se permita usar un CNP duplicado."""
         self.client.login(username="nutri2", password="Password123")
         
-        # Enviar el formulario de perfil intentando poner la colegiatura de user1
+        # Intenta duplicar la colegiatura.
         form_data = {
             "nombre_completo": "Nutricionista Dos Modificado",
             "especialidad": "Clínica",

@@ -17,6 +17,7 @@ class PerfilNutricionistaForm(forms.ModelForm):
             "email_profesional",
             "numero_colegiatura",
             "direccion_consultorio",
+            "foto",
         ]
         widgets = {
             # Aplicamos clases de diseño premium de alta gama para los inputs
@@ -57,17 +58,32 @@ class PerfilNutricionistaForm(forms.ModelForm):
                     "placeholder": "Dirección del Consultorio",
                 }
             ),
+            "foto": forms.ClearableFileInput(
+                attrs={
+                    "class": "block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/25",
+                }
+            ),
         }
 
     def clean_numero_colegiatura(self):
         numero_colegiatura = self.cleaned_data.get("numero_colegiatura", "").strip()
         if numero_colegiatura:
             import re
-            if not re.match(r"^\d{3,6}$", numero_colegiatura):
+            normalizado = numero_colegiatura.upper().replace(" ", "")
+            if not re.match(r"^(?:CNP-?)?\d{3,6}$", normalizado):
                 raise forms.ValidationError("El C.N.P. debe ser un número de 3 a 6 dígitos.")
-            qs = PerfilNutricionista.objects.filter(numero_colegiatura=numero_colegiatura)
+            qs = PerfilNutricionista.objects.filter(numero_colegiatura__iexact=numero_colegiatura)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise forms.ValidationError("Este número de colegiatura C.N.P. ya está registrado.")
         return numero_colegiatura
+
+    def clean_foto(self):
+        foto = self.cleaned_data.get("foto")
+        if foto:
+            import os
+            ext = os.path.splitext(foto.name)[1].lower()
+            if ext not in [".jpg", ".jpeg", ".png"]:
+                raise forms.ValidationError("Solo se permiten imágenes en formato JPG o PNG.")
+        return foto

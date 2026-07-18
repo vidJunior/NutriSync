@@ -87,7 +87,7 @@
         </nav>
     </header>
 
-    <!-- Mensajes del sistema (Información y éxito flotantes) -->
+    <!-- Mensajes del sistema -->
     {% include "components/messages.html" %}
 
     <!-- Hero Section -->
@@ -467,7 +467,7 @@
             </div>
 
             <!-- Pricing Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch pt-6 max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-6 max-w-5xl mx-auto justify-center">
                 {% for plan in planes %}
                 <div class="bg-white border border-slate-200 hover:border-teal-500/40 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/5 relative {% if plan.nombre == 'Profesional' %}ring-2 ring-teal-500/30{% endif %}">
                     {% if plan.nombre == 'Profesional' %}
@@ -483,7 +483,7 @@
                             <div class="flex items-baseline">
                                 {% if plan.nombre == 'Prueba Gratis' %}
                                 <span class="text-slate-900 text-4xl font-extrabold font-heading">Gratis</span>
-                                <span class="text-slate-400 text-sm font-semibold ml-1">/ 7 días</span>
+                                <span class="text-teal-600 text-sm font-bold ml-1.5 px-2 py-0.5 rounded-md bg-teal-50 border border-teal-200">/ 14 días</span>
                                 {% else %}
                                 <span class="text-slate-800 text-xl font-bold">S/</span>
                                 <!-- Monthly Price -->
@@ -494,7 +494,7 @@
                                 {% endif %}
                             </div>
                             {% if plan.nombre == 'Prueba Gratis' %}
-                            <p class="text-[11px] text-teal-650 font-bold mt-1">Requiere tarjeta de crédito</p>
+                            <p class="text-[11px] text-teal-650 font-bold mt-2">Requiere tarjeta de crédito o Yape/PayPal</p>
                             {% else %}
                             <p class="price-annual-desc text-xs text-indigo-500 font-semibold mt-1 opacity-0 transition-opacity">Pago anual único</p>
                             {% endif %}
@@ -543,7 +543,7 @@
                             bg-slate-100 hover:bg-slate-200 text-slate-800
                             {% endif %}">
                             {% if plan.nombre == 'Prueba Gratis' %}
-                            Probar Gratis 7 Días
+                            Probar Gratis 14 Días
                             {% else %}
                             Elegir Plan {{ plan.nombre }}
                             {% endif %}
@@ -551,7 +551,7 @@
                     </div>
                 </div>
                 {% empty %}
-                <p class="text-center text-slate-500 col-span-4">No hay planes de suscripción configurados en este momento.</p>
+                <p class="text-center text-slate-500 col-span-3">No hay planes de suscripción configurados en este momento.</p>
                 {% endfor %}
             </div>
         </div>
@@ -788,7 +788,7 @@
             }
         });
 
-        // Autoabrir el modal de login si existe el parámetro 'login' o hay un mensaje de error
+        // Abre el login desde la URL o un error.
         const urlParamsModal = new URLSearchParams(window.location.search);
         const hasLoginParam = urlParamsModal.has('login');
         let hasErrorMessage = false;

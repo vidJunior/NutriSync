@@ -1,11 +1,12 @@
 # core/views.py
-# Vistas de autenticación, dashboard y perfil del nutricionista.
+# Autenticación, panel y perfil.
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 from config.choices import EstadoNutricionista
@@ -23,7 +24,7 @@ def login_view(request):
     Vista de login con redirecciones al modal de la página principal.
     Cualquier petición GET redirige a la página principal con el modal abierto.
     """
-    # Si ya está autenticado, redirige al panel correspondiente directamente
+    # Redirige al panel si ya inició sesión.
     if request.user.is_authenticated:
         perfil = getattr(request.user, "perfil", None)
         if perfil and perfil.rol == "admin_plataforma":
@@ -42,7 +43,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Validamos que el perfil esté habilitado antes de permitir el acceso
+            # Verifica que el perfil esté habilitado.
             try:
                 perfil = user.perfil
                 if perfil.estado != EstadoNutricionista.HABILITADO:
@@ -52,7 +53,7 @@ def login_view(request):
                     )
                     return redirect("/?login=true")
             except Exception:
-                # Si es superusuario y no tiene perfil, se lo creamos con rol de administrador
+                # Crea el perfil faltante del administrador.
                 if user.is_superuser:
                     from core.models import PerfilNutricionista, Rol
                     nombre = f"{user.first_name} {user.last_name}".strip() or user.username
@@ -70,7 +71,7 @@ def login_view(request):
                 request, f"Bienvenido, {user.first_name or user.username}."
             )
             
-            # Redirección inteligente de rol
+            # Redirige según el rol.
             perfil = getattr(user, "perfil", None)
             if perfil and perfil.rol == "admin_plataforma":
                 next_url = request.POST.get("next", "") or request.GET.get("next", "") or "/administracion/"
@@ -91,7 +92,7 @@ def login_view(request):
                 redirect_url += f"&next={next_param}"
             return redirect(redirect_url)
 
-    # Si es GET, redirigir a la página principal con el modal abierto
+    # Abre el modal desde la página principal.
     next_param = request.GET.get("next", "")
     redirect_url = "/?login=true"
     if next_param:
@@ -155,11 +156,16 @@ def register_view(request):
 
         if numero_colegiatura:
             import re
-            if not re.match(r"^\d{3,6}$", numero_colegiatura):
-                errors.append("El C.N.P. debe ser un número de 3 a 6 dígitos.")
+            numero_colegiatura = numero_colegiatura.upper().replace(" ", "")
+            if not re.fullmatch(r"(?:CNP-?)?\d{3,6}", numero_colegiatura):
+                errors.append(
+                    "El C.N.P. debe tener de 3 a 6 dígitos, con prefijo CNP opcional."
+                )
             else:
                 from core.models import PerfilNutricionista
-                if PerfilNutricionista.objects.filter(numero_colegiatura=numero_colegiatura).exists():
+                if PerfilNutricionista.objects.filter(
+                    numero_colegiatura__iexact=numero_colegiatura
+                ).exists():
                     errors.append("El número de colegiatura C.N.P. ya está registrado.")
 
         if not plan_id:
@@ -225,7 +231,7 @@ def register_view(request):
             last_name=" ".join(nombre_completo.split(" ")[1:])
         )
 
-        # El signal crea el perfil automáticamente. Lo recuperamos y actualizamos.
+        # Actualiza el perfil creado por la señal.
         perfil = user.perfil
         perfil.nombre_completo = nombre_completo
         perfil.especialidad = especialidad
@@ -264,7 +270,7 @@ def register_view(request):
             fecha_fin=fecha_fin
         )
 
-        # Si el plan es de pago, creamos el registro de pago simulado
+        # Registra el pago del plan.
         if precio > 0:
             if payment_method_type == "tarjeta":
                 Pago.objects.create(
@@ -300,7 +306,7 @@ def register_view(request):
                     notas=f"Cobro inicial plan {plan.nombre} ({tipo_facturacion}) - PayPal Email: {paypal_email}",
                 )
         else:
-            # Para la prueba gratuita, creamos un registro de control de S/0.00
+            # Registra el control de la prueba gratuita.
             if payment_method_type == "tarjeta":
                 Pago.objects.create(
                     nutricionista=user,
@@ -310,7 +316,7 @@ def register_view(request):
                     estado=EstadoPago.COMPLETADO,
                     comision_stripe=Decimal("0.00"),
                     monto_neto=Decimal("0.00"),
-                    notas=f"Registro de Tarjeta para Prueba Gratis de 7 días - Tarjeta terminada en {card_number[-4:]}",
+                    notas=f"Registro de Tarjeta para Prueba Gratis de 14 días - Tarjeta terminada en {card_number[-4:]}",
                 )
             elif payment_method_type == "yape":
                 Pago.objects.create(
@@ -321,7 +327,7 @@ def register_view(request):
                     estado=EstadoPago.COMPLETADO,
                     comision_stripe=Decimal("0.00"),
                     monto_neto=Decimal("0.00"),
-                    notas=f"Registro de Yape para Prueba Gratis de 7 días - Celular Yape: {yape_phone}",
+                    notas=f"Registro de Yape para Prueba Gratis de 14 días - Celular Yape: {yape_phone}",
                 )
             elif payment_method_type == "paypal":
                 Pago.objects.create(
@@ -332,13 +338,13 @@ def register_view(request):
                     estado=EstadoPago.COMPLETADO,
                     comision_stripe=Decimal("0.00"),
                     monto_neto=Decimal("0.00"),
-                    notas=f"Registro de PayPal para Prueba Gratis de 7 días - PayPal Email: {paypal_email}",
+                    notas=f"Registro de PayPal para Prueba Gratis de 14 días - PayPal Email: {paypal_email}",
                 )
 
         # Logear al usuario automáticamente
         login(request, user)
         if plan.nombre == "Prueba Gratis":
-            messages.success(request, f"¡Registro exitoso! Tu prueba gratuita de 7 días ha sido activada correctamente.")
+            messages.success(request, f"¡Registro exitoso! Tu prueba gratuita de 14 días ha sido activada correctamente.")
         else:
             messages.success(request, f"¡Registro exitoso! Tu plan {plan.nombre} ha sido activado correctamente.")
         return redirect("core:dashboard")
@@ -404,11 +410,16 @@ def validate_register_fields_view(request):
 
     if numero_colegiatura:
         # Validar colegiatura (sólo dígitos)
-        if not re.match(r"^\d{3,6}$", numero_colegiatura):
-            errors["numero_colegiatura"] = "El C.N.P. debe ser un número de 3 a 6 dígitos."
+        numero_colegiatura = numero_colegiatura.upper().replace(" ", "")
+        if not re.fullmatch(r"(?:CNP-?)?\d{3,6}", numero_colegiatura):
+            errors["numero_colegiatura"] = (
+                "El C.N.P. debe tener de 3 a 6 dígitos, con prefijo CNP opcional."
+            )
         else:
             from core.models import PerfilNutricionista
-            if PerfilNutricionista.objects.filter(numero_colegiatura=numero_colegiatura).exists():
+            if PerfilNutricionista.objects.filter(
+                numero_colegiatura__iexact=numero_colegiatura
+            ).exists():
                 errors["numero_colegiatura"] = "El número de colegiatura C.N.P. ya está registrado."
 
     if not dni:
@@ -447,7 +458,7 @@ def dashboard_view(request):
 
     total_pacientes = pacientes_activos.count()
 
-    # Optimizamos: solo contamos las citas de hoy sin cargar objetos a memoria
+    # Cuenta las citas de hoy sin cargarlas.
     cantidad_citas_hoy = Cita.objects.filter(
         paciente__nutricionista=request.user, fecha_hora__date=hoy
     ).count()
@@ -510,8 +521,8 @@ def perfil_view(request):
                 messages.success(request, "Método de pago removido correctamente.")
             return redirect("core:perfil")
 
-        # De lo contrario, procesar el formulario de perfil profesional
-        form = PerfilNutricionistaForm(request.POST, instance=perfil)
+        # Procesa el perfil profesional.
+        form = PerfilNutricionistaForm(request.POST, request.FILES, instance=perfil)
         if form.is_valid():
             form.save()
             messages.success(request, "Perfil actualizado correctamente.")
@@ -519,7 +530,7 @@ def perfil_view(request):
     else:
         form = PerfilNutricionistaForm(instance=perfil)
 
-    # Analizar el método de pago guardado desde las notas de cobro
+    # Obtiene el método guardado de las notas.
     metodo_guardado = None
     if ultimo_pago and "removido" not in ultimo_pago.notas:
         if "Tarjeta terminada en" in ultimo_pago.notas:
@@ -572,6 +583,8 @@ def soporte_view(request):
         
         if not asunto or not mensaje:
             messages.error(request, "Por favor completa el asunto y el mensaje de ayuda.")
+        elif len(asunto) > 150 or len(mensaje) > 10000:
+            messages.error(request, "La solicitud de soporte supera el tamaño permitido.")
         else:
             TicketSoporte.objects.create(
                 nutricionista=request.user,
@@ -611,17 +624,24 @@ def api_alertas(request):
             "alertas": data,
             "alertas_pendientes_count": alertas_no_leidas.count()
         })
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    except Exception:
+        return JsonResponse(
+            {"status": "error", "message": "No se pudieron cargar las alertas."},
+            status=500,
+        )
 
 
 @login_required
+@require_POST
 def api_alertar_leer(request, alert_id):
     """Registra que el usuario ha leído o descartado una alerta."""
     from django.http import JsonResponse
     from administracion.models import NotificacionSistema, NotificacionLeida
     try:
-        notif = NotificacionSistema.objects.get(id=alert_id)
+        notif = get_object_or_404(
+            NotificacionSistema.para_usuario(request.user),
+            id=alert_id,
+        )
         NotificacionLeida.objects.get_or_create(usuario=request.user, notificacion=notif)
         
         # Calcular nuevo contador
@@ -630,8 +650,11 @@ def api_alertar_leer(request, alert_id):
         alertas_pendientes_count = alertas_validas.exclude(id__in=leidas_ids).count()
         
         return JsonResponse({"status": "success", "alertas_pendientes_count": alertas_pendientes_count})
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    except Exception:
+        return JsonResponse(
+            {"status": "error", "message": "No se pudo actualizar la alerta."},
+            status=500,
+        )
 
 
 @login_required
@@ -653,7 +676,7 @@ def notificaciones_view(request):
             alert_id = request.POST.get("alert_id")
             if alert_id:
                 try:
-                    a = NotificacionSistema.objects.get(id=alert_id)
+                    a = alertas_validas.get(id=alert_id)
                     NotificacionLeida.objects.get_or_create(usuario=request.user, notificacion=a)
                     messages.success(request, f"Alerta '{a.titulo}' marcada como leída.")
                 except Exception:

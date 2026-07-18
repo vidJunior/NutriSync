@@ -1,18 +1,18 @@
 <!-- templates/components/system_alerts.html -->
-<div class="space-y-3 mb-6 {% if request.resolver_match.url_name == 'notificaciones' %}hidden{% endif %}" id="system-alerts-container" data-api-url="{% url 'core:api_alertas' %}">
-    <!-- Las alertas del sistema se inyectan aquí dinámicamente como notificaciones temporales en tiempo real -->
+<div class="space-y-3 {% if request.resolver_match.url_name == 'notificaciones' %}hidden{% endif %}" id="system-alerts-container" data-api-url="{% url 'core:api_alertas' %}">
+    <!-- Alertas temporales -->
 </div>
 
 <script>
-    // IDs de alertas conocidas para no mostrarlas como banners persistentes
+    // Evita repetir alertas conocidas.
     const knownAlertIds = new Set();
     let isFirstLoad = true;
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Ejecutar primera consulta inmediata para inicializar alertas conocidas y contador de barra lateral
+        // Inicializa alertas y contador.
         fetchSystemAlerts();
         
-        // Iniciar polling cada 10 segundos
+        // Consulta cada diez segundos.
         setInterval(fetchSystemAlerts, 10000);
     });
 
@@ -44,7 +44,14 @@
             
             // Marcar como leído en backend
             const readUrl = `/api/alertas/${id}/leer/`;
-            fetch(readUrl)
+            const csrfToken = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1] || '';
+            fetch(readUrl, {
+                method: 'POST',
+                headers: {'X-CSRFToken': decodeURIComponent(csrfToken)}
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
@@ -70,21 +77,21 @@
 
                     // 2. Procesar alertas del servidor
                     data.alertas.forEach(alerta => {
-                        // Si es la carga inicial de la página, solo registramos los IDs existentes sin mostrar banners
+                        // Registra las alertas iniciales sin mostrarlas.
                         if (isFirstLoad) {
                             knownAlertIds.add(alerta.id);
                             return;
                         }
 
-                        // Si ya la procesamos (conocida), no hacemos nada
+                        // Omite alertas procesadas.
                         if (knownAlertIds.has(alerta.id)) {
                             return;
                         }
 
-                        // Registrar como procesada para no volver a mostrarla
+                        // Marca la alerta como procesada.
                         knownAlertIds.add(alerta.id);
 
-                        // Crear y renderizar el banner temporal (Toast)
+                        // Muestra la alerta temporal.
                         const newAlert = document.createElement('div');
                         newAlert.id = `alert-banner-${alerta.id}`;
                         newAlert.setAttribute('data-alert-id', alerta.id);
@@ -130,6 +137,7 @@
 
                         // Inyectar al contenedor
                         container.insertBefore(newAlert, container.firstChild);
+                        container.classList.add('mb-6');
                         
                         // Renderizar icono de Lucide
                         if (window.lucide) {
@@ -142,7 +150,7 @@
                             newAlert.classList.add('opacity-100', 'translate-y-0', 'scale-100');
                         }, 50);
 
-                        // Auto-descarte después de 7 segundos
+                        // Oculta la alerta a los siete segundos.
                         setTimeout(() => {
                             dismissSystemAlert(alerta.id);
                         }, 7000);
