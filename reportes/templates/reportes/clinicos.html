@@ -198,7 +198,7 @@
         cerrarModal();
     });
 
-    // Configuración Premium de Gráficos (Chart.js)
+    // Configuración de Chart.js
     {% if paciente_seleccionado and evolucion %}
     const evolucionData = {{ evolucion|safe }};
     if (evolucionData.fechas && evolucionData.fechas.length > 0) {

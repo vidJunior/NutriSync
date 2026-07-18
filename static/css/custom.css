@@ -1,10 +1,10 @@
 .sidebar-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    border-radius: 14px;
-    font-size: 0.875rem;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
     color: #94A3B8;
     text-decoration: none;
     font-weight: 500;
@@ -15,14 +15,14 @@
 .sidebar-link:hover {
     background-color: rgba(255, 255, 255, 0.05);
     color: #F8FAFC;
-    transform: translateX(4px);
+    transform: translateX(3px);
 }
 
 .sidebar-link.active {
     background: linear-gradient(135deg, #0d9488, #10b981);
     color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 10px 20px -5px rgba(13, 148, 136, 0.3);
+    box-shadow: 0 4px 12px -3px rgba(13, 148, 136, 0.3);
 }
 
 .sidebar-link.active i {
@@ -158,3 +158,35 @@ body {
 
 .card-premium-hover { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .card-premium-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05); }
+
+/* Campos de formulario */
+.form-control, .form-select {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+    color: #1e293b;
+    background-color: #ffffff;
+    background-clip: padding-box;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d9488;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+}
+
