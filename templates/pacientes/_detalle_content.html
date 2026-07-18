@@ -300,53 +300,53 @@
         
         <div class="relative">
             
-            <nav class="hidden md:flex -mb-px space-x-2 overflow-x-auto scrollbar-thin px-4 py-3" 
+            <nav class="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2 w-full border-b border-slate-200 p-4 pb-3" 
                  aria-label="Tabs" 
                  id="tabs-container">
                 
-                <button onclick="switchTab(event, 'tab-informacion')"
-                    class="tab-btn border-b-2 border-teal-600 py-3 px-2 text-sm font-semibold text-teal-600 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-all">
-                    <i data-lucide="info" class="w-4 h-4"></i>
-                    <span>Información</span>
+                <button onclick="switchTab(event, 'tab-informacion')" data-tab-target="tab-informacion"
+                    class="tab-btn border-b-2 border-teal-600 py-3 px-3 text-xs lg:text-sm font-semibold text-teal-600 flex items-center justify-center gap-2 transition-all w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Información</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-mediciones')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="scale" class="w-4 h-4"></i>
-                    <span>Mediciones</span>
+                <button onclick="switchTab(event, 'tab-mediciones')" data-tab-target="tab-mediciones"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="scale" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Mediciones</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-evaluacion')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="clipboard-check" class="w-4 h-4"></i>
-                    <span>Evaluación</span>
+                <button onclick="switchTab(event, 'tab-evaluacion')" data-tab-target="tab-evaluacion"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="clipboard-check" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Evaluación</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-plan')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="utensils" class="w-4 h-4"></i>
-                    <span>Plan</span>
+                <button onclick="switchTab(event, 'tab-plan')" data-tab-target="tab-plan"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="utensils" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Plan Alimentario</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-recomendaciones')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="heart" class="w-4 h-4"></i>
-                    <span>Recs</span>
+                <button onclick="switchTab(event, 'tab-recomendaciones')" data-tab-target="tab-recomendaciones"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="heart" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Recomendaciones</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-seguimiento')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="activity" class="w-4 h-4"></i>
-                    <span>Follow</span>
+                <button onclick="switchTab(event, 'tab-seguimiento')" data-tab-target="tab-seguimiento"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="activity" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Seguimiento</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-entregables')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="share-2" class="w-4 h-4"></i>
-                    <span>Entrega</span>
+                <button onclick="switchTab(event, 'tab-entregables')" data-tab-target="tab-entregables"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="share-2" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Entregables</span>
                 </button>
-                <button onclick="switchTab(event, 'tab-archivos')"
-                    class="tab-btn border-b-2 border-transparent py-3 px-2 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800 whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-colors">
-                    <i data-lucide="folder-open" class="w-4 h-4"></i>
-                    <span>Arch</span>
+                <button onclick="switchTab(event, 'tab-archivos')" data-tab-target="tab-archivos"
+                    class="tab-btn border-b-2 border-transparent py-3 px-3 text-xs lg:text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-850 flex items-center justify-center gap-2 transition-colors w-full min-h-[3.4rem] text-center">
+                    <i data-lucide="folder-open" class="w-4 h-4 shrink-0"></i>
+                    <span class="leading-tight">Archivos</span>
                 </button>
             </nav>
 
-            <div class="hidden md:flex flex-col justify-center items-center gap-1 absolute top-1/2 -translate-y-1/2 right-2 z-30 space-y-1">
+            <div id="tab-scroll-controls" class="hidden">
                 <button class="scroll-btn p-1.5 rounded-full text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
                     onclick="scrollTabs('left')">
                     <i data-lucide="chevron-left" class="w-5 h-5"></i>
@@ -358,16 +358,16 @@
                 </button>
             </div>
 
-            <select onchange="switchTab(null, this.value)" 
-                    class="grid grid-cols-2 md:hidden w-full text-sm font-medium text-slate-700 border-0 bg-transparent p-2 cursor-pointer">
+            <select id="patient-tabs-select" onchange="switchTab(null, this.value)" 
+                    class="block md:hidden w-full text-sm font-medium text-slate-700 border border-slate-200 rounded-xl bg-white px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer">
                 <option value="tab-informacion">Información</option>
                 <option value="tab-mediciones">Mediciones</option>
                 <option value="tab-evaluacion">Evaluación</option>
                 <option value="tab-plan">Plan</option>
-                <option value="tab-recomendaciones">Recs</option>
-                <option value="tab-seguimiento">Follow</option>
-                <option value="tab-entregables">Entrega</option>
-                <option value="tab-archivos">Arch</option>
+                <option value="tab-recomendaciones">Recomendaciones</option>
+                <option value="tab-seguimiento">Seguimiento</option>
+                <option value="tab-entregables">Entregables</option>
+                <option value="tab-archivos">Archivos</option>
             </select>
         </div>
     </div>
@@ -5459,14 +5459,25 @@
 
         setTimeout(lockFinalizedFields, 50);
 
+        const tabsNav = document.getElementById('tabs-container');
+        const tabsSelect = document.getElementById('patient-tabs-select');
+        if (tabsSelect && tabsSelect.value !== tabId) {
+            tabsSelect.value = tabId;
+        }
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('border-teal-600', 'text-teal-600', 'font-semibold');
             btn.classList.add('border-transparent', 'text-slate-600', 'font-medium');
         });
 
-        if (event && event.currentTarget) {
-            event.currentTarget.classList.add('border-teal-600', 'text-teal-600', 'font-semibold');
-            event.currentTarget.classList.remove('border-transparent', 'text-slate-600', 'font-medium');
+        const activeButton = (event && event.currentTarget) || document.querySelector(`.tab-btn[data-tab-target="${tabId}"]`);
+        if (activeButton) {
+            activeButton.classList.add('border-teal-600', 'text-teal-600', 'font-semibold');
+            activeButton.classList.remove('border-transparent', 'text-slate-600', 'font-medium');
+
+            if (tabsNav && tabsNav.scrollWidth > tabsNav.clientWidth && activeButton.scrollIntoView) {
+                activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
 
         if (tabId === 'tab-mediciones') loadMediciones();
@@ -10329,13 +10340,9 @@
     // Auto-activar pestaña basada en query param '?tab=...'
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const tab = urlParams.get('tab');
-        if (tab) {
-            const btn = document.querySelector(`button[onclick*="tab-${tab}"]`);
-            if (btn) {
-                btn.click();
-            }
-        }
+        const rawTab = urlParams.get('tab') || 'informacion';
+        const tab = rawTab.startsWith('tab-') ? rawTab : `tab-${rawTab}`;
+        switchTab(null, tab);
     });
 
     // Filtrar recetas globales (plantillas) en el modal de importación

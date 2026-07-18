@@ -60,24 +60,42 @@ function _showError(message) {
 
 const tabsContainer = document.getElementById('tabs-container');
 const scrollBtns = document.querySelectorAll('.scroll-btn');
+const scrollControls = document.getElementById('tab-scroll-controls');
+const SIDEBAR_BREAKPOINT = 1280;
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(updateTabScrollIndicators, 100);
-    if (tabsContainer && window.innerWidth <= 767) setupTouchScroll(tabsContainer);
+    if (tabsContainer) {
+        tabsContainer.addEventListener('scroll', updateTabScrollIndicators, { passive: true });
+        if (window.innerWidth <= 767) setupTouchScroll(tabsContainer);
+    }
 });
 
 function updateTabScrollIndicators() {
-    if (!tabsContainer || !scrollBtns) return;
+    if (!tabsContainer) return;
 
     const canScrollLeft = tabsContainer.scrollLeft > 0;
     const canScrollRight = tabsContainer.scrollLeft + tabsContainer.clientWidth < tabsContainer.scrollWidth - 10;
+    const needsScroll = canScrollLeft || canScrollRight;
 
-    scrollBtns[0].style.opacity = canScrollLeft ? '1' : '0.3';
-    scrollBtns[1].style.opacity = canScrollRight ? '1' : '0.3';
-    
-    scrollBtns.forEach(btn => {
-        btn.style.display = canScrollLeft || canScrollRight ? 'flex' : 'none';
-    });
+    if (scrollControls) {
+        if (needsScroll) {
+            scrollControls.classList.remove('hidden');
+            scrollControls.classList.add('md:flex');
+        } else {
+            scrollControls.classList.add('hidden');
+            scrollControls.classList.remove('md:flex');
+        }
+    }
+
+    if (scrollBtns && scrollBtns.length >= 2) {
+        scrollBtns[0].style.opacity = canScrollLeft ? '1' : '0.3';
+        scrollBtns[1].style.opacity = canScrollRight ? '1' : '0.3';
+        
+        scrollBtns.forEach(btn => {
+            btn.style.display = needsScroll ? 'flex' : 'none';
+        });
+    }
 }
 
 function scrollTabs(direction) {
@@ -363,16 +381,29 @@ async function refreshListaPacientes() {
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.classList.toggle('-translate-x-full');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar) return;
+    const isOpen = !sidebar.classList.contains('-translate-x-full');
+    sidebar.classList.toggle('-translate-x-full');
+    if (backdrop) {
+        backdrop.classList.toggle('hidden', isOpen);
+    }
+    document.body.classList.toggle('overflow-hidden', !isOpen && window.innerWidth < SIDEBAR_BREAKPOINT);
+    if (window.innerWidth < SIDEBAR_BREAKPOINT) {
+        sidebar.dataset.mobileOpen = (!isOpen).toString();
     }
 }
 
 function closeSidebar() {
     const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.classList.add('-translate-x-full');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar) return;
+    sidebar.classList.add('-translate-x-full');
+    sidebar.dataset.mobileOpen = 'false';
+    if (backdrop) {
+        backdrop.classList.add('hidden');
     }
+    document.body.classList.remove('overflow-hidden');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -382,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
     const sidebarLinks = sidebar ? sidebar.querySelectorAll('a') : [];
 
     if (menuBtn && sidebar) {
@@ -393,17 +425,39 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarLinks.forEach(link => {
             link.addEventListener('click', () => {
 
-                if (window.innerWidth < 1024) {
+                if (window.innerWidth < SIDEBAR_BREAKPOINT) {
                     closeSidebar();
                 }
             });
         });
     }
 
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+                closeSidebar();
+            }
+        }
+    });
+
     window.addEventListener('resize', () => {
         const sidebar = document.getElementById('sidebar');
-        if (sidebar && window.innerWidth >= 1024) {
-            sidebar.classList.remove('-translate-x-full');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
+            if (sidebar) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.dataset.mobileOpen = 'false';
+            }
+            if (backdrop) backdrop.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        } else if (sidebar) {
+            const mobileOpen = sidebar.dataset.mobileOpen === 'true';
+            if (backdrop) backdrop.classList.toggle('hidden', !mobileOpen);
         }
     });
 

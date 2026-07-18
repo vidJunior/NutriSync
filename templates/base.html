@@ -6,15 +6,15 @@
     <meta name="description" content="NutriSync — Plataforma de gestión profesional para nutricionistas">
     <title>{% block title %}NutriSync{% endblock %} — NutriSync</title>
 
-    <!-- Inter font: tipografía limpia y profesional -->
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN Play -->
+    
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Lucide Icons -->
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
@@ -34,29 +34,29 @@
         }
     </script>
 
-    <!-- CSS personalizado y Favicon -->
+    
     {% load static %}
     <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
     <link rel="stylesheet" href="{% static 'css/custom.css' %}?v={% now 'U' %}">
 
-    <!-- CSRF Token para llamadas AJAX seguras -->
+    
     <meta name="csrf-token" content="{{ csrf_token }}">
 
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex">
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex overflow-x-hidden">
 
-    <!-- ─── Sidebar ────────────────────────────────── -->
+    
     {% include "components/sidebar.html" %}
 
-    <!-- ─── Área de contenido ──────────────────────── -->
-    <div class="flex-1 flex flex-col min-h-screen lg:pl-60">
+    
+    <div class="flex-1 flex flex-col min-h-screen xl:pl-60">
 
-        <!-- Header Superior con Efecto de Vidrio Esmerilado (Glassmorphism) -->
-        <header class="bg-white/70 backdrop-blur-xl border-b border-slate-200/50 px-8 py-4 flex items-center justify-between sticky top-0 z-20 transition-all duration-300">
+        
+        <header class="bg-white/70 backdrop-blur-xl border-b border-slate-200/50 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-20 transition-all duration-300">
             <div class="flex items-center gap-4">
                 <button id="menu-btn"
-                    class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all">
+                    class="xl:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <h1 class="text-2xl font-black tracking-tight text-slate-900">
@@ -64,8 +64,8 @@
                 </h1>
             </div>
             
-            <div class="flex items-center gap-4">
-                <!-- Información de Perfil del Usuario en el Header con Dropdown -->
+            <div class="flex items-center gap-3 sm:gap-4">
+                
                 <div class="relative">
                     <button id="profile-dropdown-btn" class="flex items-center gap-3 bg-slate-100/50 hover:bg-slate-200/50 active:bg-slate-200/80 border border-slate-200/30 hover:border-slate-350 px-3.5 py-1.5 rounded-full shadow-sm cursor-pointer transition-all duration-200 focus:outline-none">
                         <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white font-bold text-xs flex items-center justify-center shadow-inner">
@@ -77,7 +77,7 @@
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                     </button>
                     
-                    <!-- Menú Desplegable Flotante Premium -->
+                    
                     <div id="profile-dropdown-menu" class="absolute right-0 mt-2.5 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 hidden z-50 transform origin-top-right transition-all duration-150">
                         <a href="{% url 'core:perfil' %}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors">
                             <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
@@ -93,7 +93,7 @@
                 
                 <span class="w-px h-6 bg-slate-200/80 hidden sm:inline"></span>
                 
-                <!-- Botón de Salir de la Cuenta -->
+                
                 <a href="{% url 'core:logout' %}"
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
                    title="Cerrar sesión">
@@ -103,12 +103,12 @@
             </div>
         </header>
 
-        <!-- Mensajes de éxito / error / info -->
+        
         {% include "components/messages.html" %}
 
-        <!-- Contenido principal -->
-        <main class="flex-1 p-8">
-            <!-- Alertas globales del sistema -->
+        
+        <main class="flex-1 p-4 sm:p-6 lg:p-8">
+            
             {% include "components/system_alerts.html" %}
 
             {% block content %}{% endblock %}
@@ -116,10 +116,10 @@
 
     </div>
 
-    <!-- ─── Modal ───────────────────────────────────── -->
+    
     {% include "components/modal.html" %}
 
-    <!-- ─── JS ──────────────────────────────────────── -->
+    
     <script src="{% static 'js/app.js' %}?v={% now 'U' %}"></script>
     <script>
       lucide.createIcons();
@@ -144,3 +144,4 @@
     {% block extra_js %}{% endblock %}
 </body>
 </html>
+
