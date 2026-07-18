@@ -1,12 +1,14 @@
 # pacientes/models.py
-# Modelo Paciente — ficha clínica de la persona atendida por el nutricionista.
-# El FK nutricionista aísla los datos entre profesionales (arquitectura multi-tenant).
+# Ficha clínica del paciente.
+# El nutricionista aísla los datos.
 
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.contrib.auth.models import User
-import random
+import secrets
 import string
+from core.validation import validate_uploaded_file
 from config.choices import Sexo
 from pacientes.validators import (
     validate_dni,
@@ -26,7 +28,7 @@ class Paciente(models.Model):
     """
 
     # FK al nutricionista que gestiona este paciente.
-    # Garantiza que cada profesional solo vea sus propios pacientes (aislamiento multi-tenant).
+    # Aísla los pacientes por profesional.
     nutricionista = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -34,7 +36,7 @@ class Paciente(models.Model):
         verbose_name="Nutricionista",
     )
 
-    # Relación opcional con el User que representa la cuenta móvil del Paciente.
+    # Cuenta móvil opcional.
     usuario = models.OneToOneField(
         User,
         on_delete=models.SET_NULL,
@@ -44,7 +46,7 @@ class Paciente(models.Model):
         verbose_name="Usuario de Acceso Móvil",
     )
 
-    # ─── Datos personales ────────────────────────────────────────────────────
+    # Datos personales
     nombre = models.CharField(
         max_length=100,
         validators=[validate_nombre_apellido],
@@ -120,7 +122,7 @@ class Paciente(models.Model):
         verbose_name="Seguimiento Nutricional",
     )
 
-    # ─── Contacto ────────────────────────────────────────────────────────────
+    # Contacto
     telefono = models.CharField(
         max_length=20,
         validators=[validate_telefono],
@@ -129,7 +131,7 @@ class Paciente(models.Model):
     email = models.EmailField(blank=True, verbose_name="Email")
     direccion = models.TextField(blank=True, verbose_name="Dirección")
 
-    # ─── Información de salud ────────────────────────────────────────────────
+    # Información de salud
     condiciones_medicas = models.TextField(
         blank=True,
         verbose_name="Condiciones médicas",
@@ -146,8 +148,8 @@ class Paciente(models.Model):
         help_text="Observaciones adicionales relevantes para el nutricionista",
     )
 
-    # ─── Control ─────────────────────────────────────────────────────────────
-    # Soft-delete: inactivar en lugar de borrar. Preserva el historial del paciente.
+    # Control
+    # La inactivación conserva el historial.
     estado = models.BooleanField(
         default=True,
         verbose_name="Activo",
@@ -187,7 +189,7 @@ class Paciente(models.Model):
         current_in_info = self.informacion_clinica.get("objetivo_principal") if self.informacion_clinica else None
         current_in_notas = get_motivo_from_notas(self.notas_generales)
 
-        # Buscar el valor antiguo de la base de datos para ver cuál cambió
+        # Compara los valores guardados.
         db_obj = None
         if self.pk:
             try:
@@ -208,7 +210,7 @@ class Paciente(models.Model):
             elif current_in_notas != old_in_notas:
                 nuevo_objetivo = current_in_notas
         
-        # Si es un paciente nuevo o no se detectó cambio diferencial, usar el primero no nulo
+        # Usa el primer valor disponible.
         if not nuevo_objetivo:
             nuevo_objetivo = current_in_eval or current_in_info or current_in_notas or "Pérdida de peso"
 
@@ -270,7 +272,7 @@ class Paciente(models.Model):
         else:
             self.imc_clasificacion = None
 
-        # Forzar validaciones completas antes de persistir en base de datos
+        # Valida antes de guardar.
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -399,6 +401,32 @@ class Consulta(models.Model):
     def __str__(self):
         return f"Consulta #{self.numero_consulta} ({self.tipo}) — {self.paciente}"
 
+    def clean(self):
+        super().clean()
+        errors = {}
+        if (
+            self.paciente_id
+            and self.profesional_id
+            and self.paciente.nutricionista_id != self.profesional_id
+        ):
+            errors["profesional"] = "El profesional no corresponde al paciente."
+        if self.cita_id and self.paciente_id and self.cita.paciente_id != self.paciente_id:
+            errors["cita"] = "La cita no pertenece al paciente."
+        if (
+            self.consulta_anterior_id
+            and self.paciente_id
+            and self.consulta_anterior.paciente_id != self.paciente_id
+        ):
+            errors["consulta_anterior"] = (
+                "La consulta anterior no pertenece al paciente."
+            )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class PlanAlimentario(models.Model):
     ESTADOS = [
@@ -458,6 +486,44 @@ class PlanAlimentario(models.Model):
     def __str__(self):
         return f"{self.nombre} — {self.paciente.nombre_completo} ({self.estado})"
 
+    def clean(self):
+        super().clean()
+        errors = {}
+        if (
+            self.consulta_id
+            and self.paciente_id
+            and self.consulta.paciente_id != self.paciente_id
+        ):
+            errors["consulta"] = "La consulta no pertenece al paciente."
+        ranges = {
+            "calorias": (500, 10000),
+            "proteinas": (0, 1000),
+            "carbohidratos": (0, 1500),
+            "grasas": (0, 500),
+            "fibra": (0, 200),
+            "agua_recomendada": (0.1, 20),
+        }
+        for field_name, (minimum, maximum) in ranges.items():
+            value = getattr(self, field_name)
+            if value is not None and not minimum <= float(value) <= maximum:
+                errors[field_name] = (
+                    f"El valor debe estar entre {minimum} y {maximum}."
+                )
+        for field_name in (
+            "comidas",
+            "sustituciones",
+            "recomendaciones",
+            "suplementacion",
+        ):
+            if not isinstance(getattr(self, field_name), list):
+                errors[field_name] = "El contenido debe ser una lista."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 import uuid
 import os
@@ -516,6 +582,33 @@ class ArchivoPaciente(models.Model):
     def __str__(self):
         return f"{self.nombre} ({self.categoria}) — {self.paciente.nombre_completo}"
 
+    def clean(self):
+        super().clean()
+        errors = {}
+        if (
+            self.consulta_id
+            and self.paciente_id
+            and self.consulta.paciente_id != self.paciente_id
+        ):
+            errors["consulta"] = "La consulta no pertenece al paciente."
+        if (
+            self.nutricionista_id
+            and self.paciente_id
+            and self.paciente.nutricionista_id != self.nutricionista_id
+        ):
+            errors["nutricionista"] = "El profesional no corresponde al paciente."
+        if self.archivo and hasattr(self.archivo, "content_type"):
+            try:
+                validate_uploaded_file(self.archivo)
+            except ValidationError as exc:
+                errors["archivo"] = exc.messages
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class CodigoVinculacion(models.Model):
     """
@@ -558,10 +651,10 @@ class CodigoVinculacion(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.codigo:
-            # Generar código de vinculación de 6 caracteres alfanuméricos
+            # Genera un código de seis caracteres.
             caracteres = string.ascii_uppercase + string.digits
             while True:
-                nuevo_codigo = "".join(random.choices(caracteres, k=6))
+                nuevo_codigo = "".join(secrets.choice(caracteres) for _ in range(6))
                 if not CodigoVinculacion.objects.filter(codigo=nuevo_codigo).exists():
                     self.codigo = nuevo_codigo
                     break

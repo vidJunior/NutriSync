@@ -5494,7 +5494,7 @@
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('hidden');
-            // Inicializar medicación si abre el de historia clínica
+    // Carga la medicación.
             if (modalId === 'modal-historia-clinica') {
                 renderMedsTable();
             }
@@ -5508,7 +5508,7 @@
         }
     }
 
-    // Cerrar modales específicos clickeando fuera de forma segura (sin cerrar al seleccionar texto)
+    // Cierra modales al pulsar fuera.
     let mousedownModalTarget = null;
     window.addEventListener('mousedown', function (e) {
         if (e.target.classList.contains('modal-overlay') || e.target.id === 'modal-evaluacion-completa') {
@@ -5568,7 +5568,7 @@
             });
     }
 
-    // ─── LÓGICA DE TABLA DINÁMICA DE MEDICACIÓN/SUPLEMENTACIÓN ───
+// Medicación y suplementación
     let medsList = [];
     try {
         const medsJsonElement = document.getElementById('meds-data-json');
@@ -5641,7 +5641,7 @@
         renderMedsTable();
     }
 
-    // Formatear chips dinámicos de checklist al inicializarse
+    // Formatea las opciones marcadas.
     document.querySelectorAll('.chip-checkbox input').forEach(input => {
         const span = input.nextElementSibling;
         const updateStyle = () => {
@@ -5660,7 +5660,7 @@
         lucide.createIcons();
     }
 
-    // ─── MÓDULO DE MEDICIONES (SEGUIMIENTO CLÍNICO) ───
+// Mediciones
     let currentField = "peso_kg";
     let medicionesData = [];
     let chartInstance = null;
@@ -6117,7 +6117,7 @@
                 }
             });
         } else {
-            // Fallback a los datos base del paciente si no hay mediciones previas
+            // Usa los datos base si no hay medidas.
             const basePesoStr = "{{ paciente.peso|default_if_none:'' }}";
             const baseTallaStr = "{{ paciente.talla|default_if_none:'' }}";
             const inputPeso = document.getElementById("eval-peso_kg");
@@ -6203,7 +6203,7 @@
         });
     }
 
-    // ─── JS PARA EL MÓDULO DE EVALUACIÓN ───
+// Evaluación
     let evaluacionData = {};
 
     function loadEvaluacion() {
@@ -6471,7 +6471,7 @@
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
-        // Populate form fields with current evaluacionData values
+    // Carga la evaluación actual.
         if (modalId === "modal-eval-diagnostico") {
             const principal = document.getElementById("input-eval-diagnostico-principal");
             if (principal) principal.value = evaluacionData.diagnostico_principal || "Normopeso";
@@ -6737,7 +6737,7 @@
                     closeEvalModal(modalId);
                     loadEvaluacion();
 
-                    // Update target card metrics in top header if necessary
+    // Actualiza las métricas del encabezado.
                     if (section === "objetivos") {
                         // Update header tab summary or targets
                         const headerTarget = document.querySelector(".bg-white [data-lucide='target'] + h3");
@@ -6761,7 +6761,7 @@
             });
     }
 
-    // ─── JS PARA EL MÓDULO DE PLAN ALIMENTARIO ───
+// Plan alimentario
     let activePlan = null;
     let catalogRecetas = [];
     let catalogModelos = [];
@@ -7562,7 +7562,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // If we deleted the active plan, load default, else stay
+                // Carga el plan disponible.
                     const targetId = activePlan && activePlan.id === planId ? null : activePlan.id;
                     loadPlanAlimentario(targetId);
                 } else {
@@ -7626,7 +7626,7 @@
         window.open(url, "_blank");
     }
 
-    // ─── MÓDULO DE EXPEDIENTE Y ARCHIVOS ───
+// Expediente y archivos
     let allArchivos = [];
     let activeArchivosCategory = '';
 
@@ -8108,7 +8108,7 @@
             .catch(err => console.error(err));
     }
 
-    // ─── MÓDULO DE SEGUIMIENTO CLÍNICO Y EVOLUCIÓN ───
+// Seguimiento clínico
     let seguimientoData = null;
     let segChart = null;
 
@@ -8609,7 +8609,7 @@
                 container.appendChild(div);
             });
 
-            // Poblar las dificultades personalizadas (las que no están en el catálogo standard)
+    // Carga dificultades personalizadas.
             customDificultades = seguimientoData.dificultades.filter(d => !dificultadesCatalogo.includes(d));
             renderCustomDificultadesList();
             document.getElementById('input-new-dificultad').value = '';
@@ -8859,7 +8859,7 @@
         };
         sendSeguimientoData(payload, 'modal-seg-logros');
     }
-    // ─── LÓGICA DEL MÓDULO DE RECOMENDACIONES ───
+// Recomendaciones
     let recomendacionesData = null;
     let tempRecomFoods = [];
     let tempLimitarFoods = [];
@@ -8927,7 +8927,7 @@
             const metaEl = document.getElementById(`rec-${cat.replace('_', '-')}-meta`);
             const cumpliEl = document.getElementById(`rec-${cat.replace('_', '-')}-cumplimiento`);
 
-            // 1. Poblar Metadatos (Fecha, Profesional, Cumplimiento)
+    // 1. Carga los metadatos.
             if (metaEl) {
                 metaEl.innerText = r.fecha ? `${r.fecha} — Por ${r.profesional}` : "—";
             }
@@ -9033,13 +9033,13 @@
         const modal = getRecomendacionModalElement(categoria);
         if (!modal) return;
 
-        // 1. Establecer cita_id y fecha actuales en los formularios
+    // 1. Asigna cita y fecha.
         const select = document.getElementById("recomendaciones-cita-select");
         const citaId = select ? select.value : "null";
 
         modal.querySelectorAll(".input-rec-cita-id").forEach(el => el.value = citaId);
 
-        // Poner la fecha de hoy por defecto para el backend si no hay cita
+    // Usa la fecha actual si no hay cita.
         modal.querySelectorAll(".input-rec-fecha").forEach(el => {
             el.value = new Date().toISOString().split('T')[0];
         });
@@ -9171,7 +9171,7 @@
         const form = document.getElementById(formId);
         const formData = new FormData(form);
 
-        // Si son categorías de tipo lista, adjuntar elementos de los arrays temporales
+    // Añade los elementos de categorías.
         if (categoria === "alimentos_recomendados") {
             tempRecomFoods.forEach(food => formData.append("items", food));
         }
@@ -9219,7 +9219,7 @@
             });
     }
 
-    // ─── LÓGICA DEL MÓDULO DE ENTREGABLES ───
+// Entregables
     let entregablesData = null;
 
     function loadEntregables(citaId = null) {
@@ -9979,7 +9979,7 @@
         return "bg-slate-100 text-slate-600 border border-slate-200";
     }
 
-    // ─── CONSULTAS NUTRICIONALES JS ───
+// Consultas nutricionales
     function abrirModalNuevaConsulta() {
         const errDiv = document.getElementById('nueva-consulta-error');
         if (errDiv) errDiv.classList.add('hidden');
@@ -10050,7 +10050,7 @@
 
                 if (successMarker) {
                     closeModal();
-                    // Refrescar página para ver la nueva cita en el listado
+        // Actualiza la lista de citas.
                     window.location.reload();
                 } else {
                     const formContent = doc.getElementById('cita-form-content');
@@ -10218,7 +10218,7 @@
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
         const formId = form.getAttribute('id') || '';
-        // Check if this is a save/action form (ignore navigation, search, print, toggle sidebar, new consultation)
+    // Detecta formularios que guardan datos.
         if (formId && (formId.includes('search') || formId.includes('filter') || formId === 'form-nueva-consulta')) {
             return;
         }
@@ -10243,7 +10243,7 @@
         });
     });
 
-    // Hide "Nueva medición", "Subir entregable", etc. buttons
+    // Oculta acciones de edición.
     const actionButtons = document.querySelectorAll(
         'button[onclick*="guardar"], button[onclick*="subir"], button[onclick*="crear"], button[onclick*="eliminar"], ' +
         'a[href*="guardar"], a[href*="subir"], a[href*="crear"], a[href*="eliminar"], ' +
@@ -10260,7 +10260,7 @@
         btn.style.display = 'none';
     });
 
-    // Also show warning banner at the top of each tab/panel
+    // Muestra la advertencia en cada panel.
     const panels = document.querySelectorAll('.tab-panel');
     panels.forEach(panel => {
         // Ignore if already warning
@@ -10337,7 +10337,7 @@
         sendSeguimientoData(payload, 'modal-seg-logros');
     }
 
-    // Auto-activar pestaña basada en query param '?tab=...'
+    // Activa la pestaña indicada en la URL.
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const rawTab = urlParams.get('tab') || 'informacion';
@@ -10345,7 +10345,7 @@
         switchTab(null, tab);
     });
 
-    // Filtrar recetas globales (plantillas) en el modal de importación
+    // Filtra recetas para importar.
     function filterTemplates() {
         const query = document.getElementById("search-templates-input").value.toLowerCase().trim();
         const items = document.querySelectorAll(".template-item");

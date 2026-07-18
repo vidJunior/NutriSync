@@ -153,8 +153,23 @@ class PacienteCreateView(FormFragmentMixin, LoginRequiredMixin, CreateView):
         return reverse_lazy("pacientes:detalle", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
-        # Asignamos el nutricionista autenticado automáticamente antes de guardar.
-        # Esto evita que el usuario pueda asignar el paciente a otro profesional.
+        try:
+            suscripcion = self.request.user.suscripcion
+        except Exception:
+            suscripcion = None
+
+        if suscripcion and suscripcion.estado == "activa":
+            limite = suscripcion.plan.limite_pacientes
+        else:
+            from facturacion.models import PlanSuscripcion
+            plan_defecto = PlanSuscripcion.objects.filter(nombre="Prueba Gratis").first()
+            limite = plan_defecto.limite_pacientes if plan_defecto else -1
+
+        if limite != -1:
+            total = Paciente.objects.filter(nutricionista=self.request.user).count()
+            if total >= limite:
+                form.add_error(None, f"Límite alcanzado: Tu plan actual solo permite registrar hasta {limite} pacientes. Por favor, actualiza tu plan en la sección de Facturación.")
+                return self.form_invalid(form)
         form.instance.nutricionista = self.request.user
         return super().form_valid(form)
 

@@ -1,5 +1,5 @@
 # pacientes/urls.py
-# URLs de la app pacientes. Namespace 'pacientes' para referenciar desde templates.
+# Rutas de pacientes.
 
 from django.urls import path
 from . import views

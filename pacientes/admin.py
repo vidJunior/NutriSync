@@ -1,6 +1,5 @@
 # pacientes/admin.py
-# Registro del modelo Paciente en el panel de administración de Django.
-# Facilita al nutricionista la gestión avanzada desde /admin/.
+# Admin de pacientes.
 
 from django.contrib import admin
 from .models import Paciente
@@ -21,7 +20,7 @@ class PacienteAdmin(admin.ModelAdmin):
     )
     list_filter = ("estado", "sexo", "fecha_registro")
     search_fields = ("nombre", "apellido", "telefono", "email")
-    # Permite activar/desactivar pacientes directamente desde la lista
+    # Cambia el estado desde la lista.
     list_editable = ("estado",)
     readonly_fields = ("fecha_registro", "fecha_actualizacion")
     date_hierarchy = "fecha_registro"

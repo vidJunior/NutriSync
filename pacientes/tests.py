@@ -37,7 +37,7 @@ class PacienteCreateViewTestCase(TestCase):
             data=self.form_data,
             follow=False
         )
-        # Debería haber redireccionado (302) a la ficha del paciente detalle
+        # Confirma la redirección al paciente.
         self.assertEqual(response.status_code, 302)
         
         # Verificar que se creó el paciente
@@ -59,14 +59,14 @@ class PacienteCreateViewTestCase(TestCase):
             data=self.form_data,
             HTTP_X_REQUESTED_WITH="XMLHttpRequest"
         )
-        # Debería retornar 200 OK con el fragmento HTML de éxito
+        # Confirma el fragmento de éxito.
         self.assertEqual(response.status_code, 200)
         
         # Verificar que se creó el paciente
         paciente = Paciente.objects.filter(nombre="Carlos", apellido="Gómez").first()
         self.assertIsNotNone(paciente)
         
-        # Verificar que la respuesta contiene el div de éxito con el ID correcto y el pk
+        # Confirma el ID en la respuesta.
         expected_content = f'<div id="paciente-form-success" data-success="true" data-pk="{paciente.pk}"></div>'
         self.assertContains(response, expected_content)
 
@@ -83,7 +83,7 @@ class PacienteCreateViewTestCase(TestCase):
             data=invalid_data
         )
         self.assertEqual(response.status_code, 200)
-        # Debe renderizar el template completo (que hereda de base.html)
+        # Renderiza la página completa.
         self.assertTemplateUsed(response, "pacientes/form.html")
         self.assertFormError(response.context["form"], "nombre", "Este campo es obligatorio.")
 
@@ -287,7 +287,7 @@ class PacienteValidationTestCase(TestCase):
             telefono="999888777",
         )
 
-        # Mismo nutricionista, mismo DNI -> Debe fallar a nivel de DB/clean
+        # Rechaza un DNI duplicado.
         dup = Paciente(
             nutricionista=self.nutri1,
             nombre="Pedro",
@@ -485,7 +485,7 @@ class MedidaCorporalSyncTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 302)  # Redirección exitosa
         
-        # Validamos que se haya creado la medida
+        # Confirma la creación de la medida.
         medida = MedidaCorporal.objects.filter(paciente=self.paciente).first()
         self.assertIsNotNone(medida)
         self.assertEqual(medida.fecha, date.today())
@@ -686,7 +686,14 @@ class PacienteEntregablesTestCase(TestCase):
             paciente=self.paciente,
             nombre="Plan Test",
             calorias=1800,
-            estado="Activo"
+            estado="Activo",
+            comidas=[
+                {
+                    "tipo": "Desayuno",
+                    "alimentos": "Avena con fruta",
+                    "hora": "08:00",
+                }
+            ],
         )
 
         # Publicar el plan
@@ -766,10 +773,36 @@ class ConsultaFlowTestCase(TestCase):
         self.assertEqual(consulta.numero_consulta, 1)
         self.assertEqual(consulta.estado, "en_curso")
         
-        # Debe haber heredado datos del paciente dentro de informacion_clinica
+        # Confirma los datos clínicos heredados.
         self.assertIsNotNone(consulta.informacion_clinica)
         self.assertEqual(consulta.informacion_clinica.get("enfermedades"), ["Anemia"])
         self.assertEqual(consulta.informacion_clinica.get("habitos", {}).get("sueno"), "7 horas")
+
+        # Completa los requisitos mínimos.
+        from seguimiento.models import MedidaCorporal
+        from pacientes.models import PlanAlimentario
+
+        consulta.informacion_clinica = {
+            "enfermedades": ["Anemia"],
+            "habitos": {
+                "sueno_horas": 7,
+                "actividad_fisica": "Actividad moderada",
+            },
+            "historia_alimentaria": {"num_comidas": 4},
+        }
+        consulta.evaluacion = {"diagnostico_principal": "Riesgo nutricional leve"}
+        consulta.save()
+        MedidaCorporal.objects.create(
+            paciente=self.paciente,
+            consulta=consulta,
+            peso_kg=65,
+            talla_cm=160,
+        )
+        PlanAlimentario.objects.create(
+            paciente=self.paciente,
+            consulta=consulta,
+            nombre="Plan inicial",
+        )
 
         # 2. Finalizar la consulta
         response_fin = self.client.post(
@@ -782,7 +815,7 @@ class ConsultaFlowTestCase(TestCase):
         self.assertEqual(consulta.estado, "finalizada")
         self.assertIsNotNone(consulta.hora_fin)
 
-        # 3. Intentar editar con la consulta finalizada (debe dar 400 Bad Request)
+        # 3. Rechaza la edición finalizada.
         post_data = {
             "categoria": "hidratacion",
             "consumo_diario": "3.5",
@@ -826,6 +859,18 @@ class ConsultaFlowTestCase(TestCase):
         # Verificar estado de la cita paso a "en_consulta"
         cita.refresh_from_db()
         self.assertEqual(cita.estado, "en_consulta")
+
+        from seguimiento.models import MedidaCorporal
+
+        consulta = Consulta.objects.get(pk=consulta_id)
+        consulta.observaciones = "Evolución clínica favorable."
+        consulta.save()
+        MedidaCorporal.objects.create(
+            paciente=self.paciente,
+            consulta=consulta,
+            peso_kg=64.5,
+            talla_cm=160,
+        )
 
         # Finalizar la consulta
         response_fin = self.client.post(

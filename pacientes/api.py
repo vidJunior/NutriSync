@@ -1,11 +1,16 @@
 # pacientes/api.py
 from typing import List, Dict, Any, Optional
+import re
+
+from django.conf import settings
 from django.utils import timezone
 from django.core import signing
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.core.validators import validate_email
+from django.db import IntegrityError, transaction
 from ninja import Router, Schema
 from ninja.security import HttpBearer
 from ninja.errors import HttpError
@@ -13,32 +18,42 @@ from django.core.cache import cache
 from pacientes.models import Paciente, CodigoVinculacion, PlanAlimentario, ArchivoPaciente
 from agendas.models import Cita
 from seguimiento.models import MedidaCorporal, NotaClinica, Recomendacion
+from core.validation import validate_hex_color, validate_http_url
+from pacientes.validators import validate_dni, validate_telefono
 
 router = Router()
 
 def obtener_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
+    if settings.TRUST_X_FORWARDED_FOR and x_forwarded_for:
         return x_forwarded_for.split(',')[0].strip()
     return request.META.get('REMOTE_ADDR', '').strip()
 
-# ─── Seguridad y Autenticación con Token Firmado ─────────────────────────────
+# Autenticación con token
 
 class PacienteAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
-            # Descifrar y validar el token firmado (vigente por 30 días)
+            # Valida el token de 30 días.
             data = signing.loads(token, max_age=60*60*24*30)
             user_id = data.get("user_id")
-            # Optimización: Cargar de antemano el perfil del paciente para evitar queries extra (N+1)
+            # Precarga el perfil del paciente.
             user = User.objects.select_related('paciente_perfil').get(pk=user_id)
+            paciente = user.paciente_perfil
+            if not user.is_active or not paciente.estado or paciente.usuario_id != user.id:
+                return None
             return user
-        except (signing.SignatureExpired, signing.BadSignature, User.DoesNotExist):
+        except (
+            signing.SignatureExpired,
+            signing.BadSignature,
+            User.DoesNotExist,
+            Paciente.DoesNotExist,
+        ):
             return None
 
 auth_paciente = PacienteAuth()
 
-# ─── Esquemas de Pydantic (Request / Response) ───────────────────────────────
+# Esquemas de entrada y salida
 
 class RegistroPacienteSchema(Schema):
     dni: str
@@ -147,7 +162,7 @@ class ArchivoPacienteSchema(Schema):
     observaciones: str
 
 
-# ─── Endpoints de Autenticación y Registro ───────────────────────────────────
+# Autenticación y registro
 
 @router.post("/auth/register-vinculado", response={200: TokenSchema})
 def registrar_paciente_vinculado(request, data: RegistroPacienteSchema):
@@ -155,6 +170,24 @@ def registrar_paciente_vinculado(request, data: RegistroPacienteSchema):
     Registra una cuenta de usuario Django vinculada a un expediente de paciente
     mediante el DNI y el código de vinculación otorgado por el nutricionista.
     """
+    dni = data.dni.strip()
+    code = data.codigo_vinculacion.strip().upper()
+    username = data.username.strip()
+    email = data.email.strip().lower()
+    password = data.password
+    try:
+        validate_dni(dni)
+        validate_email(email)
+        validate_password(password)
+    except ValidationError as exc:
+        raise HttpError(400, " ".join(exc.messages))
+    if not re.fullmatch(r"[\w.@+-]{3,150}", username):
+        raise HttpError(400, "El nombre de usuario no tiene un formato válido.")
+    if not re.fullmatch(r"[A-Z0-9]{6}", code):
+        raise HttpError(400, "El código de vinculación no tiene un formato válido.")
+    if User.objects.filter(email__iexact=email).exists():
+        raise HttpError(400, "El correo electrónico ya está asociado a otra cuenta.")
+
     ip = obtener_client_ip(request)
     limite_clave = f"rl_vinculo_{ip}"
     intentos = cache.get(limite_clave, 0)
@@ -166,7 +199,7 @@ def registrar_paciente_vinculado(request, data: RegistroPacienteSchema):
 
     try:
         # 1. Buscar candidatos por DNI
-        pacientes_candidatos = Paciente.objects.filter(dni=data.dni, estado=True)
+        pacientes_candidatos = Paciente.objects.filter(dni=dni, estado=True)
         if not pacientes_candidatos.exists():
             raise Paciente.DoesNotExist
 
@@ -175,8 +208,8 @@ def registrar_paciente_vinculado(request, data: RegistroPacienteSchema):
             try:
                 vinculo = CodigoVinculacion.objects.get(paciente=cand)
                 # Validar código y vigencia, y que el correo coincida
-                if vinculo.esta_valido() and vinculo.codigo == data.codigo_vinculacion.strip().upper():
-                    if cand.email and cand.email.strip().lower() == data.email.strip().lower():
+                if vinculo.esta_valido() and vinculo.codigo == code:
+                    if cand.email and cand.email.strip().lower() == email:
                         paciente = cand
                         break
             except CodigoVinculacion.DoesNotExist:
@@ -195,20 +228,30 @@ def registrar_paciente_vinculado(request, data: RegistroPacienteSchema):
         cache.set(limite_clave, intentos + 1, 300)
         raise HttpError(400, error_generico)
 
-    # 4. Validar que el nombre de usuario de Django no esté ocupado
-    if User.objects.filter(username=data.username).exists():
+    # 4. Valida que el usuario esté disponible.
+    if User.objects.filter(username__iexact=username).exists():
         cache.set(limite_clave, intentos + 1, 300)
         raise HttpError(400, "El nombre de usuario seleccionado ya está en uso.")
 
     # 5. Crear usuario y enlazar de forma atómica
     with transaction.atomic():
-        user = User.objects.create_user(
-            username=data.username,
-            email=data.email,
-            password=data.password,
-            first_name=paciente.nombre,
-            last_name=paciente.apellido
-        )
+        paciente = Paciente.objects.select_for_update().get(pk=paciente.pk)
+        vinculo = CodigoVinculacion.objects.select_for_update().get(paciente=paciente)
+        if paciente.usuario_id or not vinculo.esta_valido() or vinculo.codigo != code:
+            raise HttpError(400, error_generico)
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=paciente.nombre,
+                last_name=paciente.apellido
+            )
+        except IntegrityError as exc:
+            raise HttpError(
+                400,
+                "El usuario o correo ya está asociado a otra cuenta.",
+            ) from exc
         paciente.usuario = user
         paciente.save()
 
@@ -235,6 +278,10 @@ def login_paciente(request, data: LoginSchema):
     Inicia sesión usando el nombre de usuario y la contraseña del paciente,
     devolviendo un token firmado si la autenticación es correcta.
     """
+    username = data.username.strip()
+    if not username or len(username) > 150 or len(data.password) > 128:
+        raise HttpError(401, "Credenciales incorrectas.")
+
     ip = obtener_client_ip(request)
     limite_clave = f"rl_login_{ip}"
     intentos = cache.get(limite_clave, 0)
@@ -242,12 +289,12 @@ def login_paciente(request, data: LoginSchema):
     if intentos >= 5:
         raise HttpError(429, "Demasiados intentos de inicio de sesión fallidos. Intente de nuevo en 5 minutos.")
 
-    user = authenticate(username=data.username, password=data.password)
+    user = authenticate(username=username, password=data.password)
     if user is None:
         cache.set(limite_clave, intentos + 1, 300)
         raise HttpError(401, "Credenciales incorrectas.")
 
-    # Validamos que el usuario esté realmente enlazado a un paciente activo
+    # Verifica el vínculo con un paciente activo.
     try:
         paciente = user.paciente_perfil
         if not paciente.estado:
@@ -267,13 +314,13 @@ def login_paciente(request, data: LoginSchema):
     }
 
 
-# ─── Endpoints de Consumo de Datos (Protegidos) ──────────────────────────────
+# Endpoints protegidos
 
 @router.get("/perfil", auth=auth_paciente, response=PacientePerfilSchema)
 def obtener_perfil(request):
     """Retorna los datos del perfil y medidas iniciales del paciente autenticado."""
     paciente = request.auth.paciente_perfil
-    # Inyectar atributos dinámicos del JSON de informacion_clinica
+    # Añade los datos clínicos del JSON.
     info = paciente.informacion_clinica or {}
     paciente.avatar_color = info.get("avatar_color", "#10B981")
     paciente.foto_url = info.get("foto_url", "")
@@ -296,7 +343,7 @@ def obtener_historial_medidas(request):
     paciente = request.auth.paciente_perfil
     medidas = MedidaCorporal.objects.filter(paciente=paciente).order_by('-fecha')
     
-    # Formateamos las fechas a string para evitar problemas de serialización
+    # Convierte las fechas para serializarlas.
     resultado = []
     for m in medidas:
         resultado.append({
@@ -402,6 +449,7 @@ def obtener_archivos_paciente(request):
 
 
 @router.post("/perfil/update", auth=auth_paciente)
+@transaction.atomic
 def actualizar_perfil(request, data: PerfilUpdateSchema):
     """Actualiza la información de perfil del paciente autenticado y su usuario Django."""
     user = request.auth
@@ -415,12 +463,32 @@ def actualizar_perfil(request, data: PerfilUpdateSchema):
     if "@" not in data.email:
         raise HttpError(400, "Formato de correo electrónico inválido.")
         
+    email = data.email.strip().lower()
+    try:
+        validate_email(email)
+        validate_telefono(data.telefono.strip())
+        validate_hex_color(data.avatar_color)
+        validate_http_url(data.foto_url)
+    except ValidationError as exc:
+        raise HttpError(400, " ".join(exc.messages))
+    if User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
+        raise HttpError(400, "El correo electrónico ya está asociado a otra cuenta.")
+    if (
+        Paciente.objects.filter(
+            nutricionista=paciente.nutricionista,
+            email__iexact=email,
+        )
+        .exclude(pk=paciente.pk)
+        .exists()
+    ):
+        raise HttpError(400, "El profesional ya tiene otro paciente con este correo.")
+
     paciente.nombre = data.nombre.strip()
     paciente.apellido = data.apellido.strip()
     paciente.telefono = data.telefono.strip()
-    paciente.email = data.email.strip().lower()
+    paciente.email = email
     
-    # Guardar en informacion_clinica los atributos del avatar
+    # Guarda los datos del avatar.
     if paciente.informacion_clinica is None:
         paciente.informacion_clinica = {}
     
@@ -439,7 +507,11 @@ def actualizar_perfil(request, data: PerfilUpdateSchema):
     user.first_name = paciente.nombre
     user.last_name = paciente.apellido
     user.email = paciente.email
-    user.save()
+    try:
+        user.full_clean()
+        user.save()
+    except ValidationError as exc:
+        raise HttpError(400, " ".join(exc.messages))
     
     return {
         "success": True,

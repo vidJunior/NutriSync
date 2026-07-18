@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
 from pacientes.models import Paciente, PlanAlimentario
+from nutricion.models import Receta
 
 class PlanAlimentarioTestCase(TestCase):
     def setUp(self):
@@ -30,6 +31,16 @@ class PlanAlimentarioTestCase(TestCase):
             profesional=self.nutricionista,
             numero_consulta=1,
             estado="en_curso"
+        )
+        self.receta_desayuno = Receta.objects.create(
+            nombre="Desayuno de prueba",
+            creado_por=self.nutricionista,
+            es_sistema=True,
+        )
+        self.receta_cena = Receta.objects.create(
+            nombre="Cena de prueba",
+            creado_por=self.nutricionista,
+            es_sistema=True,
         )
 
     def test_plan_get_empty_initially(self):
@@ -98,7 +109,10 @@ class PlanAlimentarioTestCase(TestCase):
                 "section": "comidas",
                 "comida_tipo": ["Desayuno", "Cena"],
                 "comida_hora": ["08:00", "21:00"],
-                "comida_receta_id": ["1", "2"],
+                "comida_receta_id": [
+                    str(self.receta_desayuno.pk),
+                    str(self.receta_cena.pk),
+                ],
                 "comida_observaciones": ["Sin yema", "Pechuga"]
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest"
@@ -107,7 +121,10 @@ class PlanAlimentarioTestCase(TestCase):
         plan.refresh_from_db()
         self.assertEqual(len(plan.comidas), 2)
         self.assertEqual(plan.comidas[0]["tipo"], "Desayuno")
-        self.assertEqual(plan.comidas[1]["receta_id"], "2")
+        self.assertEqual(
+            plan.comidas[1]["receta_id"],
+            str(self.receta_cena.pk),
+        )
 
     def test_plan_nueva_version(self):
         """Verify creating a new version copies plan and keeps older version in history."""
@@ -134,7 +151,7 @@ class PlanAlimentarioTestCase(TestCase):
         self.assertTrue(data["success"])
         new_plan_id = data["plan_id"]
         
-        # Verify the new plan is Active and the old one is no longer the single Active or was updated
+        # Verifica el cambio de plan activo.
         new_plan = PlanAlimentario.objects.get(pk=new_plan_id)
         plan.refresh_from_db()
         
@@ -206,7 +223,14 @@ class PlanAlimentarioTestCase(TestCase):
         plan = PlanAlimentario.objects.create(
             paciente=self.paciente,
             nombre="Plan Para Enviar",
-            estado="Activo"
+            estado="Activo",
+            comidas=[
+                {
+                    "tipo": "Desayuno",
+                    "alimentos": "Avena con fruta",
+                    "hora": "08:00",
+                }
+            ],
         )
         url_enviar = reverse("pacientes:plan_enviar", kwargs={"pk": self.paciente.pk})
         response = self.client.post(

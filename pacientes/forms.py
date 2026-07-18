@@ -1,6 +1,5 @@
 # pacientes/forms.py
-# Formulario para crear y editar pacientes con validaciones de negocio.
-# Optimizado para un registro rápido de menos de 2 minutos.
+# Formulario de pacientes.
 
 import random
 from django import forms
@@ -45,7 +44,7 @@ class PacienteForm(forms.ModelForm):
 
     class Meta:
         model = Paciente
-        # Incluye únicamente campos requeridos y opcionales permitidos para el registro rápido
+        # Incluye los campos del registro rápido.
         fields = [
             "nombre",
             "apellido",
@@ -140,7 +139,7 @@ class PacienteForm(forms.ModelForm):
         self.fields["email"].required = True
         self.fields["telefono"].required = True
 
-        # Cargar valores guardados en notas_generales al editar
+        # Carga notas guardadas al editar.
         if self.instance and self.instance.pk:
             notas = self.instance.notas_generales or ""
             if "Motivo de Consulta:" in notas:
@@ -219,7 +218,7 @@ class PacienteForm(forms.ModelForm):
         motivo = self.cleaned_data.get("motivo_consulta")
         observaciones = self.cleaned_data.get("observaciones_iniciales")
 
-        # Serializamos el motivo y las observaciones en notas_generales
+        # Guarda motivo y observaciones en notas.
         instance.notas_generales = f"Motivo de Consulta: {motivo}\nObservaciones Iniciales:\n{observaciones}"
 
         if commit:

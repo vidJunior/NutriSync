@@ -1,5 +1,5 @@
 <!-- pacientes/_form_content.html -->
-<!-- Fragmento del formulario de paciente (crear/editar) simplificado para registro rápido en menos de 2 minutos. -->
+<!-- Formulario de paciente -->
 
 <div id="paciente-form-content" class="max-w-5xl mx-auto">
     <form method="post" action="{% if form.instance.pk %}{% url 'pacientes:editar' form.instance.pk %}{% else %}{% url 'pacientes:nuevo' %}{% endif %}" novalidate id="paciente-form" class="space-y-6" enctype="multipart/form-data">
@@ -19,7 +19,7 @@
         </div>
         {% endif %}
 
-        <!-- Grid principal de 2 columnas en Desktop para baja carga cognitiva -->
+        <!-- Datos del paciente -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <!-- SECCIÓN 1: DATOS PERSONALES -->
@@ -241,7 +241,7 @@
         </div>
     </form>
 
-    <!-- JS de cálculos en tiempo real y vista previa de foto -->
+    <!-- Cálculos y foto -->
     <script>
         (function() {
             const form = document.getElementById('paciente-form');
@@ -296,7 +296,7 @@
                     return;
                 }
 
-                // Si ingresa la talla en metros (ej: 1.65), convertimos a cm para el cálculo local
+                // Convierte metros a centímetros.
                 const tallaCm = (talla < 3) ? (talla * 100) : talla;
                 const tallaM = tallaCm / 100;
                 const imc = (peso / (tallaM * tallaM)).toFixed(1);
