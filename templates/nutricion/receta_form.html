@@ -18,7 +18,7 @@
   <form id="receta-form" method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
     {% csrf_token %}
 
-    <!-- ─── Columna Izquierda: Formulario (2/3) ──────────────────────────────── -->
+    <!-- Formulario -->
     <div class="lg:col-span-2 space-y-6">
       
       <!-- Ficha de datos básicos -->
@@ -105,7 +105,7 @@
           <span class="text-xs text-slate-400">Total en gramos (g)</span>
         </div>
 
-        <!-- Buscador interactivo de alimentos (Autocomplete) -->
+            <!-- Buscador de alimentos -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 relative">
           <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
             Buscar y agregar ingrediente
@@ -154,7 +154,7 @@
                 <td class="px-4 py-3">
                   {% if formset_form.instance.pk %}
                     <span class="font-medium text-slate-800">{{ formset_form.instance.alimento.nombre }}</span>
-                    <!-- Conservamos el select original oculto para que Django procese la relación al editar -->
+                  <!-- Select usado por Django -->
                     <div class="hidden">{{ formset_form.alimento }}</div>
                   {% else %}
                     {{ formset_form.alimento }}
@@ -255,7 +255,7 @@
 
     </div>
 
-    <!-- ─── Columna Derecha: Análisis Global Flotante (1/3) ────────────────────── -->
+    <!-- Resumen nutricional -->
     <div class="lg:col-span-1 space-y-6 sticky top-24">
       
       <!-- Card Análisis Nutricional -->
@@ -275,7 +275,7 @@
               <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
               <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f1f5f9" stroke-width="4.2"></circle>
               
-              <!-- Segmentos de macros (se calcularán dinámicamente con JS) -->
+              <!-- Distribución de macros -->
               <circle id="donut-segment-carb" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
               <circle id="donut-segment-prot" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
               <circle id="donut-segment-gras" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
@@ -288,7 +288,7 @@
             </div>
           </div>
 
-          <!-- Consolidado de Macronutrientes con barra de progreso -->
+          <!-- Totales de macronutrientes -->
           <div class="space-y-4">
             <!-- Carbohidratos -->
             <div>
@@ -375,7 +375,7 @@
 
 </div>
 
-<!-- Template oculto de fila para Django Inline Formset -->
+    <!-- Fila del formset -->
 <table class="hidden">
   <tbody id="empty-row-template">
     <tr class="ingredient-row hover:bg-slate-50/50 transition-colors duration-150" data-index="__prefix__">
@@ -403,7 +403,7 @@
   </tbody>
 </table>
 
-<!-- LÓGICA FRONTEND: Autocompletado, Formsets e Interacción Nutricional -->
+<!-- Formulario dinámico -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   
@@ -482,7 +482,7 @@ document.addEventListener("DOMContentLoaded", function() {
     tr.setAttribute("data-index", index);
     tr.innerHTML = filledHtml;
 
-    // Colocar el nombre del alimento en la etiqueta visual
+    // Muestra el nombre del alimento.
     tr.querySelector(".label-alimento-nombre").innerText = food.nombre;
 
     // Configurar el input select oculto
@@ -496,7 +496,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Agregar fila a la tabla
     container.appendChild(tr);
 
-    // Reinicializar iconos Lucide para el nuevo botón de eliminar
+    // Actualiza los iconos.
     lucide.createIcons();
 
     // Enlazar eventos de eliminación y recálculo
@@ -520,11 +520,11 @@ document.addEventListener("DOMContentLoaded", function() {
       removeBtn.addEventListener("click", function() {
         const deleteCheckbox = row.querySelector(`input[name="ingredientes-${index}-DELETE"]`);
         if (deleteCheckbox) {
-          // Si ya existe en la DB, lo marcamos para borrar y ocultamos la fila
+    // Marca la fila guardada para eliminarla.
           deleteCheckbox.checked = true;
           row.classList.add("hidden");
         } else {
-          // Si es nuevo, simplemente removemos el nodo y disminuimos totalForms
+      // Elimina la fila nueva.
           row.remove();
         }
         recalculateNutrients();
@@ -532,7 +532,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  // Enlazar eventos a todas las filas existentes en la carga inicial (ej. al editar)
+  // Enlaza las filas existentes.
   document.querySelectorAll(".ingredient-row").forEach(row => {
     bindRowEvents(row);
   });
@@ -543,7 +543,7 @@ document.addEventListener("DOMContentLoaded", function() {
     portionsInput.addEventListener("input", recalculateNutrients);
   }
 
-  // 4. Lógica de Recálculo en tiempo real
+  // 4. Recálculo
   function recalculateNutrients() {
     let totalCals = 0;
     let totalCarbs = 0;
@@ -552,7 +552,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let totalFibra = 0;
 
     document.querySelectorAll(".ingredient-row").forEach(row => {
-      // Si la fila está oculta (marcada para borrar), no la sumamos
+    // Omite filas eliminadas.
       if (row.classList.contains("hidden")) return;
 
       const index = row.getAttribute("data-index");
@@ -574,7 +574,7 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
 
-    // Calcular distribución de macros (%) para el gráfico de dona
+  // Calcula la distribución de macros.
     const totalGrams = totalCarbs + totalProts + totalGras;
     let pctCarbs = 0;
     let pctProts = 0;
@@ -604,8 +604,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("bar-pct-gras").style.width = pctGras + "%";
 
     // Actualizar gráfico de dona SVG interactivo
-    // Usamos stroke-dasharray para pintar segmentos del círculo de radio 15.915
-    // Perímetro del círculo = 2 * PI * r = 100 unidades de dasharray
+  // Dibuja los segmentos del gráfico.
     const segmentCarb = document.getElementById("donut-segment-carb");
     const segmentProt = document.getElementById("donut-segment-prot");
     const segmentGras = document.getElementById("donut-segment-gras");
@@ -627,7 +626,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("lbl-portion-gras").innerText = (totalGras / porciones).toFixed(1);
   }
 
-  // 5. Gestión de Pasos de Preparación (Añadir/Eliminar dinámicamente)
+  // 5. Pasos de preparación
   const stepsContainer = document.getElementById("preparation-steps-container");
   const addStepBtn = document.getElementById("btn-add-step");
 
@@ -667,7 +666,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Vincular eventos de eliminación a los pasos iniciales cargados en edición
+  // Enlaza los pasos existentes.
   stepsContainer.querySelectorAll(".step-item").forEach(item => {
     bindStepRemoveEvent(item);
   });

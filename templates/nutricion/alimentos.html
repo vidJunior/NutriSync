@@ -6,7 +6,7 @@
 {% block content %}
 <div class="space-y-6">
 
-  <!-- ─── Header con acciones ─────────────────────────────────────────────── -->
+    <!-- Acciones -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <p class="text-sm text-slate-500 mt-1">
@@ -15,12 +15,15 @@
     </div>
     <div class="flex items-center gap-2">
       {% if request.user.is_superuser %}
-      <a href="{% url 'nutricion:cargar_ejemplos' %}"
-         onclick="return confirm('¿Cargar los alimentos de ejemplo en el catálogo?')"
-         class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm
-                transition-all duration-200 flex items-center gap-2">
-        <i data-lucide="database" class="w-4 h-4"></i> Cargar ejemplos
-      </a>
+      <form method="post" action="{% url 'nutricion:cargar_ejemplos' %}"
+            onsubmit="return confirm('¿Cargar los alimentos de ejemplo en el catálogo?')">
+        {% csrf_token %}
+        <button type="submit"
+           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm
+                  transition-all duration-200 flex items-center gap-2">
+          <i data-lucide="database" class="w-4 h-4"></i> Cargar ejemplos
+        </button>
+      </form>
       {% endif %}
       <a href="{% url 'nutricion:alimento_nuevo' %}"
          class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm
@@ -30,7 +33,7 @@
     </div>
   </div>
 
-  <!-- ─── Filtros ──────────────────────────────────────────────────────────── -->
+    <!-- Filtros -->
   <form method="get" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
     <div class="flex flex-col sm:flex-row gap-3">
       <!-- Búsqueda por nombre -->
@@ -75,7 +78,7 @@
     </div>
   </form>
 
-  <!-- ─── Tabla de alimentos ───────────────────────────────────────────────── -->
+    <!-- Alimentos -->
   {% if alimentos %}
   <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -179,12 +182,15 @@
     </p>
     <div class="flex items-center justify-center gap-3">
       {% if request.user.is_superuser %}
-      <a href="{% url 'nutricion:cargar_ejemplos' %}"
-         onclick="return confirm('¿Cargar 20+ alimentos de ejemplo?')"
-         class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm
-                transition-all duration-200 flex items-center gap-2">
-        <i data-lucide="database" class="w-4 h-4"></i> Cargar ejemplos
-      </a>
+      <form method="post" action="{% url 'nutricion:cargar_ejemplos' %}"
+            onsubmit="return confirm('¿Cargar 20+ alimentos de ejemplo?')">
+        {% csrf_token %}
+        <button type="submit"
+           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm
+                  transition-all duration-200 flex items-center gap-2">
+          <i data-lucide="database" class="w-4 h-4"></i> Cargar ejemplos
+        </button>
+      </form>
       {% endif %}
       <a href="{% url 'nutricion:alimento_nuevo' %}"
          class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm

@@ -1,12 +1,11 @@
 # nutricion/admin.py
-# Registro de modelos de nutrición en el panel de administración.
-# ComidaPlan se registra como inline de PlanNutricional para edición integrada.
+# Admin de nutrición.
 
 from django.contrib import admin
 from .models import Alimento, PlanNutricional, ComidaPlan
 
 
-# -------------Inline de comidas dentro del plan-------------
+# Comidas del plan
 
 class ComidaPlanInline(admin.TabularInline):
     """
@@ -18,7 +17,7 @@ class ComidaPlanInline(admin.TabularInline):
     fields = ("tipo_comida", "hora_sugerida", "receta", "observaciones")
 
 
-# -------------Alimento-------------
+# Alimentos
 
 @admin.register(Alimento)
 class AlimentoAdmin(admin.ModelAdmin):
@@ -43,7 +42,7 @@ class AlimentoAdmin(admin.ModelAdmin):
     )
 
 
-# -------------PlanNutricional-------------
+# Planes nutricionales
 
 @admin.register(PlanNutricional)
 class PlanNutricionalAdmin(admin.ModelAdmin):
@@ -70,7 +69,7 @@ class PlanNutricionalAdmin(admin.ModelAdmin):
     )
 
 
-# -------------ComidaPlan (administración independiente)-------------
+# Administración de comidas
 
 @admin.register(ComidaPlan)
 class ComidaPlanAdmin(admin.ModelAdmin):

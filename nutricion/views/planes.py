@@ -162,6 +162,7 @@ class PlanUpdateView(LoginRequiredMixin, PlanFormFragmentMixin, UpdateView):
 
 
 @login_required
+@require_POST
 def plan_duplicar(request, pk):
     """
     Duplica un modelo de plan existente y todas sus comidas asociadas.
@@ -196,6 +197,9 @@ def plan_toggle(request, pk):
         plan.estado = 'Borrador'
         messages.success(request, f"Modelo de plan «{plan.nombre}» desactivado.")
     else:
+        if not plan.comidas.exists():
+            messages.error(request, "No se puede activar un plan sin comidas.")
+            return redirect("nutricion:plan_detalle", pk=plan.pk)
         plan.estado = 'Activo'
         messages.success(request, f"Modelo de plan «{plan.nombre}» activado.")
     plan.save()

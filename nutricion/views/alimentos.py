@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from ..models import Alimento, CategoriaAlimento
 from ..forms import AlimentoForm
 
@@ -90,6 +91,7 @@ class AlimentoUpdateView(LoginRequiredMixin, UpdateView):
 
 
 @login_required
+@require_POST
 def cargar_alimentos_ejemplo(request):
     """
     Vista de utilidad para cargar los 20+ alimentos de ejemplo en la BD.

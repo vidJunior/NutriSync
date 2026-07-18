@@ -36,7 +36,7 @@ class Alimento(models.Model):
         db_index=True,
     )
 
-    # -------------Información nutricional por 100g-------------
+    # Valores por 100 g
     calorias_100g = models.DecimalField(
         max_digits=7,
         decimal_places=2,

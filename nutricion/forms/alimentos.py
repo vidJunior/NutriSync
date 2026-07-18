@@ -65,3 +65,25 @@ class AlimentoForm(forms.ModelForm):
                 "Verifica el catálogo antes de agregar uno nuevo."
             )
         return nombre
+
+    def clean(self):
+        cleaned_data = super().clean()
+        calories = cleaned_data.get("calorias_100g")
+        if calories is not None and calories > 1000:
+            self.add_error(
+                "calorias_100g",
+                "Las calorías por 100 g no pueden superar 1000 kcal.",
+            )
+        for field_name in (
+            "proteinas_100g",
+            "carbohidratos_100g",
+            "grasas_100g",
+            "fibra_100g",
+        ):
+            value = cleaned_data.get(field_name)
+            if value is not None and value > 100:
+                self.add_error(
+                    field_name,
+                    "El valor por 100 g no puede superar 100 g.",
+                )
+        return cleaned_data

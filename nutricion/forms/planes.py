@@ -93,7 +93,7 @@ class ComidaPlanForm(forms.ModelForm):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         
-        # Filtrar recetas para mostrar solo las del nutricionista (que no sean de paciente específico) o de sistema
+        # Muestra recetas propias y del sistema.
         if user:
             self.fields["receta"].queryset = Receta.objects.filter(
                 (Q(creado_por=user) & Q(paciente__isnull=True)) | Q(es_sistema=True)

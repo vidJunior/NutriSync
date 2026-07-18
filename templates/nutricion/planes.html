@@ -6,7 +6,7 @@
 {% block content %}
 <div class="space-y-6">
 
-  <!-- ─── Header ─────────────────────────────────────────────────────────── -->
+    <!-- Encabezado -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <p class="text-sm text-slate-500">Biblioteca de modelos de planes nutricionales reutilizables</p>
     <button type="button" onclick="openModalPlanNuevo()"
@@ -16,7 +16,7 @@
     </button>
   </div>
 
-  <!-- ─── Filtros ──────────────────────────────────────────────────────────── -->
+    <!-- Filtros -->
   <form method="get" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
     <div class="flex flex-col sm:flex-row gap-3">
       <div class="flex-1 relative">
@@ -42,7 +42,7 @@
     </div>
   </form>
 
-  <!-- ─── Lista de planes ──────────────────────────────────────────────────── -->
+    <!-- Planes -->
   {% if planes %}
   <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
     <table class="w-full text-sm">
@@ -107,11 +107,14 @@
                  title="Ver detalle">
                 <i data-lucide="eye" class="w-4 h-4"></i>
               </a>
-              <a href="{% url 'nutricion:plan_duplicar' plan.pk %}"
-                 class="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors flex items-center gap-1"
-                 title="Duplicar modelo">
-                <i data-lucide="copy" class="w-4 h-4"></i>
-              </a>
+              <form method="post" action="{% url 'nutricion:plan_duplicar' plan.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                   class="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors flex items-center gap-1"
+                   title="Duplicar modelo">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                </button>
+              </form>
               {% if plan.estado != 'Archivado' %}
               <form method="post" action="{% url 'nutricion:plan_archivar' plan.pk %}" class="inline">
                 {% csrf_token %}

@@ -26,7 +26,7 @@
 
       <div class="space-y-6">
 
-        <!-- ── Información general ──────────────────────────────────────── -->
+    <!-- Información general -->
         <div>
           <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100">
             Información general del Modelo
@@ -94,7 +94,7 @@
           </div>
         </div>
 
-        <!-- ── Macronutrientes y Metas ─────────────────────────────────── -->
+    <!-- Macronutrientes y metas -->
         <div>
           <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100">
             Metas nutricionales del Modelo
@@ -195,7 +195,7 @@
           </div>
         </div>
 
-        <!-- ── Descripción ───────────────────────────────────────────── -->
+    <!-- Descripción -->
         <div>
           <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100">
             Descripción y Notas
@@ -262,7 +262,7 @@
     const gras = parseFloat(fields.gras?.value) || 0;
     const kcalInput = parseFloat(fields.kcal?.value) || 0;
 
-    // Calorías de cada macro (4kcal/g prot, 4kcal/g carb, 9kcal/g grasa)
+    // Calorías por macronutriente.
     const calProt = prot * 4;
     const calCarb = carb * 4;
     const calGras = gras * 9;

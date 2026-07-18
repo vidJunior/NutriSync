@@ -91,7 +91,7 @@ class RecetaCreateView(LoginRequiredMixin, CreateView):
         else:
             context["ingredientes_formset"] = IngredienteRecetaFormSet()
 
-        # Pasamos el catálogo completo de alimentos en JSON para el selector dinámico
+        # Carga el catálogo para el selector.
         alimentos_list = list(
             Alimento.objects.filter(estado=True).values(
                 "id", "nombre", "categoria", "calorias_100g", "proteinas_100g", "carbohidratos_100g", "grasas_100g", "fibra_100g"
@@ -119,7 +119,7 @@ class RecetaCreateView(LoginRequiredMixin, CreateView):
                 paciente = get_object_or_404(Paciente, pk=paciente_id, nutricionista=self.request.user)
                 form.instance.paciente = paciente
             
-            # Obtener las instrucciones dinámicas del POST (lista de strings)
+            # Obtiene las instrucciones del POST.
             pasos = self.request.POST.getlist("pasos_instrucciones")
             pasos_limpios = [p.strip() for p in pasos if p.strip()]
             form.instance.instrucciones = pasos_limpios
@@ -176,7 +176,7 @@ class RecetaUpdateView(LoginRequiredMixin, UpdateView):
                 instance=self.object
             )
 
-        # Pasamos el catálogo completo de alimentos en JSON para el selector dinámico
+        # Carga el catálogo para el selector.
         alimentos_list = list(
             Alimento.objects.filter(estado=True).values(
                 "id", "nombre", "categoria", "calorias_100g", "proteinas_100g", "carbohidratos_100g", "grasas_100g", "fibra_100g"
@@ -202,7 +202,7 @@ class RecetaUpdateView(LoginRequiredMixin, UpdateView):
                 paciente = get_object_or_404(Paciente, pk=paciente_id, nutricionista=self.request.user)
                 form.instance.paciente = paciente
 
-            # Obtener las instrucciones dinámicas del POST (lista de strings)
+            # Obtiene las instrucciones del POST.
             pasos = self.request.POST.getlist("pasos_instrucciones")
             pasos_limpios = [p.strip() for p in pasos if p.strip()]
             form.instance.instrucciones = pasos_limpios

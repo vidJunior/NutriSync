@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from ..validators import validate_tiempo_preparacion, validate_porciones, validate_cantidad_ingrediente
 from .alimentos import Alimento
@@ -72,6 +73,34 @@ class Receta(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if not isinstance(self.instrucciones, list):
+            errors["instrucciones"] = "Las instrucciones deben ser una lista."
+        else:
+            if len(self.instrucciones) > 50:
+                errors["instrucciones"] = "La receta no puede superar 50 pasos."
+            elif any(
+                not isinstance(step, str) or not step.strip() or len(step.strip()) > 1000
+                for step in self.instrucciones
+            ):
+                errors["instrucciones"] = (
+                    "Cada paso debe tener entre 1 y 1000 caracteres."
+                )
+        if (
+            self.paciente_id
+            and self.creado_por_id
+            and self.paciente.nutricionista_id != self.creado_por_id
+        ):
+            errors["paciente"] = "El paciente no pertenece al profesional."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @property
     def calorias_totales(self):
@@ -176,3 +205,14 @@ class IngredienteReceta(models.Model):
 
     def __str__(self):
         return f"{self.cantidad}g de {self.alimento.nombre} en {self.receta.nombre}"
+
+    def clean(self):
+        super().clean()
+        if self.alimento_id and not self.alimento.estado:
+            raise ValidationError(
+                {"alimento": "No se puede usar un alimento inactivo."}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

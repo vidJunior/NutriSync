@@ -6,7 +6,7 @@
 {% block content %}
 <div class="space-y-6">
 
-  <!-- ─── Breadcrumb ──────────────────────────────────────────────────────── -->
+    <!-- Navegación -->
   <nav class="flex items-center gap-2 text-sm text-slate-400">
     {% if paciente_id %}
       <a href="{% url 'pacientes:detalle' paciente_id %}?tab=recetas" class="hover:text-teal-600 transition-colors flex items-center gap-1">
@@ -21,7 +21,7 @@
     <span class="text-slate-600 truncate max-w-xs">{{ receta.nombre }}</span>
   </nav>
 
-  <!-- ─── Ficha Cabecera de Receta ─────────────────────────────────────────── -->
+    <!-- Receta -->
   <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
     <div class="flex flex-col md:flex-row gap-6">
       
@@ -94,7 +94,7 @@
       {% endif %}
     </div>
 
-    <!-- ─── Ficha Nutricional Detallada (Macros por Porción) ──────────────────── -->
+    <!-- Nutrición por porción -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mt-6 pt-5 border-t border-slate-100">
       <div class="text-center bg-slate-50 rounded-xl p-3 border border-slate-100">
         <p class="text-2xl font-black text-amber-600">{{ receta.calorias_por_porcion|floatformat:0 }}</p>
@@ -119,7 +119,7 @@
     </div>
   </div>
 
-  <!-- ─── Cuerpo de la Receta (Ingredientes + Instrucciones) ────────────────── -->
+    <!-- Ingredientes e instrucciones -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     
     <!-- Ingredientes (Izquierda 1/3) -->

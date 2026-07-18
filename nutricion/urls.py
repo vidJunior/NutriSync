@@ -1,5 +1,5 @@
 # nutricion/urls.py
-# URLs del módulo de planes nutricionales y catálogo de alimentos.
+# Rutas de nutrición.
 # Namespace: 'nutricion'
 
 from django.urls import path
