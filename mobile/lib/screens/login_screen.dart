@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Controladores y variables de estado para el formulario de registro
+  // Estado del registro
   final _dniController = TextEditingController();
   final _codigoController = TextEditingController();
   final _emailController = TextEditingController();
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMsg;
   Timer? _errorTimer;
 
-  // Evaluar fuerza de contraseña
+  // Evalúa la contraseña.
   String _passwordStrength = '';
   Color _passwordStrengthColor = Colors.transparent;
   double _passwordStrengthPct = 0.0;
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _errorMsg = message;
     });
-    // Ocultar automáticamente en 4 segundos
+            // Oculta el mensaje en cuatro segundos.
     _errorTimer = Timer(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
@@ -324,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Mensaje de Error (desaparece solo en 4s)
+                  // Mensaje de error
                   if (_errorMsg != null)
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
@@ -581,7 +581,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          // Barra de Seguridad de Contraseña (en Registro)
+                  // Seguridad de la contraseña
                           if (_passwordStrength.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Row(
@@ -732,7 +732,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ─── Logo Personalizado de NutriSync (Manzana desde Asset PNG) ───────────────
+// Logo de NutriSync
 class NutriSyncLogo extends StatelessWidget {
   final double size;
   final Color? color;

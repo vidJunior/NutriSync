@@ -3,9 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // URL base por defecto para emulador Android.
-  // Si ejecutas en un dispositivo físico, usa la IP local de tu PC.
-  // Ejemplo de uso:
+  // URL del emulador Android.
+  // Ejemplo:
   // flutter run -d <device> --dart-define=API_BASE_URL=http://192.168.101.18:8000/api/paciente
   static final String baseUrl = const String.fromEnvironment(
     'API_BASE_URL',
@@ -15,7 +14,7 @@ class ApiService {
       : _defaultLocalUrl();
 
   static String _defaultLocalUrl() {
-    // Apunta a la URL de producción en Render conectada a Supabase
+  // URL de producción
     return 'https://nutrisync-qr9a.onrender.com/api/paciente';
   }
 
@@ -23,7 +22,7 @@ class ApiService {
   static String? _nombrePaciente;
   static String? _email;
 
-  // Inicializar SharedPreferences y cargar el token si existe
+  // Carga el token guardado.
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('token');
@@ -36,7 +35,7 @@ class ApiService {
   static String? get nombrePaciente => _nombrePaciente;
   static String? get email => _email;
 
-  // Guardar datos de sesión
+  // Guarda la sesión.
   static Future<void> guardarSesion(String tokenValue, String nombreValue, String emailValue) async {
     _token = tokenValue;
     _nombrePaciente = nombreValue;
@@ -48,7 +47,7 @@ class ApiService {
     await prefs.setString('email', emailValue);
   }
 
-  // Borrar datos de sesión (Logout)
+  // Cierra la sesión.
   static Future<void> cerrarSesion() async {
     _token = null;
     _nombrePaciente = null;
@@ -60,7 +59,7 @@ class ApiService {
     await prefs.remove('email');
   }
 
-  // Interceptor para agregar Token Bearer a los headers
+  // Añade el token Bearer.
   static Map<String, String> _getHeaders() {
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
@@ -72,7 +71,7 @@ class ApiService {
     return headers;
   }
 
-  // Petición POST de Login
+  // Inicio de sesión
   static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       final response = await http.post(
@@ -102,7 +101,7 @@ class ApiService {
     }
   }
 
-  // Petición POST de Registro Vinculado
+  // Registro vinculado
   static Future<Map<String, dynamic>> registrarVinculado({
     required String dni,
     required String codigoVinculacion,
@@ -141,7 +140,7 @@ class ApiService {
     }
   }
 
-  // Obtener Perfil del Paciente
+  // Perfil del paciente
   static Future<Map<String, dynamic>> getPerfil() async {
     final response = await http.get(
       Uri.parse('$baseUrl/perfil'),
@@ -154,7 +153,7 @@ class ApiService {
     }
   }
 
-  // Actualizar Perfil (Teléfono y Avatar)
+  // Actualiza teléfono y avatar.
   static Future<Map<String, dynamic>> updatePerfil({
     required String nombre,
     required String apellido,
@@ -189,7 +188,7 @@ class ApiService {
     }
   }
 
-  // Obtener Plan Alimentario Activo
+  // Plan alimentario activo
   static Future<Map<String, dynamic>> getPlanActivo() async {
     final response = await http.get(
       Uri.parse('$baseUrl/plan-activo'),
@@ -202,7 +201,7 @@ class ApiService {
     }
   }
 
-  // Obtener Historial de Medidas
+  // Historial de medidas
   static Future<List<dynamic>> getMedidas() async {
     final response = await http.get(
       Uri.parse('$baseUrl/medidas'),
@@ -215,7 +214,7 @@ class ApiService {
     }
   }
 
-  // Obtener Citas Programadas
+  // Citas programadas
   static Future<List<dynamic>> getCitas() async {
     final response = await http.get(
       Uri.parse('$baseUrl/citas'),
@@ -228,7 +227,7 @@ class ApiService {
     }
   }
 
-  // Obtener Notas Clínicas
+  // Notas clínicas
   static Future<List<dynamic>> getNotas() async {
     final response = await http.get(
       Uri.parse('$baseUrl/notas'),
@@ -241,7 +240,7 @@ class ApiService {
     }
   }
 
-  // Obtener Recomendaciones
+  // Recomendaciones
   static Future<List<dynamic>> getRecomendaciones() async {
     final response = await http.get(
       Uri.parse('$baseUrl/recomendaciones'),
@@ -254,7 +253,7 @@ class ApiService {
     }
   }
 
-  // Obtener Archivos del Paciente
+  // Archivos del paciente
   static Future<List<dynamic>> getArchivos() async {
     final response = await http.get(
       Uri.parse('$baseUrl/archivos'),

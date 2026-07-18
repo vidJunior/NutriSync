@@ -6,7 +6,7 @@ import 'package:mobile/screens/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inicializar servicio de API y cargar token guardado
+  // Carga la sesión guardada.
   await ApiService.init();
   
   runApp(const MyApp());
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       title: 'NutriSync Mobile',
       debugShowCheckedModeBanner: false,
       
-      // Tema Oscuro Premium de NutriSync (por defecto)
+      // Tema oscuro
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData(
         useMaterial3: true,
@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       
-      // Tema Claro opcional
+      // Tema claro
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
@@ -74,7 +74,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      // Redirigir según el estado de autenticación cargado en SharedPreferences
+      // Redirige según la sesión.
       home: ApiService.isAuthenticated ? const HomeScreen() : const LoginScreen(),
     );
   }

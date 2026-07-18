@@ -41,7 +41,7 @@ class _PerfilDialogState extends State<PerfilDialog> {
     super.dispose();
   }
 
-  // Abrir ImagePicker de forma nativa
+  // Abre el selector de imágenes.
   Future<void> _elegirFoto() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -276,7 +276,7 @@ class _PerfilDialogState extends State<PerfilDialog> {
                 ),
               ),
 
-              // Caja de información estática (Solo Lectura)
+              // Información de solo lectura
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(

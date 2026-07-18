@@ -48,14 +48,14 @@ class _DashboardTabState extends State<DashboardTab> {
       try {
         planData = await ApiService.getPlanActivo();
       } catch (e) {
-        // Ignorar si el plan activo no está asignado o no se encuentra (ej. 404)
+      // Omite un plan inexistente.
       }
       
       List<dynamic> citasData = [];
       try {
         citasData = await ApiService.getCitas();
       } catch (e) {
-        // Ignorar fallo de citas secundario
+      // Omite fallos de citas.
       }
 
 
@@ -201,7 +201,7 @@ class _DashboardTabState extends State<DashboardTab> {
               ),
             ),
             const SizedBox(height: 10),
-            // Barra de progreso animada elásticamente (Curves.easeOutBack)
+                  // Progreso animado
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: pct),
               duration: const Duration(milliseconds: 1200),
@@ -419,7 +419,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Fila de calorías centrada sin superposición
+                // Resumen de calorías
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.baseline,

@@ -119,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // Contenido de la pestaña activa con transición de desvanecimiento
+          // Pestaña activa
             Positioned.fill(
               bottom: 85, // Dar espacio para que la barra inferior no tape el contenido del scroll
               child: AnimatedSwitcher(
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Barra de Navegación Inferior Flotante (Glassmorphism simulado dentro de la zona segura)
+            // Navegación inferior
             Positioned(
               left: 16,
               right: 16,
