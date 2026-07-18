@@ -1,5 +1,5 @@
 # administracion/views/notifications.py
-# Vistas para la creación y gestión de alertas/notificaciones globales del sistema.
+# Alertas globales.
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -17,8 +17,17 @@ def notificaciones_crear_view(request):
         mensaje = request.POST.get("mensaje", "").strip()
         tipo = request.POST.get("tipo", "info").strip()
         plan_destino = request.POST.get("plan_destino", "").strip()
+        tipo_valido = tipo in dict(NotificacionSistema.TIPO_CHOICES)
+        plan_valido = (
+            not plan_destino
+            or PlanSuscripcion.objects.filter(nombre=plan_destino).exists()
+        )
         
-        if not titulo or not mensaje:
+        if len(titulo) > 200 or len(mensaje) > 10000:
+            messages.error(request, "La notificación supera el tamaño permitido.")
+        elif not tipo_valido or not plan_valido:
+            messages.error(request, "El tipo o plan de destino no es válido.")
+        elif not titulo or not mensaje:
             messages.error(request, "Por favor completa el título y mensaje de la notificación.")
         else:
             notificacion = NotificacionSistema.objects.create(

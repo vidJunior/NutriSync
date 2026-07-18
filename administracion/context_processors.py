@@ -1,5 +1,5 @@
 # administracion/context_processors.py
-# Inyecta el perfil del administrador en el contexto global.
+# Añade el perfil administrativo al contexto.
 
 def admin_context(request):
     """Inyecta el perfil del administrador en el contexto."""

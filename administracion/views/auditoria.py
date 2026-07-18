@@ -1,5 +1,5 @@
 # administracion/views/auditoria.py
-# Vistas para el visor de logs de auditoría administrativa.
+# Auditoría administrativa.
 
 from django.shortcuts import render
 from django.core.paginator import Paginator

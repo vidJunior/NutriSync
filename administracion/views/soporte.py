@@ -1,5 +1,5 @@
 # administracion/views/soporte.py
-# Controlador administrativo para la gestión y resolución de tickets de soporte técnico.
+# Gestión de soporte.
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -47,7 +47,11 @@ def soporte_responder_view(request, pk):
         respuesta = request.POST.get("respuesta", "").strip()
         nuevo_estado = request.POST.get("estado", "resuelto")
         
-        if not respuesta:
+        if len(respuesta) > 10000:
+            messages.error(request, "La respuesta no puede superar 10000 caracteres.")
+        elif nuevo_estado not in dict(TicketSoporte.ESTADO_CHOICES):
+            messages.error(request, "El estado del ticket no es válido.")
+        elif not respuesta:
             messages.error(request, "Por favor escribe una respuesta para el ticket de soporte.")
         else:
             ticket.respuesta_admin = respuesta

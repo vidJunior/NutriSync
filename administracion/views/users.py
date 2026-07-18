@@ -1,5 +1,5 @@
 # administracion/views/users.py
-# Gestión de nutricionistas (usuarios) del panel de administración.
+# Gestión de nutricionistas.
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
@@ -50,7 +50,7 @@ def usuario_detalle_view(request, pk):
     from django.utils import timezone
     from administracion.models import LimiteOverride
     
-    # Recuperar o crear el override de límites para el nutricionista
+    # Obtiene los límites personalizados.
     override, _ = LimiteOverride.objects.get_or_create(nutricionista=usuario)
 
     # Suscripción y plan actual
@@ -60,7 +60,7 @@ def usuario_detalle_view(request, pk):
     limite_pacientes = plan.limite_pacientes if plan else -1
     limite_citas = plan.limite_citas_mes if plan else -1
 
-    # Cantidad total de pacientes activos y citas del mes actual
+    # Totales del mes actual.
     pacientes_activos = usuario.pacientes.filter(estado=True).count()
     
     hoy = timezone.now()
@@ -113,11 +113,17 @@ def usuario_override_limites(request, pk):
     try:
         pacientes = int(request.POST.get("pacientes_adicionales", 0))
         citas = int(request.POST.get("citas_adicionales_mes", 0))
-    except ValueError:
-        pacientes = 0
-        citas = 0
+    except (TypeError, ValueError):
+        messages.error(request, "Los límites adicionales deben ser números enteros.")
+        return redirect('administracion:usuario_detalle', pk=pk)
+    if not 0 <= pacientes <= 100000 or not 0 <= citas <= 100000:
+        messages.error(request, "Los límites adicionales deben estar entre 0 y 100000.")
+        return redirect('administracion:usuario_detalle', pk=pk)
         
     notas = request.POST.get("notas", "").strip()
+    if len(notas) > 5000:
+        messages.error(request, "Las notas no pueden superar 5000 caracteres.")
+        return redirect('administracion:usuario_detalle', pk=pk)
     
     override, _ = LimiteOverride.objects.get_or_create(nutricionista=usuario)
     override.pacientes_adicionales = pacientes

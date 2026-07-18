@@ -1,5 +1,5 @@
 # administracion/views/reports.py
-# Vistas para la sección de reportes avanzados y exportación de datos en formato CSV.
+# Reportes y exportación CSV.
 
 import csv
 from django.http import HttpResponse
@@ -21,11 +21,14 @@ def reportes_dashboard_view(request):
     """Muestra estadísticas avanzadas, listado mensual de pagos y descargas."""
     hoy = timezone.now()
     
-    # Parámetros de mes y año para la grilla de pagos de nutricionistas
+    # Mes y año del reporte.
     try:
         mes_filtro = int(request.GET.get("mes", hoy.month))
         anio_filtro = int(request.GET.get("anio", hoy.year))
     except ValueError:
+        mes_filtro = hoy.month
+        anio_filtro = hoy.year
+    if not 1 <= mes_filtro <= 12 or not 2000 <= anio_filtro <= hoy.year + 1:
         mes_filtro = hoy.month
         anio_filtro = hoy.year
 
@@ -38,7 +41,7 @@ def reportes_dashboard_view(request):
     labels_planes = [item["plan__nombre"] for item in planes_dist]
     valores_planes = [item["total"] for item in planes_dist]
 
-    # 2. Métricas de facturación acumulada por método de pago
+    # 2. Facturación por método.
     metodos_dist = Pago.objects.filter(estado="completado")\
         .values("metodo_pago")\
         .annotate(total_monto=Sum("monto"))\
@@ -71,7 +74,7 @@ def reportes_dashboard_view(request):
         
     total_mes_seleccionado = pagos_mes.filter(estado="completado").aggregate(total=Sum("monto"))["total"] or Decimal("0.00")
 
-    # 5. Opciones para selector de meses (últimos 12 meses históricos)
+    # 5. Últimos doce meses.
     meses_opciones = []
     nombres_meses = [
         "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -229,6 +232,9 @@ def exportar_pagos_mensuales_csv(request):
         mes = int(request.GET.get("mes", timezone.now().month))
         anio = int(request.GET.get("anio", timezone.now().year))
     except ValueError:
+        mes = timezone.now().month
+        anio = timezone.now().year
+    if not 1 <= mes <= 12 or not 2000 <= anio <= timezone.now().year + 1:
         mes = timezone.now().month
         anio = timezone.now().year
 

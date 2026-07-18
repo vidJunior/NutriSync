@@ -1,5 +1,5 @@
 # administracion/views/plans.py
-# Vistas para la gestión (CRUD) de planes de suscripción.
+# Planes de suscripción.
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages

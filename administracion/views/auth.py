@@ -1,5 +1,5 @@
 # administracion/views/auth.py
-# Gestión de cierre de sesión para administradores de la plataforma.
+# Sesión administrativa.
 
 from django.shortcuts import redirect
 from django.contrib.auth import logout

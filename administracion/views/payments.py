@@ -1,16 +1,17 @@
 # administracion/views/payments.py
-# Vistas para la verificación y aprobación de pagos de suscripciones.
+# Revisión de pagos.
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.db import transaction
 from datetime import timedelta
 from decimal import Decimal
 
 from administracion.mixins import admin_requerido
 from administracion.models import LogAuditoriaAdmin
-from facturacion.models import Pago, SuscripcionNutricionista
+from facturacion.models import Pago, PlanSuscripcion, SuscripcionNutricionista
 from facturacion.choices import EstadoPago, EstadoSuscripcion
 
 
@@ -27,31 +28,54 @@ def pagos_verificar_lista_view(request):
 
 @admin_requerido
 @require_POST
+@transaction.atomic
 def pago_aprobar_view(request, pk):
     """Aprueba un pago de suscripción y activa/extiende la suscripción del nutricionista."""
-    pago = get_object_or_404(Pago, pk=pk)
+    pago = get_object_or_404(Pago.objects.select_for_update(), pk=pk)
     
     if pago.estado != EstadoPago.PENDIENTE:
         messages.error(request, "Este pago ya no está en estado pendiente.")
         return redirect("administracion:pagos_verificar_lista")
-        
-    pago.estado = EstadoPago.COMPLETADO
-    pago.save()
+    if not pago.nutricionista_id or pago.cobro_id or pago.factura_id:
+        messages.error(request, "Este pago no corresponde a una suscripción.")
+        return redirect("administracion:pagos_verificar_lista")
+    if not pago.referencia and not pago.comprobante:
+        messages.error(request, "El pago necesita una referencia o comprobante verificable.")
+        return redirect("administracion:pagos_verificar_lista")
     
     # Buscar o activar la suscripción del nutricionista
-    suscripcion, creada = SuscripcionNutricionista.objects.get_or_create(
-        nutricionista=pago.nutricionista,
-        defaults={
-            "plan_id": 1, # ID por defecto o el plan en pago
-            "tipo_facturacion": "mensual",
-            "precio_aplicado": pago.monto,
-            "estado": EstadoSuscripcion.ACTIVA,
-            "fecha_inicio": timezone.now().date(),
-            "fecha_fin": timezone.now().date() + timedelta(days=30),
-        }
+    suscripcion = (
+        SuscripcionNutricionista.objects.select_for_update()
+        .filter(nutricionista=pago.nutricionista)
+        .first()
     )
+    creada = suscripcion is None
+    if creada:
+        coincidencias = []
+        for plan in PlanSuscripcion.objects.filter(activo=True):
+            if plan.precio_mensual == pago.monto:
+                coincidencias.append((plan, "mensual", 30))
+            if plan.precio_anual == pago.monto:
+                coincidencias.append((plan, "anual", 365))
+        if len(coincidencias) != 1:
+            messages.error(
+                request,
+                "No se pudo identificar de forma única el plan pagado.",
+            )
+            return redirect("administracion:pagos_verificar_lista")
+        plan, tipo_facturacion, dias_extension = coincidencias[0]
+        hoy = timezone.localdate()
+        suscripcion = SuscripcionNutricionista.objects.create(
+            nutricionista=pago.nutricionista,
+            plan=plan,
+            tipo_facturacion=tipo_facturacion,
+            precio_aplicado=pago.monto,
+            estado=EstadoSuscripcion.ACTIVA,
+            fecha_inicio=hoy,
+            fecha_fin=hoy + timedelta(days=dias_extension),
+        )
     
-    # Si la suscripción ya existía, la actualizamos y extendemos
+    # Extiende la suscripción existente.
     if not creada:
         hoy = timezone.now().date()
         suscripcion.estado = EstadoSuscripcion.ACTIVA
@@ -67,6 +91,9 @@ def pago_aprobar_view(request, pk):
             suscripcion.fecha_fin = hoy + timedelta(days=dias_extension)
             
         suscripcion.save()
+
+    pago.estado = EstadoPago.COMPLETADO
+    pago.save()
         
     # Registrar auditoría
     LogAuditoriaAdmin.objects.create(

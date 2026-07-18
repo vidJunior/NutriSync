@@ -1,5 +1,5 @@
 # administracion/views/dashboard.py
-# Vista del dashboard del administrador con métricas financieras y operativas.
+# Panel administrativo.
 
 from django.shortcuts import render
 from django.db.models import Sum
@@ -48,14 +48,14 @@ def dashboard_view(request):
     total_suscripciones = SuscripcionNutricionista.objects.count()
     churn_rate = (cancelaciones_30_dias / total_suscripciones * 100) if total_suscripciones > 0 else 0
 
-    # 6. Historial de cobros recientes (últimos 5 pagos de suscripción)
+    # 6. Últimos cinco pagos.
     pagos_recientes = Pago.objects.select_related("nutricionista__perfil").order_by("-fecha_pago")[:5]
 
-    # 7. Datos de facturación mensual (últimos 6 meses) para el gráfico
+    # 7. Facturación de seis meses.
     ingresos_meses = []
     labels_meses = []
     
-    # Para evitar problemas con zonas horarias o meses con menos de 30 días,
+    # Ajusta meses y zonas horarias.
     # calcularemos los últimos 6 meses calendarios
     hoy = timezone.now().date()
     for i in range(5, -1, -1):

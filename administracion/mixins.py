@@ -1,5 +1,5 @@
 # administracion/mixins.py
-# Protege vistas para que solo accedan usuarios con rol 'admin_plataforma'.
+# Restringe el acceso a administradores.
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied

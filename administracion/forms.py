@@ -1,5 +1,5 @@
 # administracion/forms.py
-# Formularios para la gestión del backoffice administrativo.
+# Formularios administrativos.
 
 from django import forms
 from facturacion.models import PlanSuscripcion
