@@ -65,7 +65,13 @@
             </div>
             
             <div class="flex items-center gap-3 sm:gap-4">
-                
+                <!-- Botón de Soporte Técnico -->
+                <a href="{% url 'core:soporte' %}" 
+                   class="p-2 text-slate-500 hover:text-teal-600 hover:bg-slate-100/80 rounded-full transition-all duration-200 flex items-center justify-center cursor-pointer"
+                   title="Soporte Técnico">
+                    <i data-lucide="headset" class="w-5 h-5"></i>
+                </a>
+
                 <div class="relative">
                     <button id="profile-dropdown-btn" class="flex items-center gap-3 bg-slate-100/50 hover:bg-slate-200/50 active:bg-slate-200/80 border border-slate-200/30 hover:border-slate-350 px-3.5 py-1.5 rounded-full shadow-sm cursor-pointer transition-all duration-200 focus:outline-none">
                         <div class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shadow-inner {% if not perfil.foto %}bg-gradient-to-tr from-teal-600 to-emerald-500 text-white font-bold text-xs{% endif %}">
