@@ -1,97 +1,187 @@
 {% extends "base.html" %}
-{% block title %}Notas Clínicas{% endblock %}
-{% block page_title %}Notas Clínicas{% endblock %}
+{% block title %}Notas clínicas{% endblock %}
+{% block page_title %}Notas clínicas{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <p class="text-sm text-slate-500">
-            Historial clínico de tus pacientes activos. Selecciona un paciente para ver o crear notas.
-        </p>
-        <p class="text-xs text-slate-400 font-medium">
-            <span class="text-teal-600 font-semibold">{{ total_notas }}</span> notas registradas
-        </p>
-    </div>
-
-    <!-- Lista de pacientes con notas -->
-    <div class="space-y-4">
-        {% for item in pacientes_con_notas %}
-        <div
-            class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-
-                <!-- Info del paciente -->
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <a href="{% url 'seguimiento:notas_lista' item.paciente.pk %}"
-                            class="text-base font-semibold text-slate-800 hover:text-teal-600 transition-colors">
-                            {{ item.paciente.nombre }} {{ item.paciente.apellido }}
-                        </a>
-                        {% if item.ultima_nota %}
-                        <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                            <i data-lucide="clock" class="w-3 h-3"></i>
-                            Última nota: {{ item.ultima_nota.fecha|date:"d/m/Y" }} — {{ item.ultima_nota.titulo }}
-                        </p>
-                        {% else %}
-                        <p class="text-xs text-slate-400 mt-0.5">Sin notas registradas</p>
-                        {% endif %}
-                    </div>
+<div class="space-y-5">
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-5 border-b border-slate-200 px-5 py-5 sm:px-6 lg:flex-row lg:items-end lg:justify-between">
+            <div class="min-w-0">
+                <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-amber-700">
+                    <span class="h-2 w-2 rounded-sm bg-amber-500"></span>
+                    Continuidad del expediente
                 </div>
+                <h2 class="text-lg font-bold text-slate-900 sm:text-xl">Registro clínico por paciente</h2>
+                <p class="mt-1 max-w-2xl text-sm text-slate-500">
+                    Consulta el último registro, identifica expedientes pendientes y documenta los acuerdos de atención.
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                    <i data-lucide="files" class="h-3.5 w-3.5"></i>
+                    {{ total_notas }} notas acumuladas
+                </span>
+                <a href="{% url 'pacientes:nuevo' %}"
+                   class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+                    <i data-lucide="user-plus" class="h-4 w-4"></i>
+                    Nuevo paciente
+                </a>
+            </div>
+        </div>
 
-                <!-- Contador y acciones -->
-                <div class="flex items-center gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4">
+            <div class="border-b border-r border-slate-100 px-5 py-4 lg:border-b-0">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Pacientes activos</p>
+                    <i data-lucide="users-round" class="h-4 w-4 text-sky-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ total_pacientes }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">Expedientes disponibles</p>
+            </div>
+            <div class="border-b border-slate-100 px-5 py-4 lg:border-b-0 lg:border-r">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Con historial</p>
+                    <i data-lucide="notebook-tabs" class="h-4 w-4 text-emerald-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-emerald-700">{{ pacientes_con_historial }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">Pacientes documentados</p>
+            </div>
+            <div class="border-r border-slate-100 px-5 py-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Por documentar</p>
+                    <i data-lucide="file-warning" class="h-4 w-4 text-amber-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-amber-700">{{ pacientes_sin_notas }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">Sin ninguna nota clínica</p>
+            </div>
+            <div class="px-5 py-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Actividad del mes</p>
+                    <i data-lucide="notebook-pen" class="h-4 w-4 text-violet-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ notas_este_mes }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">Notas creadas este mes</p>
+            </div>
+        </div>
+    </section>
 
-                    <!-- Contador de notas -->
-                    <div class="text-center hidden sm:block">
-                        <p class="text-xs text-slate-400 uppercase tracking-wide">Notas</p>
-                        <p class="text-lg font-bold text-slate-800">{{ item.total_notas }}</p>
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+                <h3 class="font-bold text-slate-900">Expedientes clínicos</h3>
+                <p class="mt-0.5 text-sm text-slate-500">Última nota registrada y acceso directo a la documentación.</p>
+            </div>
+            <span class="inline-flex w-fit items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800">
+                <i data-lucide="lock-keyhole" class="h-3.5 w-3.5"></i>
+                Información clínica
+            </span>
+        </div>
+
+        <div class="hidden grid-cols-[minmax(190px,0.7fr)_minmax(360px,1.35fr)_110px_auto] gap-5 border-b border-slate-100 bg-slate-50 px-6 py-2.5 text-[10px] font-semibold uppercase text-slate-500 xl:grid">
+            <span>Paciente</span>
+            <span>Último registro</span>
+            <span>Historial</span>
+            <span class="text-right">Acciones</span>
+        </div>
+
+        <div class="divide-y divide-slate-100">
+            {% for item in pacientes_con_notas %}
+            <article class="relative px-5 py-5 hover:bg-slate-50/70 sm:px-6">
+                <span class="absolute inset-y-0 left-0 w-0.5 {% if item.ultima_nota %}bg-teal-500{% else %}bg-amber-400{% endif %}"></span>
+
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(190px,0.7fr)_minmax(360px,1.35fr)_110px_auto] xl:items-center xl:gap-5">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm">
+                            <i data-lucide="user-round" class="h-5 w-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <a href="{% url 'seguimiento:notas_lista' item.paciente.pk %}"
+                               class="block truncate font-semibold text-slate-900 hover:text-teal-700">
+                                {{ item.paciente.nombre_completo }}
+                            </a>
+                            {% if item.ultima_nota %}
+                            <p class="mt-1 text-xs text-slate-500">
+                                Actualizado
+                                {% if item.dias_desde_nota <= 0 %}
+                                    hoy
+                                {% elif item.dias_desde_nota == 1 %}
+                                    hace 1 día
+                                {% else %}
+                                    hace {{ item.dias_desde_nota }} días
+                                {% endif %}
+                            </p>
+                            {% else %}
+                            <p class="mt-1 text-xs font-medium text-amber-700">Expediente sin iniciar</p>
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <!-- Botones de acción -->
-                    <div class="flex gap-2">
+                    {% if item.ultima_nota %}
+                    <div class="min-w-0 border-l-2 border-amber-300 pl-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
+                                {{ item.ultima_nota.get_tipo_display }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                                <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
+                                {{ item.ultima_nota.fecha|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                        <p class="mt-1.5 truncate text-sm font-semibold text-slate-900" title="{{ item.ultima_nota.titulo }}">
+                            {{ item.ultima_nota.titulo }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-4 py-3">
+                        <i data-lucide="file-plus-2" class="h-5 w-5 flex-shrink-0 text-amber-600"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-amber-900">Sin registro clínico</p>
+                            <p class="text-xs text-amber-700">Crea la primera nota del expediente.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex items-center gap-2 xl:block">
+                        <span class="text-xs font-medium text-slate-500 xl:hidden">Notas:</span>
+                        <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+                            <i data-lucide="files" class="h-4 w-4 text-slate-400"></i>
+                            {{ item.total_notas }}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 xl:justify-end">
                         <a href="{% url 'seguimiento:notas_nueva' item.paciente.pk %}"
-                            class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 flex items-center gap-1">
-                            <i data-lucide="plus" class="w-3 h-3"></i> Nueva consulta
+                           class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-teal-700">
+                            <i data-lucide="notebook-pen" class="h-3.5 w-3.5"></i>
+                            {% if item.ultima_nota %}Nueva nota{% else %}Iniciar expediente{% endif %}
                         </a>
                         {% if item.total_notas > 0 %}
                         <a href="{% url 'seguimiento:notas_lista' item.paciente.pk %}"
-                            class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1">
-                            <i data-lucide="clipboard-list" class="w-3 h-3"></i> Ver notas
+                           class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                            <i data-lucide="file-clock" class="h-3.5 w-3.5"></i>
+                            Ver historial
                         </a>
                         {% endif %}
-                        <a href="{% url 'seguimiento:historial' item.paciente.pk %}"
-                            class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1">
-                            <i data-lucide="history" class="w-3 h-3"></i> Historial
-                        </a>
                     </div>
                 </div>
+            </article>
+            {% empty %}
+            <div class="px-6 py-16 text-center">
+                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+                    <i data-lucide="notebook-tabs" class="h-7 w-7 text-slate-400"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-800">No hay expedientes disponibles</h3>
+                <p class="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                    Registra un paciente para comenzar su documentación clínica.
+                </p>
+                <a href="{% url 'pacientes:nuevo' %}"
+                   class="mt-5 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+                    <i data-lucide="user-plus" class="h-4 w-4"></i>
+                    Registrar paciente
+                </a>
             </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <!-- Empty state -->
-        <div class="text-center py-16 px-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-5">
-                <i data-lucide="clipboard-list" class="w-10 h-10 text-slate-300"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-700 mb-2">Sin pacientes activos</h3>
-            <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">
-                No tienes pacientes activos registrados. Agrega pacientes primero para comenzar a registrar notas
-                clínicas.
-            </p>
-            <a href="{% url 'pacientes:nuevo' %}"
-                class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
-                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                Registrar paciente
-            </a>
-        </div>
-        {% endfor %}
-    </div>
-
+    </section>
 </div>
 {% endblock %}

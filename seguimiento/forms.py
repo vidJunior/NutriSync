@@ -1,11 +1,12 @@
 # seguimiento/forms.py
-# Formularios para MedidaCorporal (IMC auto-calculado) y NotaClinica.
-# Los widgets usan clases Tailwind para consistencia visual con el sistema de diseño.
+# Formularios de medidas y notas.
+# Configura los formularios de seguimiento.
 
 from django import forms
+from decimal import Decimal
 from .models import MedidaCorporal, NotaClinica
 
-# Clases CSS reutilizables para inputs (consistentes con el diseño del sistema)
+# Clases CSS de los campos
 INPUT_CLASSES = (
     "border border-slate-200 rounded-lg px-3 py-2 w-full "
     "focus:ring-2 focus:ring-teal-500 focus:border-teal-500 "
@@ -20,6 +21,19 @@ TEXTAREA_CLASSES = (
 
 
 class MedidaCorporalForm(forms.ModelForm):
+    talla_cm = forms.DecimalField(
+        min_value=Decimal("0.5"),
+        max_value=Decimal("250"),
+        decimal_places=1,
+        widget=forms.NumberInput(
+            attrs={
+                "class": INPUT_CLASSES,
+                "step": "0.1",
+                "placeholder": "Ej: 165.0",
+            }
+        ),
+    )
+
     class Meta:
         model = MedidaCorporal
         fields = [
@@ -78,7 +92,7 @@ class MedidaCorporalForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Mostrar el IMC actual como campo de solo lectura si ya existe una instancia
+        # Muestra el IMC actual sin editarlo.
         if self.instance and self.instance.pk and self.instance.imc:
             self.fields["imc_display"] = forms.DecimalField(
                 label="IMC (calculado)",
@@ -101,7 +115,7 @@ class MedidaCorporalForm(forms.ModelForm):
         """Si el usuario ingresa la talla en metros (ej: 1.80), la convertimos a centímetros (180)."""
         talla_cm = self.cleaned_data.get("talla_cm")
         if talla_cm is not None:
-            # Si se encuentra en un rango de metros razonable (0.5 a 2.5), multiplicar por 100
+            # Convierte metros a centímetros.
             if 0.5 <= talla_cm <= 2.5:
                 talla_cm = talla_cm * 100
         return talla_cm
@@ -174,7 +188,7 @@ class NotaClinicaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Filtramos las citas del paciente para que solo aparezcan las relevantes
+        # Muestra solo las citas del paciente.
         paciente = kwargs.pop("paciente", None)
         super().__init__(*args, **kwargs)
         if paciente:

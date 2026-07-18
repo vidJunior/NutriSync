@@ -1,127 +1,136 @@
 {% extends "base.html" %}
-{% block title %}{{ nota.titulo }}{% endblock %}
-{% block page_title %}Nota Clínica{% endblock %}
+{% block title %}Nota Clínica - {{ nota.titulo }}{% endblock %}
+{% block page_title %}Detalle de Nota Clínica{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto space-y-6">
 
-    <!-- Breadcrumb -->
-    <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6">
-        <a href="{% url 'core:dashboard' %}" class="hover:text-teal-600 transition-colors">Dashboard</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <a href="{% url 'pacientes:lista' %}" class="hover:text-teal-600 transition-colors">Pacientes</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <a href="{% url 'pacientes:detalle' nota.paciente.pk %}" class="hover:text-teal-600 transition-colors">{{ nota.paciente.nombre_completo }}</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <a href="{% url 'seguimiento:notas_lista' nota.paciente.pk %}" class="hover:text-teal-600 transition-colors">Notas</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <span class="text-slate-600 font-medium">{{ nota.titulo|truncatechars:30 }}</span>
-    </nav>
+    <!-- Navegación -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'seguimiento:notas_lista' nota.paciente.pk %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Volver a Expediente Clínico
+            </a>
+        </div>
+        <div>
+            <a href="{% url 'seguimiento:historial' nota.paciente.pk %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-650 transition-colors">
+                <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                Ver línea de tiempo
+            </a>
+        </div>
+    </div>
 
     <!-- Contenido de la nota -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-4 mb-6">
-            <div>
-                <h2 class="text-xl font-semibold text-slate-800">{{ nota.titulo }}</h2>
-                <div class="flex items-center gap-3 mt-2">
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
-                        {% if nota.tipo == 'consulta' %}bg-blue-50 text-blue-700 border border-blue-200
-                        {% elif nota.tipo == 'seguimiento' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-                        {% elif nota.tipo == 'observacion' %}bg-amber-50 text-amber-700 border border-amber-200
-                        {% elif nota.tipo == 'receta' %}bg-purple-50 text-purple-700 border border-purple-200
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <!-- Encabezado de la nota -->
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="space-y-1.5">
+                <div class="flex items-center flex-wrap gap-2.5">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border
+                        {% if nota.tipo == 'consulta' %}bg-sky-50 text-sky-700 border-sky-200
+                        {% elif nota.tipo == 'seguimiento' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                        {% elif nota.tipo == 'observacion' %}bg-amber-50 text-amber-700 border-amber-200
+                        {% elif nota.tipo == 'receta' %}bg-purple-50 text-purple-700 border-purple-200
                         {% endif %}">
                         {{ nota.get_tipo_display }}
                     </span>
-                    <span class="text-sm text-slate-400">{{ nota.fecha|date:"d/m/Y" }}</span>
+                    <span class="text-xs text-slate-400 font-semibold flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> {{ nota.fecha|date:"d/m/Y" }}
+                    </span>
+                </div>
+                <h2 class="text-lg font-extrabold text-slate-900 leading-snug">{{ nota.titulo }}</h2>
+            </div>
+            
+            <div class="flex items-center gap-2.5 bg-white border border-slate-200 rounded-lg p-2.5 shadow-xs">
+                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="user-round" class="w-4.5 h-4.5"></i>
+                </div>
+                <div class="min-w-0">
+                    <a href="{% url 'pacientes:detalle' nota.paciente.pk %}" class="text-xs font-bold text-slate-800 hover:text-teal-600 transition-colors block truncate max-w-[150px]">
+                        {{ nota.paciente.nombre_completo }}
+                    </a>
+                    <p class="text-[10px] text-slate-500 font-semibold">Paciente en control</p>
                 </div>
             </div>
-            <a href="{% url 'pacientes:detalle' nota.paciente.pk %}"
-               class="flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors">
-                <i data-lucide="user" class="w-4 h-4"></i>
-                {{ nota.paciente.nombre_completo }}
-            </a>
         </div>
 
-        <hr class="border-slate-100 mb-6">
-
-        <!-- Contenido Diario Clínico -->
-        <div class="space-y-6">
+        <!-- Secciones clínicas -->
+        <div class="p-6 space-y-6">
+            
             {% if nota.motivo_consulta %}
-            <div>
-                <h4 class="text-sm font-semibold text-slate-800 mb-2">Motivo de consulta</h4>
-                <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-slate-500"></i> Motivo de consulta
+                </h4>
+                <div class="text-sm text-slate-700 whitespace-pre-line leading-relaxed bg-slate-50/50 p-4 rounded-xl border border-slate-150">
                     {{ nota.motivo_consulta }}
                 </div>
             </div>
             {% endif %}
 
             {% if nota.resumen_consulta %}
-            <div>
-                <h4 class="text-sm font-semibold text-slate-800 mb-2">Resumen de la consulta</h4>
-                <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="file-text" class="w-4 h-4 text-slate-500"></i> Resumen de la consulta
+                </h4>
+                <div class="text-sm text-slate-700 whitespace-pre-line leading-relaxed bg-slate-50/50 p-4 rounded-xl border border-slate-150">
                     {{ nota.resumen_consulta }}
                 </div>
             </div>
             {% endif %}
 
             {% if nota.objetivos_acordados %}
-            <div>
-                <h4 class="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i> Objetivos acordados</h4>
-                <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line bg-emerald-50/50 p-4 rounded-lg border border-emerald-100">
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="target" class="w-4 h-4 text-emerald-500"></i> Objetivos acordados
+                </h4>
+                <div class="text-sm text-slate-850 whitespace-pre-line leading-relaxed bg-emerald-50/20 p-4 rounded-xl border border-emerald-100">
                     {{ nota.objetivos_acordados }}
                 </div>
             </div>
             {% endif %}
 
             {% if nota.plan_accion %}
-            <div>
-                <h4 class="text-sm font-semibold text-slate-800 mb-2">Plan de acción / Acuerdos</h4>
-                <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="compass" class="w-4 h-4 text-indigo-500"></i> Plan de acción / Acuerdos
+                </h4>
+                <div class="text-sm text-slate-750 whitespace-pre-line leading-relaxed bg-indigo-50/10 p-4 rounded-xl border border-indigo-100">
                     {{ nota.plan_accion }}
                 </div>
             </div>
             {% endif %}
 
             {% if nota.observaciones_clinicas %}
-            <div>
-                <h4 class="text-sm font-semibold text-slate-800 mb-2">Observaciones clínicas</h4>
-                <div class="prose prose-sm max-w-none text-slate-700 whitespace-pre-line bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i> Observaciones clínicas privadas
+                </h4>
+                <div class="text-sm text-slate-700 whitespace-pre-line leading-relaxed bg-slate-50/50 p-4 rounded-xl border border-slate-150">
                     {{ nota.observaciones_clinicas }}
                 </div>
             </div>
             {% endif %}
-        </div>
 
-        <!-- Cita relacionada -->
-        {% if nota.cita %}
-        <hr class="border-slate-100 my-6">
-        <div class="bg-slate-50 rounded-lg p-4">
-            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Cita relacionada</h4>
-            <p class="text-sm text-slate-700">
-                {{ nota.cita.get_tipo_display }} — {{ nota.cita.fecha_hora|date:"d/m/Y H:i" }}
-                <span class="text-slate-400">({{ nota.cita.get_estado_display }})</span>
-            </p>
-            <a href="{% url 'agendas:detalle' nota.cita.pk %}" class="text-xs text-teal-600 hover:text-teal-700 font-medium mt-1 inline-flex items-center gap-1">
-                <i data-lucide="external-link" class="w-3 h-3"></i> Ver detalle de la cita
-            </a>
-        </div>
-        {% endif %}
-
-        <!-- Acciones -->
-        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-            <a href="{% url 'seguimiento:notas_lista' nota.paciente.pk %}"
-               class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm transition-all duration-200 flex items-center gap-2">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                Volver a notas
-            </a>
-            <a href="{% url 'seguimiento:historial' nota.paciente.pk %}"
-               class="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
-                <i data-lucide="history" class="w-4 h-4"></i>
-                Ver línea de tiempo
-            </a>
+            <!-- Bloque de cita vinculada -->
+            {% if nota.cita %}
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Cita Relacionada</span>
+                    <p class="text-sm font-bold text-slate-800">
+                        {{ nota.cita.get_tipo_display }} — {{ nota.cita.fecha_hora|date:"d/m/Y H:i" }}
+                    </p>
+                    <p class="text-xs text-slate-500 font-semibold">Estado: {{ nota.cita.get_estado_display }}</p>
+                </div>
+                <a href="{% url 'agendas:detalle' nota.cita.pk %}"
+                   class="inline-flex items-center gap-1.5 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors">
+                    Ver cita asociada
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
-
 </div>
 {% endblock %}

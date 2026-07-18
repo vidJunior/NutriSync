@@ -1,118 +1,166 @@
 {% extends "base.html" %}
-{% block title %}Nueva Medida{% endblock %}
-{% block page_title %}Registrar Medidas Corporales{% endblock %}
+{% block title %}Nueva Medida - {{ paciente.nombre_completo }}{% endblock %}
+{% block page_title %}Registrar Medidas{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto space-y-6">
 
-    <!-- Botón de Retroceso -->
-    <div class="mb-6">
-        <a href="{% url 'seguimiento:dashboard' %}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 transition-colors duration-200">
+    <!-- Navegación -->
+    <div>
+        <a href="{% url 'seguimiento:dashboard' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition-colors duration-200">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            Volver a Seguimiento
+            Volver a Evolución Corporal
         </a>
     </div>
 
-    <!-- Banner del paciente -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6 flex items-center justify-between">
+    <!-- Paciente -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
-                <i data-lucide="user" class="w-5 h-5"></i>
+            <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="user-round" class="w-5 h-5"></i>
             </div>
             <div>
-                <h2 class="text-lg font-semibold text-slate-800">{{ paciente.nombre_completo }}</h2>
-                <p class="text-xs text-slate-400">Registrando nueva medición corporal</p>
+                <h2 class="text-base font-bold text-slate-900">{{ paciente.nombre_completo }}</h2>
+                <p class="text-xs text-slate-500">Añadiendo nuevo control antropométrico</p>
             </div>
         </div>
-        <a href="{% url 'seguimiento:medidas_lista' paciente.pk %}"
-           class="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
-            <i data-lucide="activity" class="w-4 h-4"></i> Ver historial
-        </a>
+        <div>
+            <a href="{% url 'seguimiento:medidas_lista' paciente.pk %}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                <i data-lucide="table-properties" class="w-3.5 h-3.5 text-slate-500"></i>
+                Ver historial de medidas
+            </a>
+        </div>
     </div>
 
     <!-- Formulario -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <form method="post" novalidate>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="ruler" class="w-4 h-4 text-teal-600"></i>
+                Datos Antropométricos
+            </h3>
+        </div>
+
+        <form method="post" class="p-6 space-y-6" novalidate>
             {% csrf_token %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <!-- Peso -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                        {{ form.peso_kg.label }} <span class="text-red-500">*</span>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.peso_kg.label }} <span class="text-rose-500">*</span>
                     </label>
-                    {{ form.peso_kg }}
+                    <div class="relative">
+                        {{ form.peso_kg }}
+                        <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400 select-none">kg</span>
+                    </div>
                     {% if form.peso_kg.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.peso_kg.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.peso_kg.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
                 <!-- Talla -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                        {{ form.talla_cm.label }} <span class="text-red-500">*</span>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.talla_cm.label }} <span class="text-rose-500">*</span>
                     </label>
-                    {{ form.talla_cm }}
+                    <div class="relative">
+                        {{ form.talla_cm }}
+                        <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400 select-none">cm</span>
+                    </div>
                     {% if form.talla_cm.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.talla_cm.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.talla_cm.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
+                <!-- IMC si está en modo edición -->
+                {% if form.imc_display %}
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        {{ form.imc_display.label }}
+                    </label>
+                    {{ form.imc_display }}
+                </div>
+                {% endif %}
+
                 <!-- Grasa corporal -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.grasa_corporal_pct.label }}
                     </label>
-                    {{ form.grasa_corporal_pct }}
+                    <div class="relative">
+                        {{ form.grasa_corporal_pct }}
+                        <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400 select-none">%</span>
+                    </div>
                     {% if form.grasa_corporal_pct.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.grasa_corporal_pct.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.grasa_corporal_pct.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
                 <!-- Cintura -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.cintura_cm.label }}
                     </label>
-                    {{ form.cintura_cm }}
+                    <div class="relative">
+                        {{ form.cintura_cm }}
+                        <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400 select-none">cm</span>
+                    </div>
                     {% if form.cintura_cm.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.cintura_cm.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.cintura_cm.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
                 <!-- Cadera -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.cadera_cm.label }}
                     </label>
-                    {{ form.cadera_cm }}
+                    <div class="relative">
+                        {{ form.cadera_cm }}
+                        <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400 select-none">cm</span>
+                    </div>
                     {% if form.cadera_cm.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.cadera_cm.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.cadera_cm.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Notas -->
-            <div class="mt-5">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                    {{ form.notas.label }}
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Observaciones o Notas
                 </label>
+                {{ form.notes_dummy_or_real }}
                 {{ form.notas }}
                 {% if form.notas.errors %}
-                <p class="text-red-500 text-xs mt-1">{{ form.notas.errors.0 }}</p>
+                <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.notas.errors.0 }}
+                </p>
                 {% endif %}
             </div>
 
             <!-- Acciones -->
-            <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
                 <a href="{% url 'seguimiento:dashboard' %}"
-                   class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm transition-all duration-200">
+                   class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
                     Cancelar
                 </a>
                 <button type="submit"
-                        class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 transition-colors">
                     <i data-lucide="save" class="w-4 h-4"></i>
-                    Guardar Medidas
+                    Guardar Medición
                 </button>
             </div>
         </form>

@@ -1,158 +1,194 @@
 {% extends "base.html" %}
-{% block title %}Nueva Nota Clínica{% endblock %}
+{% block title %}Nueva Nota Clínica - {{ paciente.nombre_completo }}{% endblock %}
 {% block page_title %}Nueva Nota Clínica{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto space-y-6">
 
-    <!-- Breadcrumb -->
-    <nav class="flex items-center gap-2 text-sm text-slate-400 mb-6">
-        <a href="{% url 'core:dashboard' %}" class="hover:text-teal-600 transition-colors">Dashboard</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <a href="{% url 'pacientes:lista' %}" class="hover:text-teal-600 transition-colors">Pacientes</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <a href="{% url 'pacientes:detalle' paciente.pk %}" class="hover:text-teal-600 transition-colors">{{ paciente.nombre_completo }}</a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <span class="text-slate-600 font-medium">Nueva Nota</span>
-    </nav>
-
-    <!-- Banner del paciente -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                <i data-lucide="user" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <h2 class="text-lg font-semibold text-slate-800">{{ paciente.nombre_completo }}</h2>
-                <p class="text-xs text-slate-400">Creando nueva nota clínica</p>
-            </div>
-        </div>
-        <a href="{% url 'seguimiento:notas_lista' paciente.pk %}"
-           class="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
-            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ver notas
+    <!-- Navegación -->
+    <div>
+        <a href="{% url 'seguimiento:notas_dashboard' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors duration-200">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            Volver a Notas Clínicas
         </a>
     </div>
 
+    <!-- Paciente -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="user-round" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-bold text-slate-900">{{ paciente.nombre_completo }}</h2>
+                <p class="text-xs text-slate-500">Creando nueva nota en el expediente clínico</p>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'seguimiento:notas_lista' paciente.pk %}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-slate-500"></i>
+                Ver expediente clínico
+            </a>
+        </div>
+    </div>
+
     <!-- Formulario -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <form method="post" novalidate>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="notebook-pen" class="w-4 h-4 text-indigo-600"></i>
+                Detalles de la Consulta / Nota
+            </h3>
+            <span class="text-xs text-slate-400 font-semibold">* Campos obligatorios</span>
+        </div>
+
+        <form method="post" class="p-6 space-y-6" novalidate>
             {% csrf_token %}
 
+            <!-- Datos de la nota -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <!-- Fecha -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                        {{ form.fecha.label }} <span class="text-red-500">*</span>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.fecha.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.fecha }}
                     {% if form.fecha.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.fecha.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.fecha.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
                 <!-- Tipo -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                        {{ form.tipo.label }} <span class="text-red-500">*</span>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.tipo.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.tipo }}
                     {% if form.tipo.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.tipo.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.tipo.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
                 <!-- Cita relacionada -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.cita.label }}
                     </label>
                     {{ form.cita }}
                     {% if form.cita.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.cita.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.cita.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Título -->
-            <div class="mt-5">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                    {{ form.titulo.label }} <span class="text-red-500">*</span>
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    {{ form.titulo.label }} <span class="text-rose-500">*</span>
                 </label>
                 {{ form.titulo }}
                 {% if form.titulo.errors %}
-                <p class="text-red-500 text-xs mt-1">{{ form.titulo.errors.0 }}</p>
+                <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.titulo.errors.0 }}
+                </p>
                 {% endif %}
             </div>
 
             <!-- Motivo de consulta -->
-            <div class="mt-5">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     {{ form.motivo_consulta.label }}
                 </label>
                 {{ form.motivo_consulta }}
                 {% if form.motivo_consulta.errors %}
-                <p class="text-red-500 text-xs mt-1">{{ form.motivo_consulta.errors.0 }}</p>
+                <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.motivo_consulta.errors.0 }}
+                </p>
                 {% endif %}
             </div>
 
             <!-- Resumen de la consulta -->
-            <div class="mt-5">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 flex justify-between items-center">
-                    <span>{{ form.resumen_consulta.label }}</span>
-                    <span class="text-[10px] bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full border border-teal-100">Autogenerado</span>
-                </label>
+            <div class="space-y-1.5">
+                <div class="flex justify-between items-center">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.resumen_consulta.label }}
+                    </label>
+                    <span class="inline-flex items-center gap-1 rounded bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700 border border-teal-100">
+                        <i data-lucide="sparkles" class="w-3 h-3"></i> Autocompletado sugerido
+                    </span>
+                </div>
                 {{ form.resumen_consulta }}
                 {% if form.resumen_consulta.errors %}
-                <p class="text-red-500 text-xs mt-1">{{ form.resumen_consulta.errors.0 }}</p>
+                <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.resumen_consulta.errors.0 }}
+                </p>
                 {% endif %}
-                <p class="text-[10px] text-slate-400 mt-1">Este resumen se ha generado tomando los datos actuales del paciente, pero puedes editarlo libremente.</p>
+                <p class="text-[10px] text-slate-400 mt-1">Este resumen incluye información base actual del paciente y puede ser editado para adaptarlo a la consulta.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+            <!-- Objetivos y plan -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- Objetivos acordados -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                        <i data-lucide="target" class="w-3.5 h-3.5 text-indigo-500"></i>
                         {{ form.objetivos_acordados.label }}
                     </label>
                     {{ form.objetivos_acordados }}
                     {% if form.objetivos_acordados.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.objetivos_acordados.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.objetivos_acordados.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
 
-                <!-- Plan de acción / Acuerdos -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                <!-- Plan de acción -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                        <i data-lucide="compass" class="w-3.5 h-3.5 text-indigo-500"></i>
                         {{ form.plan_accion.label }}
                     </label>
                     {{ form.plan_accion }}
                     {% if form.plan_accion.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.plan_accion.errors.0 }}</p>
+                    <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.plan_accion.errors.0 }}
+                    </p>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Observaciones clínicas -->
-            <div class="mt-5">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i>
                     {{ form.observaciones_clinicas.label }}
                 </label>
                 {{ form.observaciones_clinicas }}
                 {% if form.observaciones_clinicas.errors %}
-                <p class="text-red-500 text-xs mt-1">{{ form.observaciones_clinicas.errors.0 }}</p>
+                <p class="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3 h-3"></i> {{ form.observaciones_clinicas.errors.0 }}
+                </p>
                 {% endif %}
+                <p class="text-[10px] text-slate-400">Notas privadas para uso exclusivo del nutricionista.</p>
             </div>
 
             <!-- Acciones -->
-            <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <a href="{% url 'pacientes:detalle' paciente.pk %}"
-                   class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm transition-all duration-200">
+            <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
+                <a href="{% url 'seguimiento:notas_lista' paciente.pk %}"
+                   class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
                     Cancelar
                 </a>
                 <button type="submit"
-                        class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors">
                     <i data-lucide="save" class="w-4 h-4"></i>
-                    Guardar Nota
+                    Guardar Nota Clínica
                 </button>
             </div>
         </form>

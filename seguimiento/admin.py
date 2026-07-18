@@ -1,6 +1,5 @@
 # seguimiento/admin.py
-# Registro de modelos MedidaCorporal y NotaClinica en el panel de administración.
-# Optimizado con select_related y list_filter para navegación eficiente.
+# Admin de medidas y notas.
 
 from django.contrib import admin
 from .models import MedidaCorporal, NotaClinica
@@ -22,7 +21,7 @@ class MedidaCorporalAdmin(admin.ModelAdmin):
     readonly_fields = ["imc"]  # IMC se calcula automáticamente en save()
     date_hierarchy = "fecha"
 
-    # select_related evita N+1 queries al mostrar el paciente en la lista
+    # Evita consultas N+1.
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("paciente")
 

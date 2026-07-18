@@ -1,100 +1,216 @@
 {% extends "base.html" %}
-{% block title %}Seguimiento{% endblock %}
-{% block page_title %}Seguimiento Corporal{% endblock %}
+{% block title %}Evolución corporal{% endblock %}
+{% block page_title %}Evolución corporal{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <p class="text-sm text-slate-500">
-            Resumen de últimas mediciones corporales de tus pacientes activos.
-        </p>
-        <p class="text-xs text-slate-400 font-medium">
-            <span class="text-teal-600 font-semibold">{{ total_medidas }}</span> mediciones registradas
-        </p>
-    </div>
-
-    <!-- Lista de pacientes con medidas -->
-    <div class="space-y-4">
-        {% for item in pacientes_con_medidas %}
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <!-- Información del paciente -->
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <a href="{% url 'pacientes:detalle' item.paciente.pk %}"
-                           class="text-base font-semibold text-slate-800 hover:text-teal-600 transition-colors">
-                            {{ item.paciente.nombre_completo }}
-                        </a>
-                    </div>
+<div class="space-y-5">
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-5 border-b border-slate-200 px-5 py-5 sm:px-6 lg:flex-row lg:items-end lg:justify-between">
+            <div class="min-w-0">
+                <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-teal-700">
+                    <span class="h-2 w-2 rounded-full bg-teal-500"></span>
+                    Control antropométrico
                 </div>
+                <h2 class="text-lg font-bold text-slate-900 sm:text-xl">Lectura rápida de seguimiento</h2>
+                <p class="mt-1 max-w-2xl text-sm text-slate-500">
+                    Últimos registros, cambios frente al control anterior y pacientes que necesitan actualización.
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                    <i data-lucide="calendar-days" class="h-3.5 w-3.5"></i>
+                    Corte al {% now "d/m/Y" %}
+                </span>
+                <a href="{% url 'pacientes:nuevo' %}"
+                   class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+                    <i data-lucide="user-plus" class="h-4 w-4"></i>
+                    Nuevo paciente
+                </a>
+            </div>
+        </div>
 
-                <!-- Última medida -->
-                <div class="flex items-center gap-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4">
+            <div class="border-b border-r border-slate-100 px-5 py-4 lg:border-b-0">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">En seguimiento</p>
+                    <i data-lucide="users-round" class="h-4 w-4 text-sky-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ total_pacientes }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">{{ pacientes_con_medicion }} con línea base</p>
+            </div>
+            <div class="border-b border-slate-100 px-5 py-4 lg:border-b-0 lg:border-r">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Controles al día</p>
+                    <i data-lucide="circle-check" class="h-4 w-4 text-emerald-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-emerald-700">{{ controles_al_dia }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">Medición en últimos 30 días</p>
+            </div>
+            <div class="border-r border-slate-100 px-5 py-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Sin línea base</p>
+                    <i data-lucide="circle-dashed" class="h-4 w-4 text-amber-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-amber-700">{{ pacientes_sin_medicion }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">Pendientes de primera medición</p>
+            </div>
+            <div class="px-5 py-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Actividad del mes</p>
+                    <i data-lucide="activity" class="h-4 w-4 text-violet-500"></i>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ medidas_este_mes }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">{{ total_medidas }} mediciones acumuladas</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+                <h3 class="font-bold text-slate-900">Controles por paciente</h3>
+                <p class="mt-0.5 text-sm text-slate-500">La variación compara los dos últimos registros disponibles.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Al día
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                    Requiere control
+                </span>
+            </div>
+        </div>
+
+        <div class="divide-y divide-slate-100">
+            {% for item in pacientes_con_medidas %}
+            <article class="relative px-5 py-5 hover:bg-slate-50/70 sm:px-6">
+                <span class="absolute inset-y-0 left-0 w-0.5
+                    {% if not item.ultima_medida %}bg-amber-400
+                    {% elif item.control_al_dia %}bg-emerald-500
+                    {% else %}bg-amber-400{% endif %}">
+                </span>
+
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(190px,0.7fr)_minmax(430px,1.5fr)_auto] xl:items-center">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm">
+                            <i data-lucide="user-round" class="h-5 w-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <a href="{% url 'seguimiento:medidas_lista' item.paciente.pk %}"
+                               class="block truncate font-semibold text-slate-900 hover:text-teal-700">
+                                {{ item.paciente.nombre_completo }}
+                            </a>
+                            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                                {% if item.ultima_medida %}
+                                <span class="inline-flex items-center gap-1 text-slate-500">
+                                    <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
+                                    {{ item.ultima_medida.fecha|date:"d/m/Y" }}
+                                </span>
+                                {% if item.control_al_dia %}
+                                <span class="font-medium text-emerald-700">Control vigente</span>
+                                {% else %}
+                                <span class="font-medium text-amber-700">
+                                    Hace {{ item.dias_desde_medicion }} días
+                                </span>
+                                {% endif %}
+                                {% else %}
+                                <span class="font-medium text-amber-700">Sin mediciones registradas</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
                     {% if item.ultima_medida %}
-                    <div class="text-center">
-                        <p class="text-xs text-slate-400 uppercase tracking-wide">Última medida</p>
-                        <p class="text-xs text-slate-500">{{ item.ultima_medida.fecha|date:"d/m/Y" }}</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xs text-slate-400 uppercase tracking-wide">Peso</p>
-                        <p class="text-sm font-semibold text-slate-800">{{ item.ultima_medida.peso_kg }} kg</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xs text-slate-400 uppercase tracking-wide">IMC</p>
-                        <p class="text-sm font-semibold
-                            {% if item.ultima_medida.imc < 18.5 %}text-amber-600
-                            {% elif item.ultima_medida.imc < 25 %}text-emerald-600
-                            {% elif item.ultima_medida.imc < 30 %}text-amber-600
-                            {% else %}text-red-600{% endif %}">
-                            {{ item.ultima_medida.imc }}
-                        </p>
+                    <div class="grid grid-cols-2 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:grid-cols-4 sm:divide-x sm:divide-slate-200">
+                        <div class="border-b border-r border-slate-200 px-3 py-2.5 sm:border-b-0 sm:border-r-0">
+                            <p class="text-[10px] font-semibold uppercase text-slate-500">Peso actual</p>
+                            <p class="mt-1 text-sm font-bold text-slate-900">{{ item.ultima_medida.peso_kg|floatformat:1 }} kg</p>
+                        </div>
+                        <div class="border-b border-slate-200 px-3 py-2.5 sm:border-b-0">
+                            <p class="text-[10px] font-semibold uppercase text-slate-500">Variación</p>
+                            {% if item.medida_anterior %}
+                            <p class="mt-1 inline-flex items-center gap-1 text-sm font-bold text-slate-800">
+                                {% if item.variacion_peso > 0 %}
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 text-sky-600"></i>
+                                +{{ item.variacion_peso|floatformat:1 }} kg
+                                {% elif item.variacion_peso < 0 %}
+                                <i data-lucide="arrow-down-right" class="h-3.5 w-3.5 text-sky-600"></i>
+                                {{ item.variacion_peso|floatformat:1 }} kg
+                                {% else %}
+                                <i data-lucide="minus" class="h-3.5 w-3.5 text-slate-400"></i>
+                                Sin cambio
+                                {% endif %}
+                            </p>
+                            {% else %}
+                            <p class="mt-1 text-xs font-medium text-slate-400">Sin comparativa</p>
+                            {% endif %}
+                        </div>
+                        <div class="border-r border-slate-200 px-3 py-2.5 sm:border-r-0">
+                            <p class="text-[10px] font-semibold uppercase text-slate-500">IMC</p>
+                            <p class="mt-1 text-sm font-bold
+                                {% if item.ultima_medida.imc < 18.5 %}text-amber-700
+                                {% elif item.ultima_medida.imc < 25 %}text-emerald-700
+                                {% elif item.ultima_medida.imc < 30 %}text-amber-700
+                                {% else %}text-rose-700{% endif %}">
+                                {{ item.ultima_medida.imc }}
+                            </p>
+                        </div>
+                        <div class="px-3 py-2.5">
+                            <p class="text-[10px] font-semibold uppercase text-slate-500">Cintura / grasa</p>
+                            <p class="mt-1 truncate text-sm font-bold text-slate-900">
+                                {% if item.ultima_medida.cintura_cm %}
+                                    {{ item.ultima_medida.cintura_cm|floatformat:1 }} cm
+                                {% elif item.ultima_medida.grasa_corporal_pct %}
+                                    {{ item.ultima_medida.grasa_corporal_pct|floatformat:1 }}%
+                                {% else %}
+                                    <span class="font-medium text-slate-400">Sin dato</span>
+                                {% endif %}
+                            </p>
+                        </div>
                     </div>
                     {% else %}
-                    <div class="text-center">
-                        <p class="text-xs text-slate-400">Sin mediciones registradas</p>
+                    <div class="flex items-center gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-4 py-3">
+                        <i data-lucide="ruler" class="h-5 w-5 flex-shrink-0 text-amber-600"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-amber-900">Falta establecer la línea base</p>
+                            <p class="text-xs text-amber-700">Registra peso, talla y composición inicial.</p>
+                        </div>
                     </div>
                     {% endif %}
 
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2 xl:justify-end">
                         <a href="{% url 'seguimiento:medidas_nueva' item.paciente.pk %}"
-                           class="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 flex items-center gap-1">
-                            <i data-lucide="plus" class="w-3 h-3"></i> Medir
+                           class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-teal-700">
+                            <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                            {% if item.ultima_medida %}Nuevo control{% else %}Primera medición{% endif %}
                         </a>
                         <a href="{% url 'seguimiento:medidas_lista' item.paciente.pk %}"
-                           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1">
-                            <i data-lucide="activity" class="w-3 h-3"></i> Historial
-                        </a>
-                        <a href="{% url 'seguimiento:historial' item.paciente.pk %}"
-                           class="border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1">
-                            <i data-lucide="history" class="w-3 h-3"></i> Línea de Tiempo
+                           class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                            <i data-lucide="chart-no-axes-combined" class="h-3.5 w-3.5"></i>
+                            Ver evolución
                         </a>
                     </div>
                 </div>
+            </article>
+            {% empty %}
+            <div class="px-6 py-16 text-center">
+                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+                    <i data-lucide="ruler" class="h-7 w-7 text-slate-400"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-800">No hay pacientes en seguimiento</h3>
+                <p class="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                    Registra un paciente para iniciar su línea base antropométrica.
+                </p>
+                <a href="{% url 'pacientes:nuevo' %}"
+                   class="mt-5 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+                    <i data-lucide="user-plus" class="h-4 w-4"></i>
+                    Registrar paciente
+                </a>
             </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <!-- Empty state -->
-        <div class="text-center py-16 px-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-5">
-                <i data-lucide="activity" class="w-10 h-10 text-slate-300"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-700 mb-2">Sin pacientes activos</h3>
-            <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">
-                No tienes pacientes activos registrados. Agrega pacientes primero para comenzar a registrar sus medidas corporales.
-            </p>
-            <a href="{% url 'pacientes:nuevo' %}"
-               class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
-                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                Registrar paciente
-            </a>
-        </div>
-        {% endfor %}
-    </div>
-
+    </section>
 </div>
 {% endblock %}

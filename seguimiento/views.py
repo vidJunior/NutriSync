@@ -1,6 +1,6 @@
 # seguimiento/views.py
 # Vistas de seguimiento corporal y notas clínicas.
-# Todas filtran por paciente__nutricionista=request.user para aislamiento de datos.
+# Todas las vistas filtran por nutricionista.
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -8,7 +8,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, CreateView, DetailView
 from django.urls import reverse_lazy
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.utils import timezone
 from itertools import chain
 
 from .models import MedidaCorporal, NotaClinica
@@ -17,9 +18,8 @@ from pacientes.models import Paciente
 from config.choices import TipoNota
 
 
-# ─── Mixin de aislamiento multi-nutricionista ────────────────────────────────
-# Filtra por paciente__nutricionista en lugar de un FK directo a User,
-# ya que MedidaCorporal y NotaClinica se relacionan con Paciente, no con User.
+# Aislamiento por nutricionista
+# Medidas y notas se filtran mediante el paciente.
 
 
 class NutricionistaSeguimientoMixin(LoginRequiredMixin):
@@ -50,7 +50,7 @@ class MedidaCreateView(NutricionistaSeguimientoMixin, CreateView):
     template_name = "seguimiento/medida_form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # Validamos que el paciente exista y pertenezca al nutricionista antes de continuar
+        # Verifica que el paciente pertenezca al nutricionista.
         self.paciente = self.get_paciente()
         return super().dispatch(request, *args, **kwargs)
 
@@ -71,14 +71,14 @@ class MedidaCreateView(NutricionistaSeguimientoMixin, CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-        # Intentamos obtener la última medida registrada de este paciente para precargar sus valores reales más recientes
+        # Precarga la última medida del paciente.
         ultima_medida = self.paciente.medidas.order_by("-fecha", "-fecha_registro").first()
         
         if ultima_medida:
             initial["talla_cm"] = ultima_medida.talla_cm
             initial["peso_kg"] = ultima_medida.peso_kg
         else:
-            # Si no hay medidas previas, precargamos los datos de referencia del expediente del paciente
+            # Usa los datos de referencia si no hay medidas.
             if self.paciente.talla:
                 initial["talla_cm"] = self.paciente.talla
             if self.paciente.peso:
@@ -101,12 +101,13 @@ class MedidaListView(NutricionistaSeguimientoMixin, ListView):
     paginate_by = 15
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         self.paciente = self.get_paciente()
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        # Traemos todas las medidas del paciente ordenadas por fecha descendente
-        # Usamos select_related para evitar N+1 en la relación paciente
+        # Carga las medidas recientes sin consultas N+1.
         return (
             super()
             .get_queryset()
@@ -119,29 +120,68 @@ class MedidaListView(NutricionistaSeguimientoMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["paciente"] = self.paciente
 
-        # Generamos indicadores de cambio comparando cada medición con la anterior
-        # Esto permite al nutricionista ver la evolución de un vistazo
-        medidas = list(context["medidas"])
-        cambios = []
-        anterior = None
-        for m in medidas:
-            cambio = {
-                "peso": self._comparar(m.peso_kg, anterior.peso_kg if anterior else None),
-                "imc": self._comparar(m.imc, anterior.imc if anterior else None),
-                "grasa": self._comparar(
-                    m.grasa_corporal_pct, anterior.grasa_corporal_pct if anterior else None
-                ),
-                "cintura": self._comparar(m.cintura_cm, anterior.cintura_cm if anterior else None),
-                "cadera": self._comparar(m.cadera_cm, anterior.cadera_cm if anterior else None),
-            }
-            cambios.append(cambio)
-            anterior = m
-        context["cambios"] = cambios
+        # Compara cada medida con la anterior.
+        historial = self.get_queryset()
+        medidas_pagina = list(context["medidas"])
+        medida_siguiente = None
+        if context["page_obj"].has_next():
+            inicio_siguiente = context["page_obj"].end_index()
+            siguiente = list(historial[inicio_siguiente:inicio_siguiente + 1])
+            medida_siguiente = siguiente[0] if siguiente else None
 
-        # Última medida para resumen
-        context["ultima_medida"] = medidas[0] if medidas else None
-        # Primera medida para ver cambio total
-        context["primera_medida"] = medidas[-1] if len(medidas) > 1 else None
+        registros = []
+        for indice, medida in enumerate(medidas_pagina):
+            anterior = (
+                medidas_pagina[indice + 1]
+                if indice + 1 < len(medidas_pagina)
+                else medida_siguiente
+            )
+            registros.append({
+                "medida": medida,
+                "anterior": anterior,
+                "cambio_peso": self._comparar(
+                    medida.peso_kg,
+                    anterior.peso_kg if anterior else None,
+                ),
+                "cambio_imc": self._comparar(
+                    medida.imc,
+                    anterior.imc if anterior else None,
+                ),
+                "variacion_peso": (
+                    medida.peso_kg - anterior.peso_kg
+                    if anterior and medida.peso_kg is not None and anterior.peso_kg is not None
+                    else None
+                ),
+                "variacion_imc": (
+                    medida.imc - anterior.imc
+                    if anterior and medida.imc is not None and anterior.imc is not None
+                    else None
+                ),
+            })
+        context["registros"] = registros
+
+        total_medidas = context["paginator"].count
+        ultima_medida = historial.first()
+        primera_medida = historial.last() if total_medidas > 1 else None
+
+        context["total_medidas"] = total_medidas
+        context["ultima_medida"] = ultima_medida
+        context["primera_medida"] = primera_medida
+        context["variacion_total_peso"] = (
+            ultima_medida.peso_kg - primera_medida.peso_kg
+            if ultima_medida and primera_medida
+            else None
+        )
+        context["variacion_total_imc"] = (
+            ultima_medida.imc - primera_medida.imc
+            if ultima_medida and primera_medida
+            else None
+        )
+        context["dias_seguimiento"] = (
+            (ultima_medida.fecha - primera_medida.fecha).days
+            if ultima_medida and primera_medida
+            else 0
+        )
 
         return context
 
@@ -180,7 +220,7 @@ class NotaCreateView(NutricionistaSeguimientoMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # Pasamos el paciente al formulario para filtrar las citas disponibles
+        # Filtra las citas por paciente.
         kwargs["paciente"] = self.paciente
         return kwargs
 
@@ -191,20 +231,20 @@ class NotaCreateView(NutricionistaSeguimientoMixin, CreateView):
         hoy = timezone.now().date()
         p = self.paciente
 
-        # ── Número de consulta automático ──────────────────────────────────────
+        # Número de consulta
         num_consulta = p.notas_clinicas.count() + 1
         initial["titulo"] = f"Consulta #{num_consulta} — {hoy.strftime('%d/%m/%Y')}"
         initial["fecha"] = hoy
 
-        # ── Motivo de consulta: del objetivo del paciente ──────────────────────
+        # Motivo de consulta
         info = p.informacion_clinica or {}
         objetivo = info.get("objetivo_principal") or p.notas_generales or "No especificado"
-        # Limpiar el prefijo "Motivo de Consulta:" si viene de notas_generales
+        # Quita el prefijo del motivo.
         if "Motivo de Consulta:" in objetivo:
             objetivo = objetivo.split("Motivo de Consulta:")[-1].split("\n")[0].strip()
         initial["motivo_consulta"] = objetivo
 
-        # ── Construcción del resumen automático ────────────────────────────────
+        # Resumen automático
         lineas = []
 
         # Sección 1: Información del paciente
@@ -310,6 +350,8 @@ class NotaListView(NutricionistaSeguimientoMixin, ListView):
     paginate_by = 15
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         self.paciente = self.get_paciente()
         return super().dispatch(request, *args, **kwargs)
 
@@ -328,7 +370,30 @@ class NotaListView(NutricionistaSeguimientoMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["paciente"] = self.paciente
         context["tipo_seleccionado"] = self.request.GET.get("tipo", "")
-        context["tipos_nota"] = TipoNota.CHOICES
+
+        notas_expediente = self.paciente.notas_clinicas.all()
+        conteos = {
+            fila["tipo"]: fila["total"]
+            for fila in notas_expediente.order_by()
+            .values("tipo")
+            .annotate(total=Count("id"))
+        }
+        total_notas = sum(conteos.values())
+        context["total_notas"] = total_notas
+        context["ultima_nota"] = notas_expediente.order_by(
+            "-fecha", "-fecha_creacion"
+        ).first()
+        context["filtros_nota"] = [
+            {"valor": "", "etiqueta": "Todas", "total": total_notas},
+            *[
+                {
+                    "valor": valor,
+                    "etiqueta": etiqueta,
+                    "total": conteos.get(valor, 0),
+                }
+                for valor, etiqueta in TipoNota.CHOICES
+            ],
+        ]
         return context
 
 
@@ -340,12 +405,12 @@ class NotaDetailView(NutricionistaSeguimientoMixin, DetailView):
     context_object_name = "nota"
 
     def get_queryset(self):
-        # select_related para evitar N+1 queries al mostrar paciente y cita
+        # Precarga paciente y cita.
         return super().get_queryset().select_related("paciente", "cita")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Si la nota está vinculada a una cita, pasamos datos extra
+        # Añade datos de la cita vinculada.
         if self.object.cita:
             context["cita"] = self.object.cita
         return context
@@ -363,13 +428,12 @@ def historial_paciente(request, paciente_pk):
         Paciente, pk=paciente_pk, nutricionista=request.user
     )
 
-    # Obtenemos medidas, notas y citas con type hint para el template
+    # Reúne medidas, notas y citas para la plantilla.
     medidas = MedidaCorporal.objects.filter(paciente=paciente).order_by("-fecha", "-fecha_registro")
     notas = NotaClinica.objects.filter(paciente=paciente).select_related("cita").order_by("-fecha", "-fecha_creacion")
     citas = paciente.citas.select_related("paciente").order_by("-fecha_hora")
 
-    # Construimos una lista unificada de eventos para el timeline
-    # Cada evento tiene: fecha, tipo, objeto, y datos de visualización
+    # Unifica los eventos del historial.
     eventos = []
 
     for m in medidas:
@@ -424,9 +488,7 @@ def historial_paciente(request, paciente_pk):
     return render(request, "seguimiento/historial.html", context)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# DASHBOARDS (vistas generales para el sidebar)
-# ═══════════════════════════════════════════════════════════════════════════════
+# Paneles de seguimiento
 
 
 @login_required
@@ -439,20 +501,58 @@ def seguimiento_dashboard(request):
         nutricionista=request.user, estado=True
     ).order_by("nombre", "apellido")
 
-    # Para cada paciente, obtenemos la última medida
+    hoy = timezone.localdate()
+    inicio_mes = hoy.replace(day=1)
+
+    # Compara las dos últimas medidas.
     pacientes_con_medidas = []
+    pacientes_con_medicion = 0
+    controles_al_dia = 0
     for p in pacientes:
-        ultima = MedidaCorporal.objects.filter(paciente=p).order_by("-fecha", "-fecha_registro").first()
+        medidas_recientes = list(
+            MedidaCorporal.objects.filter(paciente=p)
+            .order_by("-fecha", "-fecha_registro")[:2]
+        )
+        ultima = medidas_recientes[0] if medidas_recientes else None
+        anterior = medidas_recientes[1] if len(medidas_recientes) > 1 else None
+        variacion_peso = None
+        variacion_imc = None
+        dias_desde_medicion = None
+        control_al_dia = False
+
+        if ultima:
+            pacientes_con_medicion += 1
+            dias_desde_medicion = (hoy - ultima.fecha).days
+            control_al_dia = 0 <= dias_desde_medicion <= 30
+            if control_al_dia:
+                controles_al_dia += 1
+            if anterior:
+                variacion_peso = ultima.peso_kg - anterior.peso_kg
+                variacion_imc = ultima.imc - anterior.imc
+
         pacientes_con_medidas.append({
             "paciente": p,
             "ultima_medida": ultima,
+            "medida_anterior": anterior,
+            "variacion_peso": variacion_peso,
+            "variacion_imc": variacion_imc,
+            "dias_desde_medicion": dias_desde_medicion,
+            "control_al_dia": control_al_dia,
         })
 
+    total_pacientes = pacientes.count()
+    medidas_qs = MedidaCorporal.objects.filter(
+        paciente__nutricionista=request.user,
+        paciente__estado=True,
+    )
     context = {
         "pacientes_con_medidas": pacientes_con_medidas,
-        "total_medidas": MedidaCorporal.objects.filter(
-            paciente__nutricionista=request.user
-        ).count(),
+        "total_pacientes": total_pacientes,
+        "pacientes_con_medicion": pacientes_con_medicion,
+        "pacientes_sin_medicion": total_pacientes - pacientes_con_medicion,
+        "controles_al_dia": controles_al_dia,
+        "total_medidas": medidas_qs.count(),
+        "medidas_este_mes": medidas_qs.filter(fecha__gte=inicio_mes).count(),
     }
     return render(request, "seguimiento/dashboard.html", context)
 
@@ -468,23 +568,37 @@ def notas_dashboard(request):
         nutricionista=request.user, estado=True
     ).order_by("nombre", "apellido")
 
+    hoy = timezone.localdate()
+    inicio_mes = hoy.replace(day=1)
     pacientes_con_notas = []
-    total_notas = NotaClinica.objects.filter(
-        paciente__nutricionista=request.user
-    ).count()
+    pacientes_con_historial = 0
+    notas_qs = NotaClinica.objects.filter(
+        paciente__nutricionista=request.user,
+        paciente__estado=True,
+    )
 
     for p in pacientes:
         ultima_nota = p.notas_clinicas.order_by("-fecha", "-fecha_creacion").first()
         total_notas_paciente = p.notas_clinicas.count()
+        dias_desde_nota = None
+        if ultima_nota:
+            pacientes_con_historial += 1
+            dias_desde_nota = (hoy - ultima_nota.fecha).days
         pacientes_con_notas.append({
             "paciente": p,
             "ultima_nota": ultima_nota,
             "total_notas": total_notas_paciente,
+            "dias_desde_nota": dias_desde_nota,
         })
 
+    total_pacientes = pacientes.count()
     context = {
         "pacientes_con_notas": pacientes_con_notas,
-        "total_notas": total_notas,
+        "total_pacientes": total_pacientes,
+        "pacientes_con_historial": pacientes_con_historial,
+        "pacientes_sin_notas": total_pacientes - pacientes_con_historial,
+        "total_notas": notas_qs.count(),
+        "notas_este_mes": notas_qs.filter(fecha__gte=inicio_mes).count(),
     }
     return render(request, "seguimiento/notas_dashboard.html", context)
 

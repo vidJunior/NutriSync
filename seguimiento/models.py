@@ -1,12 +1,14 @@
 # seguimiento/models.py
-# Modelos de MedidaCorporal y NotaClinica para el seguimiento de pacientes.
-# MedidaCorporal registra datos antropométricos con IMC calculado automáticamente.
-# NotaClinica almacena apuntes del nutricionista vinculados opcionalmente a una cita.
+# Medidas corporales y notas clínicas.
 
 from django.db import models
+from decimal import Decimal, ROUND_HALF_UP
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 from config.choices import TipoNota
 from django.contrib.auth.models import User
+from core.validation import validate_uploaded_file
 
 
 class MedidaCorporal(models.Model):
@@ -185,7 +187,7 @@ class MedidaCorporal(models.Model):
         verbose_name = "Medida Corporal"
         verbose_name_plural = "Medidas Corporales"
         ordering = ["-fecha", "-fecha_registro"]
-        # Índice compuesto para búsquedas frecuentes por paciente + fecha
+        # Índice por paciente y fecha.
         indexes = [
             models.Index(fields=["paciente", "fecha"]),
         ]
@@ -198,13 +200,17 @@ class MedidaCorporal(models.Model):
         if not self.fecha:
             self.fecha = date.today()
         # Fórmula estándar OMS: IMC = peso(kg) / (talla(m))²
-        # Se calcula en save() en lugar de en cada request para consistencia de datos
+        # Calcula el IMC al guardar.
         if self.peso_kg is not None and self.talla_cm is not None and self.talla_cm > 0:
-            talla_m = float(self.talla_cm) / 100
-            self.imc = round(float(self.peso_kg) / (talla_m**2), 1)
+            talla_m = Decimal(self.talla_cm) / Decimal("100")
+            self.imc = (Decimal(self.peso_kg) / (talla_m**2)).quantize(
+                Decimal("0.1"),
+                rounding=ROUND_HALF_UP,
+            )
+        self.full_clean()
         super().save(*args, **kwargs)
 
-        # Sincronización inteligente de base de datos con el peso y la talla de referencia del paciente
+        # Sincroniza peso y talla de referencia.
         paciente = self.paciente
         need_save = False
 
@@ -218,6 +224,20 @@ class MedidaCorporal(models.Model):
 
         if need_save:
             paciente.save()
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.fecha and self.fecha > timezone.localdate():
+            errors["fecha"] = "La fecha de medición no puede ser futura."
+        if (
+            self.consulta_id
+            and self.paciente_id
+            and self.consulta.paciente_id != self.paciente_id
+        ):
+            errors["consulta"] = "La consulta no pertenece al paciente."
+        if errors:
+            raise ValidationError(errors)
 
 
 class NotaClinica(models.Model):
@@ -270,13 +290,44 @@ class NotaClinica(models.Model):
         verbose_name = "Nota Clínica"
         verbose_name_plural = "Notas Clínicas"
         ordering = ["-fecha", "-fecha_creacion"]
-        # Índice compuesto para búsquedas frecuentes por paciente + tipo
+        # Índice por paciente y tipo.
         indexes = [
             models.Index(fields=["paciente", "tipo"]),
         ]
 
     def __str__(self):
         return f"{self.titulo} — {self.paciente} ({self.get_tipo_display()})"
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.fecha and self.fecha > timezone.localdate():
+            errors["fecha"] = "La fecha de la nota no puede ser futura."
+        if self.cita_id and self.paciente_id and self.cita.paciente_id != self.paciente_id:
+            errors["cita"] = "La cita no pertenece al paciente."
+        if (
+            self.consulta_id
+            and self.paciente_id
+            and self.consulta.paciente_id != self.paciente_id
+        ):
+            errors["consulta"] = "La consulta no pertenece al paciente."
+        contenido = (
+            self.motivo_consulta,
+            self.resumen_consulta,
+            self.objetivos_acordados,
+            self.plan_accion,
+            self.observaciones_clinicas,
+        )
+        if not any((valor or "").strip() for valor in contenido):
+            errors["resumen_consulta"] = (
+                "La nota debe incluir al menos un contenido clínico."
+            )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Recomendacion(models.Model):
@@ -354,6 +405,44 @@ class Recomendacion(models.Model):
 
     def __str__(self):
         return f"{self.paciente} — {self.categoria} ({self.fecha})"
+
+    CATEGORIAS_VALIDAS = {
+        "hidratacion",
+        "actividad_fisica",
+        "alimentos_recomendados",
+        "alimentos_limitar",
+        "generales",
+    }
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.categoria not in self.CATEGORIAS_VALIDAS:
+            errors["categoria"] = "La categoría de recomendación no es válida."
+        if not isinstance(self.descripcion, dict):
+            errors["descripcion"] = "La descripción debe ser un objeto estructurado."
+        if self.fecha and self.fecha > timezone.localdate():
+            errors["fecha"] = "La fecha de recomendación no puede ser futura."
+        if (
+            self.consulta_id
+            and self.paciente_id
+            and self.consulta.paciente_id != self.paciente_id
+        ):
+            errors["consulta"] = "La consulta no pertenece al paciente."
+        if self.cita_id and self.paciente_id and self.cita.paciente_id != self.paciente_id:
+            errors["cita"] = "La cita no pertenece al paciente."
+        if (
+            self.nutricionista_id
+            and self.paciente_id
+            and self.paciente.nutricionista_id != self.nutricionista_id
+        ):
+            errors["nutricionista"] = "El profesional no corresponde al paciente."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Entregable(models.Model):
@@ -454,3 +543,32 @@ class Entregable(models.Model):
 
     def __str__(self):
         return f"{self.titulo} ({self.get_tipo_display()}) — {self.paciente}"
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if (
+            self.consulta_id
+            and self.paciente_id
+            and self.consulta.paciente_id != self.paciente_id
+        ):
+            errors["consulta"] = "La consulta no pertenece al paciente."
+        if self.cita_id and self.paciente_id and self.cita.paciente_id != self.paciente_id:
+            errors["cita"] = "La cita no pertenece al paciente."
+        if (
+            self.nutricionista_id
+            and self.paciente_id
+            and self.paciente.nutricionista_id != self.nutricionista_id
+        ):
+            errors["nutricionista"] = "El profesional no corresponde al paciente."
+        if self.archivo and hasattr(self.archivo, "content_type"):
+            try:
+                validate_uploaded_file(self.archivo)
+            except ValidationError as exc:
+                errors["archivo"] = exc.messages
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

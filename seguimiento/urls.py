@@ -1,5 +1,5 @@
 # seguimiento/urls.py
-# Rutas completas para seguimiento corporal y notas clínicas.
+# Rutas de seguimiento.
 # Namespace: 'seguimiento'
 
 from django.urls import path
@@ -8,7 +8,7 @@ from . import views
 app_name = "seguimiento"
 
 urlpatterns = [
-    # ── Dashboards generales (desde el sidebar) ───────────────────────────
+    # Paneles
     path(
         "",
         views.seguimiento_dashboard,
@@ -19,7 +19,7 @@ urlpatterns = [
         views.notas_dashboard,
         name="notas_dashboard",
     ),
-    # ── Medidas Corporales ────────────────────────────────────────────────
+    # Medidas corporales
     path(
         "medidas/nueva/<int:paciente_pk>/",
         views.MedidaCreateView.as_view(),
@@ -30,7 +30,7 @@ urlpatterns = [
         views.MedidaListView.as_view(),
         name="medidas_lista",
     ),
-    # ── Notas Clínicas ────────────────────────────────────────────────────
+    # Notas clínicas
     path(
         "notas/nueva/<int:paciente_pk>/",
         views.NotaCreateView.as_view(),
@@ -46,7 +46,7 @@ urlpatterns = [
         views.NotaDetailView.as_view(),
         name="notas_detalle",
     ),
-    # ── Historial ─────────────────────────────────────────────────────────
+    # Historial
     path(
         "historial/<int:paciente_pk>/",
         views.historial_paciente,
