@@ -8,12 +8,12 @@ from django.utils import timezone
 from datetime import timedelta, date
 from decimal import Decimal
 
-# Agregar la raíz del proyecto al path para que 'config' y las apps sean importables
+# Añade el proyecto al path.
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
-# Configurar Django para permitir la importación de modelos en un script independiente
+# Configura Django para las pruebas.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
@@ -24,21 +24,20 @@ from config.choices import EstadoCita
 from facturacion.choices import EstadoSuscripcion
 
 # ==============================================================================
-# SIMULADORES PARA INTEGRACIONES Y FUNCIONALIDADES EXTERNAS (SendGrid, Logs, Stripe)
+# Simuladores externos
 # ==============================================================================
 
 def enviar_correo_sendgrid(email, asunto, cuerpo):
     """Simulador de envío de correos vía SendGrid (UT-12-01 y UT-12-02)."""
     if not email or email.strip() == "":
         return "OMITIDO_EMAIL_VACIO"
-    # Simula la llamada HTTP a SendGrid que retorna 202 (Accepted) de aceptación de cola
+    # Simula la aceptación de SendGrid.
     return 202
 
 
 def registrar_log_paciente(usuario, accion, ip, paciente):
     """Simulador de inserción de logs CRUD con IP (UT-15-01)."""
-    # En un sistema real esto se guardaría en una tabla AuditoriaPacienteLog o similar.
-    # Simulamos el guardado retornando un diccionario con los datos insertados.
+    # Simula el registro de auditoría.
     log_entry = {
         "usuario": usuario.username,
         "accion": accion,
@@ -51,7 +50,7 @@ def registrar_log_paciente(usuario, accion, ip, paciente):
 
 def consultar_logs_paciente(usuario, tenant_id_consulta):
     """Simulador de verificación de Multi-tenancy en logs (UT-15-02)."""
-    # Obtenemos el tenant (consultorio_id o id_usuario) del usuario
+    # Obtiene el tenant del usuario.
     tenant_usuario = usuario.pk  # En NutriSync el tenant lógico suele ser el ID del nutricionista
     if tenant_usuario != tenant_id_consulta:
         raise PermissionDenied("Acceso no autorizado: No se permite lectura cruzada de logs de otro tenant.")
@@ -59,13 +58,13 @@ def consultar_logs_paciente(usuario, tenant_id_consulta):
 
 
 # ==============================================================================
-# CLASE DE PRUEBAS DEL SISTEMA FUNCIONAL
+# Pruebas funcionales
 # ==============================================================================
 
 class PruebasSistemaFuncionales(TestCase):
     
     def setUp(self):
-        # Configurar un plan de suscripción de prueba para los tests
+        # Crea el plan de prueba.
         self.plan_prueba = PlanSuscripcion.objects.create(
             nombre="Plan Test",
             precio_mensual=Decimal("59.00"),
@@ -74,7 +73,7 @@ class PruebasSistemaFuncionales(TestCase):
             limite_citas_mes=100
         )
         
-        # Crear Nutricionistas (Especialistas / Tenants)
+        # Crea los nutricionistas.
         self.nutricionista_1 = User.objects.create_user(
             username="nutri_especialista_1",
             email="nutri1@nutrisync.com",
@@ -86,7 +85,7 @@ class PruebasSistemaFuncionales(TestCase):
             password="Password123"
         )
         
-        # Crear Pacientes activos asociados a cada nutricionista
+        # Crea pacientes activos.
         self.paciente_1 = Paciente.objects.create(
             nutricionista=self.nutricionista_1,
             nombre="Juan",
@@ -114,7 +113,7 @@ class PruebasSistemaFuncionales(TestCase):
             estado=True
         )
 
-        # Crear Suscripciones para los nutricionistas
+        # Crea las suscripciones.
         self.suscripcion_1 = SuscripcionNutricionista.objects.create(
             nutricionista=self.nutricionista_1,
             plan=self.plan_prueba,
@@ -167,7 +166,7 @@ class PruebasSistemaFuncionales(TestCase):
             estado=EstadoCita.PROGRAMADA
         )
         
-        # Crear segunda cita en el mismo horario y nutricionista
+        # Crea una cita superpuesta.
         cita_solapada = Cita(
             paciente=self.paciente_1,
             nutricionista=self.nutricionista_1,
@@ -250,7 +249,7 @@ class PruebasSistemaFuncionales(TestCase):
             estado=EstadoCita.PROGRAMADA
         )
         
-        # 2. Enviar petición para iniciar consulta vinculando y adelantando la cita
+        # 2. Inicia y adelanta la cita.
         from django.urls import reverse
         url = reverse("pacientes:consulta_iniciar", args=[self.paciente_1.pk])
         response = self.client.post(url, {
@@ -266,7 +265,7 @@ class PruebasSistemaFuncionales(TestCase):
         # 3. Verificar que la cita fue actualizada
         cita_actualizada = Cita.objects.get(pk=cita.pk)
         self.assertEqual(cita_actualizada.estado, EstadoCita.EN_CONSULTA)
-        # La fecha y hora de la cita debe estar cerca del momento actual (menos de 5 segundos de diferencia)
+        # Comprueba un desfase menor a cinco segundos.
         self.assertLess((timezone.now() - cita_actualizada.fecha_hora).total_seconds(), 5)
 
     # --------------------------------------------------------------------------
@@ -276,8 +275,8 @@ class PruebasSistemaFuncionales(TestCase):
         """Valida que falle el adelanto de una cita si interfiere con otra cita agendada en la hora actual."""
         self.client.force_login(self.nutricionista_1)
         
-        # 1. Crear una cita activa justo HOY a esta misma hora (cruce)
-        # Hacemos que empiece 10 minutos en el futuro y dure 45 minutos (cruzando el momento actual de la petición)
+        # 1. Crea una cita activa superpuesta.
+        # Crea una cita activa durante la petición.
         hora_cruce = timezone.now() + timedelta(minutes=10)
         cita_existente = Cita.objects.create(
             paciente=self.paciente_sin_correo, # Otro paciente
@@ -288,7 +287,7 @@ class PruebasSistemaFuncionales(TestCase):
             estado=EstadoCita.PROGRAMADA
         )
         
-        # 2. Crear la cita programada futura que se intentará adelantar
+        # 2. Crea la cita que se adelantará.
         fecha_futura = timezone.now() + timedelta(days=3)
         cita_adelantar = Cita.objects.create(
             paciente=self.paciente_1,
@@ -313,7 +312,7 @@ class PruebasSistemaFuncionales(TestCase):
         self.assertFalse(data["success"])
         self.assertIn("solapa", data["error"])
         
-        # 4. Verificar que la cita futura no cambió su estado ni su fecha
+        # 4. Confirma que la cita no cambió.
         cita_persistida = Cita.objects.get(pk=cita_adelantar.pk)
         self.assertEqual(cita_persistida.estado, EstadoCita.PROGRAMADA)
         self.assertEqual(cita_persistida.fecha_hora, fecha_futura)
@@ -351,7 +350,7 @@ class PruebasSistemaFuncionales(TestCase):
         self.assertEqual(self.suscripcion_1.estado, EstadoSuscripcion.ACTIVA)
         fecha_fin_original = self.suscripcion_1.fecha_fin
         
-        # Simular webhook de pago exitoso (invoice.payment_succeeded)
+        # Simula un pago exitoso.
         suscripcion_db = SuscripcionNutricionista.objects.get(stripe_subscription_id="sub_stripe_123")
         suscripcion_db.estado = EstadoSuscripcion.ACTIVA
         suscripcion_db.fecha_fin = fecha_fin_original + timedelta(days=30)
@@ -366,7 +365,7 @@ class PruebasSistemaFuncionales(TestCase):
     # --------------------------------------------------------------------------
     def test_ut_13_02_cobro_declinado_en_stripe(self):
         """Valida que la cuenta del consultorio se suspenda si el cobro de la renovación en Stripe falla."""
-        # Simular webhook de pago fallido (invoice.payment_failed)
+        # Simula un pago fallido.
         suscripcion_db = SuscripcionNutricionista.objects.get(stripe_subscription_id="sub_stripe_123")
         suscripcion_db.estado = EstadoSuscripcion.VENCIDA  # El estado vencida suspende la cuenta
         suscripcion_db.save()
@@ -378,7 +377,7 @@ class PruebasSistemaFuncionales(TestCase):
     # --------------------------------------------------------------------------
     def test_ut_14_01_calculo_ingresos_netos(self):
         """Valida que la sumatoria de cobros del nutricionista en el dashboard financiero sume exactamente S/. 295.00."""
-        # Crear 5 cobros independientes de S/. 59.00 cada uno (5 * 59.00 = 295.00)
+        # Crea cinco cobros de S/ 59.
         for i in range(5):
             Cobro.objects.create(
                 nutricionista=self.nutricionista_1,
@@ -389,7 +388,7 @@ class PruebasSistemaFuncionales(TestCase):
                 estado="pendiente"
             )
             
-        # Ejecutar sumatoria agregada de cobros para este nutricionista
+        # Suma los cobros del nutricionista.
         total_acumulado = Cobro.objects.filter(
             nutricionista=self.nutricionista_1
         ).aggregate(total_sum=django.db.models.Sum("total"))["total_sum"]
@@ -401,7 +400,7 @@ class PruebasSistemaFuncionales(TestCase):
     # --------------------------------------------------------------------------
     def test_ut_14_02_dashboard_para_usuario_nuevo(self):
         """Valida que el dashboard financiero de un nutricionista nuevo cargue en S/. 0.00 sin errores."""
-        # Consultar cobros del nutricionista 2 (nuevo y sin cobros)
+        # Consulta un nutricionista sin cobros.
         total_acumulado = Cobro.objects.filter(
             nutricionista=self.nutricionista_2
         ).aggregate(total_sum=django.db.models.Sum("total"))["total_sum"]
@@ -433,11 +432,11 @@ class PruebasSistemaFuncionales(TestCase):
     # --------------------------------------------------------------------------
     def test_ut_15_02_lectura_cruzada_logs(self):
         """Valida que el middleware de multi-tenancy bloquee y retorne 403 Forbidden ante accesos ajenos."""
-        # Intento del nutricionista 1 de leer logs de su propio tenant (Permitido)
+        # Permite leer los registros propios.
         res_ok = consultar_logs_paciente(self.nutricionista_1, self.nutricionista_1.pk)
         self.assertEqual(res_ok, "LOGS_AUTORIZADOS")
         
-        # Intento de lectura cruzada: nutricionista 2 intenta leer logs de tenant 1 (Bloqueado)
+        # Bloquea la lectura cruzada.
         with self.assertRaises(PermissionDenied):
             consultar_logs_paciente(self.nutricionista_2, self.nutricionista_1.pk)
 
@@ -458,7 +457,7 @@ class PruebasSistemaFuncionales(TestCase):
         self.assertEqual(res_ini.status_code, 200)
         consulta_id = res_ini.json()["consulta_id"]
 
-        # 2. Intentar finalizar con force_validation=true (Debe fallar)
+        # 2. Intenta finalizar sin requisitos.
         res_fin_fail = self.client.post(
             reverse("pacientes:consulta_finalizar", kwargs={"pk": self.paciente_1.pk, "consulta_id": consulta_id}),
             data={"force_validation": "true"}
@@ -476,7 +475,7 @@ class PruebasSistemaFuncionales(TestCase):
         consulta_obj.observaciones = "El paciente muestra una excelente evolución y adherencia."
         consulta_obj.save()
 
-        # 4. Registrar la medición de peso requerida en esta consulta
+        # 4. Registra el peso requerido.
         MedidaCorporal.objects.create(
             paciente=self.paciente_1,
             consulta=consulta_obj,

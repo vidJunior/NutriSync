@@ -1,6 +1,6 @@
 # config/urls.py
 # URLs raíz del proyecto NutriSync.
-# Incluye las rutas de todas las apps y personaliza el panel de administración.
+# Rutas principales.
 
 from django.contrib import admin
 from django.urls import path, include
@@ -14,7 +14,7 @@ urlpatterns = [
     # Endpoints de la API móvil (Django Ninja)
     path("api/", api.urls),
 
-    # Panel de Administración Global (BackOffice SaaS) — completamente independiente
+    # Panel de administración
     path("administracion/", include("administracion.urls")),
 
     # App core: login, logout, dashboard, perfil
@@ -37,7 +37,7 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# Handlers de error personalizados con diseño consistente al resto del sistema
+# Páginas de error
 handler404 = "core.views.error_404"
 handler500 = "core.views.error_500"
 

@@ -4,12 +4,12 @@ import unittest
 import django
 
 def run_tests():
-    # Agregar la raíz del proyecto al path para que 'config' y las apps sean importables
+    # Añade el proyecto al path.
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if base_dir not in sys.path:
         sys.path.insert(0, base_dir)
         
-    # Asegurar que Django esté configurado antes de importar y ejecutar los tests
+    # Configura Django antes de importar.
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     django.setup()
     
@@ -34,7 +34,7 @@ def run_tests():
     print(f"Errores (Errors): {len(result.errors)}")
     print("======================================================================")
     
-    # Retornar exit code 1 si hay fallos o errores, para CI/CD
+    # Devuelve 1 si hay fallos.
     if not result.wasSuccessful():
         sys.exit(1)
     else:

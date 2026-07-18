@@ -5,11 +5,11 @@ Django settings for NutriSync — Plataforma de Gestión Profesional para Nutric
 from pathlib import Path
 from decouple import config
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Rutas base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# ─── Seguridad ────────────────────────────────────────────────────────────────
+# Seguridad
 
 SECRET_KEY = config(
     "SECRET_KEY",
@@ -33,7 +33,7 @@ CSRF_TRUSTED_ORIGINS = config(
 )
 
 
-# ─── Apps instaladas ──────────────────────────────────────────────────────────
+# Aplicaciones
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",  # Cabeceras CORS para la comunicación con la app móvil
-    # Apps del proyecto NutriSync — orden según dependencias
+    # Aplicaciones del proyecto
     "core.apps.CoreConfig",  # Auth, dashboard, perfil del nutricionista (CoreConfig para signals)
     "pacientes",  # Gestión de pacientes
     "agendas.apps.AgendasConfig",  # Agenda de citas
@@ -78,10 +78,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # Inyecta el PerfilNutricionista en todos los templates
-                # para que el sidebar y el header tengan acceso al nombre/especialidad
+                # Añade el perfil a las plantillas.
                 "core.context_processors.perfil_nutricionista",
-                # Inyecta el perfil del administrador en vistas de administracion
+                # Añade el perfil del administrador.
                 "administracion.context_processors.admin_context",
             ],
         },
@@ -91,9 +90,9 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# ─── Autenticación ────────────────────────────────────────────────────────────
+# Autenticación
 
-# Redirige al login si el usuario no está autenticado (@login_required)
+# Redirección de usuarios no autenticados
 LOGIN_URL = "/login/"
 # Tras un login exitoso, va al dashboard
 LOGIN_REDIRECT_URL = "/"
@@ -101,7 +100,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"
 
 
-# ─── Base de datos ────────────────────────────────────────────────────────────
+# Base de datos
 
 DATABASES = {
     "default": {
@@ -116,7 +115,7 @@ DATABASES = {
 }
 
 
-# ─── Validación de contraseñas ────────────────────────────────────────────────
+# Contraseñas
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -128,9 +127,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ─── Internacionalización ─────────────────────────────────────────────────────
+# Idioma y zona horaria
 
-# Español para que el admin, mensajes de validación y errores estén en español
+# Mensajes en español
 LANGUAGE_CODE = "es"
 
 TIME_ZONE = "America/Lima"
@@ -139,18 +138,18 @@ USE_I18N = True
 USE_TZ = True
 
 
-# ─── Archivos estáticos ───────────────────────────────────────────────────────
+# Archivos estáticos
 
 STATIC_URL = "/static/"
 
-# Directorio donde colocaremos nuestros estilos manuales (CSS personalizado, Tailwind, etc.)
+# Estilos del proyecto
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Directorio donde Django recopilará los estáticos (ej. panel de admin) usando collectstatic
+# Destino de collectstatic
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
-# ─── Archivos de medios (uploads) ─────────────────────────────────────────────
+# Archivos subidos
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -159,7 +158,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# ─── Configuración CORS (Desarrollo Móvil) ────────────────────────────────────
+# CORS para la aplicación móvil
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
@@ -171,12 +170,16 @@ else:
     )
 
 
-# ─── Configuración Stripe (Facturación) ──────────────────────────────────────
+# Stripe
 STRIPE_PUBLIC_KEY     = config("STRIPE_PUBLIC_KEY",     default="pk_test_placeholder")
 STRIPE_SECRET_KEY     = config("STRIPE_SECRET_KEY",     default="sk_test_placeholder")
 STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="whsec_placeholder")
 STRIPE_CURRENCY = "PEN"
+PAYMENT_SANDBOX = config("PAYMENT_SANDBOX", default=DEBUG, cast=bool)
+TRUST_X_FORWARDED_FOR = config(
+    "TRUST_X_FORWARDED_FOR", default=False, cast=bool
+)
 
 
-# Clave secreta para registrar administradores en /administracion/register/
+# Clave de registro administrativo
 ADMIN_REGISTER_KEY = config("ADMIN_REGISTER_KEY", default="nutrisync-admin-2025")

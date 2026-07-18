@@ -1,6 +1,5 @@
 # config/choices.py
-# Choices centralizados para todo el proyecto NutriSync.
-# Se define aquí para evitar duplicación entre apps y facilitar cambios globales.
+# Opciones compartidas del proyecto.
 
 class Sexo:
     MASCULINO = "M"
